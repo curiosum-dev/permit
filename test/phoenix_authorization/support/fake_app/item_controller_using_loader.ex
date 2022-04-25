@@ -3,11 +3,10 @@ defmodule PhoenixAuthorization.FakeApp.ItemControllerUsingLoader do
 
   alias PhoenixAuthorization.FakeApp.{Authorization, Item}
 
-  plug(PhoenixAuthorization.Plug,
+  use PhoenixAuthorization.ControllerAuthorization,
     authorization_module: Authorization,
     loader_fn: &__MODULE__.load/1,
-    resource: Item
-  )
+    resource_module: Item
 
   def index(conn, _params), do: text(conn, "listing all items")
   def show(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resource]))

@@ -42,8 +42,8 @@ defmodule PhoenixAuthorization.Plug do
     plug PhoenixAuthorization.Plug,
       authorization_module: Lvauth.Authorization,
       loader_fn: fn id -> Lvauth.Repo.get(Customer, id) end,
-      resource: Lvauth.Management.Customer,
-      id_param: "id",
+      resource_module: Lvauth.Management.Customer,
+      id_param_name: "id",
       action_crud_mapping: [
         details: :read,
         clone: :update
@@ -87,30 +87,29 @@ defmodule PhoenixAuthorization.Plug do
 
   @spec init(Types.plug_opts()) :: Types.plug_opts()
   def init(opts) do
-    default_opts = [
-      except: [],
-      action_crud_mapping: [],
-      id_param: "id",
-      fallback_path: "/"
-    ]
-
-    default_opts
-    |> Keyword.merge(opts)
-    |> Keyword.put(
-      :preload_resource_in,
-      (opts[:preload_resource_in] || []) ++ [:show, :edit, :update, :delete]
-    )
+    opts
   end
 
   @spec call(Plug.Conn.t(), Types.plug_opts()) :: Plug.Conn.t()
   def call(conn, opts) do
+    opts =
+      opts
+      |> Enum.map(fn
+        {opt_name, opt_function} when is_function(opt_function, 0) ->
+          {opt_name, opt_function.()}
+
+        {opt_name, opt_value} ->
+          {opt_name, opt_value}
+      end)
+
     controller_action = action_name(conn)
 
     if controller_action in (opts[:except] || []) do
       conn
     else
-      resource_module = opts[:resource]
-      subject = conn.assigns[:current_user]
+      resource_module = opts[:resource_module]
+
+      subject = opts[:user_from_conn].(conn)
       authorize(conn, opts, controller_action, subject, resource_module)
     end
   end
@@ -124,7 +123,7 @@ defmodule PhoenixAuthorization.Plug do
         ) ::
           Plug.Conn.t()
   defp authorize(conn, opts, _controller_action, nil, _resource) do
-    handle_unauthorized(conn, opts)
+    opts[:handle_unauthorized].(conn)
   end
 
   defp authorize(conn, opts, controller_action, subject, resource_module) do
@@ -156,7 +155,7 @@ defmodule PhoenixAuthorization.Plug do
         action_crud_mapping
       )
 
-    if check_result, do: conn, else: handle_unauthorized(conn, opts)
+    if check_result, do: conn, else: opts[:handle_unauthorized].(conn)
   end
 
   @spec authorize_and_preload_resource(
@@ -177,7 +176,7 @@ defmodule PhoenixAuthorization.Plug do
       Keyword.get(
         opts,
         :loader_fn,
-        default_loader_fn(repo, resource_module, opts[:id_param])
+        default_loader_fn(repo, resource_module, opts[:id_param_name])
       )
 
     check_result =
@@ -197,11 +196,11 @@ defmodule PhoenixAuthorization.Plug do
         |> assign(:loaded_resource, record)
 
       :unauthorized ->
-        handle_unauthorized(conn, opts)
+        opts[:handle_unauthorized].(conn)
     end
   end
 
-  @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param()) ::
+  @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
           Types.loader()
   defp default_loader_fn(repo, resource_module, "id") do
     fn id ->
@@ -214,26 +213,6 @@ defmodule PhoenixAuthorization.Plug do
 
     fn id ->
       repo.get_by(resource_module, [{id_param_atom, id}])
-    end
-  end
-
-  @spec handle_unauthorized(
-          Plug.Conn.t(),
-          Types.plug_opts()
-        ) :: Plug.Conn.t()
-  defp handle_unauthorized(conn, opts) do
-    if opts[:handle_unauthorized] do
-      opts[:handle_unauthorized].(conn, opts)
-    else
-      fallback_path = opts[:fallback_path]
-
-      conn
-      |> put_flash(
-        :error,
-        opts[:error_msg] || "You do not have permission to perform this action."
-      )
-      |> redirect(to: fallback_path)
-      |> halt()
     end
   end
 end

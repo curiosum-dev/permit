@@ -85,11 +85,11 @@ defmodule PhoenixAuthorization.Resolver do
         ) :: struct() | nil
   defp fetch_resource(repo, loader_fn, resource_module, params) do
     id_param_name = "id"
-    id_param = params[id_param_name]
+    id_param_value = params[id_param_name]
 
     loader_fn = loader_fn || default_loader_fn(repo, resource_module, id_param_name)
 
-    case loader_fn.(id_param) do
+    case loader_fn.(id_param_value) do
       nil ->
         raise Ecto.NoResultsError, queryable: resource_module
 
@@ -139,7 +139,7 @@ defmodule PhoenixAuthorization.Resolver do
     action_crud_mapping[controller_action]
   end
 
-  @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param()) ::
+  @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
           Types.loader()
   defp default_loader_fn(repo, resource_module, "id") do
     fn id ->

@@ -45,11 +45,16 @@ defmodule PhoenixAuthorization.LiveViewAuthorization do
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback action_crud_mapping() :: keyword(Types.crud())
+  @callback except() :: keyword(atom())
+  @callback id_param_name() :: Types.id_param_name()
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
                       action_crud_mapping: 0,
-                      resource_module: 0
+                      resource_module: 0,
+                      except: 0,
+                      loader_fn: 0,
+                      id_param_name: 0
 
   defmacro __using__(opts) do
     authorization_module =
@@ -57,6 +62,11 @@ defmodule PhoenixAuthorization.LiveViewAuthorization do
         raise(":authorization_module option must be given when using LiveViewAuthorization")
 
     resource_module = opts[:resource_module]
+    preload_resource_in = opts[:preload_resource_in]
+    action_crud_mapping = opts[:action_crud_mapping]
+    fallback_path = opts[:fallback_path]
+    except = opts[:except]
+    id_param_name = opts[:id_param_name]
 
     quote do
       @behaviour unquote(__MODULE__)
@@ -73,18 +83,27 @@ defmodule PhoenixAuthorization.LiveViewAuthorization do
       def resource_module, do: unquote(resource_module)
 
       @impl true
-      def preload_resource_in, do: [:show, :edit]
+      def preload_resource_in, do: (unquote(preload_resource_in) || []) ++ [:show, :edit]
 
       @impl true
-      def fallback_path, do: "/"
+      def fallback_path, do: unquote(fallback_path) || "/"
 
       @impl true
-      def action_crud_mapping, do: []
+      def except, do: unquote(except) || []
+
+      @impl true
+      def action_crud_mapping, do: unquote(action_crud_mapping) || []
+
+      @impl true
+      def id_param_name, do: unquote(id_param_name) || "id"
 
       defoverridable handle_unauthorized: 1,
                      preload_resource_in: 0,
                      fallback_path: 0,
-                     resource_module: 0
+                     resource_module: 0,
+                     except: 0,
+                     action_crud_mapping: 0,
+                     id_param_name: 0
     end
   end
 end
