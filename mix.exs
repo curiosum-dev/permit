@@ -15,7 +15,12 @@ defmodule PhoenixAuthorization.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications:
+        case Mix.env() do
+          :test -> [:logger, :plug, :phoenix_live_view]
+          :dev -> [:logger, :plug, :phoenix_live_view]
+          _ -> [:logger]
+        end
     ]
   end
 
@@ -29,7 +34,8 @@ defmodule PhoenixAuthorization.MixProject do
       {:ecto, "~> 3.0"},
       {:phoenix_live_view, "~> 0.16", optional: true},
       {:jason, "~> 1.3", only: :test},
-      {:floki, ">= 0.30.0", only: :test}
+      {:floki, ">= 0.30.0", only: :test},
+      {:dialyxir, "~> 1.1", only: [:dev, :test]}
 
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}

@@ -30,15 +30,15 @@ defmodule PhoenixAuthorization.Types do
   - `handle_unauthorized - (Optional) A function taking (conn, plug_opts), performing specific action when authorization is not successful. Defaults to redirecting to :fallback_path.
   """
   @type plug_opts :: [
-          authorization_module: module() | nil,
-          loader_fn: loader() | nil,
-          resource_module: resource_module() | nil,
-          preload_resource_in: [atom()] | nil,
-          id_param_name: id_param_name() | nil,
-          action_crud_mapping: keyword(crud()) | nil,
-          except: atom() | nil,
-          fallback_path: (Plug.Conn.t(), map() | keyword() -> binary()) | binary() | nil,
-          error_msg: binary() | nil,
-          handle_unauthorized: function() | nil
+          authorization_module: module() | function(),
+          loader_fn: loader() | function(),
+          resource_module: resource_module() | function(),
+          preload_resource_in: list(atom()) | function(),
+          id_param_name: id_param_name() | function(),
+          action_crud_mapping: keyword(crud()) | function(),
+          except: list(atom()) | function(),
+          fallback_path: (Plug.Conn.t(), map() | keyword() -> binary()) | binary() | function(),
+          error_msg: binary() | function(),
+          handle_unauthorized: function()
         ]
 end

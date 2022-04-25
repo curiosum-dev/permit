@@ -45,7 +45,7 @@ defmodule PhoenixAuthorization.LiveViewAuthorization do
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback action_crud_mapping() :: keyword(Types.crud())
-  @callback except() :: keyword(atom())
+  @callback except() :: list(atom())
   @callback id_param_name() :: Types.id_param_name()
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,

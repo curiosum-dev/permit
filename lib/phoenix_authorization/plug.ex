@@ -104,7 +104,7 @@ defmodule PhoenixAuthorization.Plug do
 
     controller_action = action_name(conn)
 
-    if controller_action in (opts[:except] || []) do
+    if controller_action in opts[:except] do
       conn
     else
       resource_module = opts[:resource_module]
