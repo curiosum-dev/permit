@@ -59,20 +59,54 @@ defmodule PhoenixAuthorization.ControllerAuthorization do
       def resource_module, do: unquote(opts_resource_module)
 
       @impl true
-      def preload_resource_in,
-        do: (unquote(opts_preload_resource_in) || []) ++ [:show, :edit, :update, :delete]
+      def preload_resource_in do
+        preload_resource_in = unquote(opts_preload_resource_in)
+
+        case preload_resource_in do
+          nil -> [:show, :edit, :update, :delete]
+          list when is_list(list) -> list ++ [:show, :edit, :update, :delete]
+        end
+      end
 
       @impl true
-      def fallback_path, do: unquote(opts_fallback_path) || "/"
+      def fallback_path do
+        fallback_path = unquote(opts_fallback_path)
+
+        case fallback_path do
+          nil -> "/"
+          _ -> fallback_path
+        end
+      end
 
       @impl true
-      def except, do: unquote(opts_except) || []
+      def except do
+        except = unquote(opts_except)
+
+        case except do
+          nil -> []
+          _ -> except
+        end
+      end
 
       @impl true
-      def action_crud_mapping, do: unquote(opts_action_crud_mapping) || []
+      def action_crud_mapping do
+        action_crud_mapping = unquote(opts_action_crud_mapping)
+
+        case action_crud_mapping do
+          nil -> []
+          _ -> action_crud_mapping
+        end
+      end
 
       @impl true
-      def id_param_name, do: unquote(opts_id_param_name) || "id"
+      def id_param_name do
+        id_param_name = unquote(opts_id_param_name)
+
+        case id_param_name do
+          nil -> "id"
+          _ -> id_param_name
+        end
+      end
 
       @impl true
       def loader_fn, do: unquote(opts_loader_fn)
