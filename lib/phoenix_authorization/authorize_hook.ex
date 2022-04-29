@@ -40,6 +40,29 @@ defmodule PhoenixAuthorization.AuthorizeHook do
       # function. If not defined, Repo.get is used by default.
       def loader_fn, do: fn id -> get_organization!(id) end
 
+  Depending on whether you use `use MyAppWeb, :live_view` or not to configure your LiveViews,
+  it might be more convenient to provide configuration as options when you mix it in via `use`.
+  For instance:
+
+      # my_app_web.ex
+      def live_view do
+        use PhoenixAuthorization.LiveViewAuthorization,
+          authorization_module: Lvauth.Authorization,
+          fallback_path: "/unauthorized"
+      end
+
+      # your live view module
+      defmodule MyAppWeb.PageLive do
+        use MyAppWeb, :live_view
+
+        @impl true
+        def resource_module, do: MyApp.Item
+
+        # you might or might not want to override something here
+        @impl true
+        def fallback_path: "/foo"
+      end
+
   In actions like :show, where a singular resource is to be authorized and preloaded, it is preloaded into
   the :loaded_resource assign. This way, you can implement your :handle_params event without caring
   about loading the record:
@@ -53,7 +76,7 @@ defmodule PhoenixAuthorization.AuthorizeHook do
       end
 
   Optionally, a handle_unauthorized/2 optional callback can be implemented, returning {:cont, socket}
-  or {:halt, redirect}. The default implementation returns:
+  or {:halt, socket}. The default implementation returns:
 
       {:halt, push_redirect(socket, to: socket.view.fallback_path())}
 

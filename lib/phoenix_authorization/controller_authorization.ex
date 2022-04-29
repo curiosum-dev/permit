@@ -1,4 +1,31 @@
 defmodule PhoenixAuthorization.ControllerAuthorization do
+  @moduledoc """
+  Injects authorization plug (PhoenixAuthorization.Plug), allowing to
+  provide its options either directly in options of `use`, or
+  as overridable functions.
+
+  Example:
+
+      # my_app_web.ex
+      def controller do
+        use PhoenixAuthorization.ControllerAuthorization,
+          authorization_module: MyApp.Authorization,
+          fallback_path: "/unauthorized"
+      end
+
+      # your controller module
+      defmodule MyAppWeb.PageController do
+        use MyAppWeb, :live_view
+
+        @impl true
+        def resource_module, do: MyApp.Item
+
+        # you might or might not want to override something here
+        @impl true
+        def fallback_path: "/foo"
+      end
+
+  """
   alias PhoenixAuthorization.Types
 
   @callback authorization_module() :: module()

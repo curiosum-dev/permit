@@ -31,9 +31,9 @@ defmodule PhoenixAuthorization.LiveViewAuthorization do
       end
 
   Optionally, a handle_unauthorized/2 optional callback can be implemented, returning {:cont, socket}
-  or {:halt, redirect}. The default implementation returns:
+  or {:halt, socket}. The default implementation returns:
 
-      {:halt, push_redirect(socket, to: socket.view.fallback_path())}
+      {:halt, socket(socket, to: socket.view.fallback_path())}
   """
   alias PhoenixAuthorization.Types
 
@@ -69,6 +69,8 @@ defmodule PhoenixAuthorization.LiveViewAuthorization do
     id_param_name = opts[:id_param_name]
 
     quote do
+      import unquote(__MODULE__)
+
       @behaviour unquote(__MODULE__)
 
       @impl true
@@ -104,6 +106,34 @@ defmodule PhoenixAuthorization.LiveViewAuthorization do
                      except: 0,
                      action_crud_mapping: 0,
                      id_param_name: 0
+    end
+  end
+
+  @doc """
+  Returns true if inside mount/1, false otherwise. Useful for distinguishing between
+  rendering directly via router or being in a handle_params lifecycle.
+
+  For example, a handle_unauthorized/1 implementation must redirect when halting during mounting,
+  while it needn't redirect when halting during the handle_params lifecycle.
+
+      @impl true
+      def handle_unauthorized(socket) do
+        if mounting?(socket) do
+          {:halt, push_redirect(socket, to: "/foo")}
+        else
+          {:halt, assign(socket, :unauthorized, true)}
+        end
+      end
+  """
+  @spec mounting?(Types.socket()) :: boolean()
+  def mounting?(socket) do
+    try do
+      Phoenix.LiveView.get_connect_info(socket, :uri)
+      true
+    rescue
+      # Raises RuntimeError if outside mount/1 because connect_info only exists while mounting.
+      # This allows us to distinguish between accessing directly from router or via e.g. handle_params.
+      RuntimeError -> false
     end
   end
 end

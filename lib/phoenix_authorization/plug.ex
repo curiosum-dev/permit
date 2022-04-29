@@ -12,14 +12,14 @@ defmodule PhoenixAuthorization.Plug do
 
   ```
   # Authorization configuration module
-  defmodule Lvauth.Authorization do
+  defmodule MyApp.Authorization do
     use PhoenixAuthorization,
       repo: Lvauth.Repo,
-      permissions_module: Lvauth.Authorization.Permissions
+      permissions_module: MyApp.Authorization.Permissions
   end
 
   # Permissions module - just as an example
-  defmodule Lvauth.Authorization.Permissions do
+  defmodule MyApp.Authorization.Permissions do
     import PhoenixAuthorization.Rules
 
     def can(%{role: :manager} = role) do
@@ -40,7 +40,7 @@ defmodule PhoenixAuthorization.Plug do
   ```
   defmodule LvauthWeb.Planning.RouteTemplateController do
     plug PhoenixAuthorization.Plug,
-      authorization_module: Lvauth.Authorization,
+      authorization_module: MyApp.Authorization,
       loader_fn: fn id -> Lvauth.Repo.get(Customer, id) end,
       resource_module: Lvauth.Management.Customer,
       id_param_name: "id",
@@ -48,7 +48,9 @@ defmodule PhoenixAuthorization.Plug do
         details: :read,
         clone: :update
       ],
-      except: [:example]
+      except: [:example],
+      user_from_conn: fn conn -> conn.assigns[:signed_in_user] end
+      handle_unauthorized: fn conn -> redirect(conn, to: "/foo") end
 
     def show(conn, params) do
       # 1. If assigns[:current_user] is present, the "id" param will be used to call
