@@ -1,3 +1,3 @@
 [
-  {"test/phoenix_authorization/support/authorization_case.ex", :unknown_function}
+  {"test/permit/support/authorization_case.ex", :unknown_function}
 ]
