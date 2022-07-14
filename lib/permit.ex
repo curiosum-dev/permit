@@ -4,6 +4,7 @@ defmodule Permit do
   """
 
   # create: %{}, read: %{}, update: %{}, delete: %{}
+  # condition_lists :: [{action: %{resoource_module: [condition]}}]
   defstruct role: nil, condition_lists: []
 
   alias Permit.Types
@@ -36,32 +37,28 @@ defmodule Permit do
 
       @spec read?(struct(), any()) :: boolean()
       def read?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :read, resource)
+        condition_lists = Permit.condition_lists_for_action(authorization, :read, resource)
 
         Permit.verify_record(authorization, resource, condition_lists)
       end
 
       @spec create?(struct(), any()) :: boolean()
       def create?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :create, resource)
+        condition_lists = Permit.condition_lists_for_action(authorization, :create, resource)
 
         Permit.verify_record(authorization, resource, condition_lists)
       end
 
       @spec update?(struct(), any()) :: boolean()
       def update?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :update, resource)
+        condition_lists = Permit.condition_lists_for_action(authorization, :update, resource)
 
         Permit.verify_record(authorization, resource, condition_lists)
       end
 
       @spec delete?(struct(), any()) :: boolean()
       def delete?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :delete, resource)
+        condition_lists = Permit.condition_lists_for_action(authorization, :delete, resource)
 
         Permit.verify_record(authorization, resource, condition_lists)
       end

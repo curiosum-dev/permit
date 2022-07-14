@@ -68,23 +68,23 @@ defmodule Permit.AuthorizationTest do
   @multi_field_object_with_other_field %TestObject{field_2: 6}
   @other_object %TestObject{}
 
+  @cruds [:create?, :read?, :update?, :delete?]
+
   describe "permission granting via all/2" do
     test "should grant all permissions to admin on any object" do
-      assert TestAuthorization.can(@admin_role)
-             |> TestAuthorization.create?(@special_object)
+      for predicate <- @cruds do
+        assert apply(
+                 TestAuthorization,
+                 predicate,
+                 [TestAuthorization.can(@admin_role), @special_object]
+               )
 
-      assert TestAuthorization.can(@admin_role)
-             |> TestAuthorization.read?(@other_object)
-
-      assert TestAuthorization.can(@admin_role)
-             |> TestAuthorization.update?(@special_object)
-
-      assert TestAuthorization.can(@admin_role)
-             |> TestAuthorization.delete?(@special_object)
-
-      # checks via symbol should also be possible
-      assert TestAuthorization.can(%{role: :admin})
-             |> TestAuthorization.delete?(@special_object)
+        assert apply(
+                 TestAuthorization,
+                 predicate,
+                 [TestAuthorization.can(@admin_role), @other_object]
+               )
+      end
     end
 
     test "should grant all permissions on special_object to special_user" do
