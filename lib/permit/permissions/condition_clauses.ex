@@ -18,12 +18,14 @@ defmodule Permit.Permissions.ConditionClauses do
 
   def conditions_satisfied?(%ConditionClauses{conditions: [true]}, _record, _ops), do: true
 
-  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, module, _ops) when is_atom(module) do
+  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, module, _ops)
+      when is_atom(module) do
     conditions
     |> Enum.all?(&(!!&1))
   end
 
-  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject) when is_struct(record) do
+  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject)
+      when is_struct(record) do
     conditions
     |> Enum.all?(fn
       {field, expected_value} ->

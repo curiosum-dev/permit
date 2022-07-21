@@ -26,9 +26,9 @@ defmodule Permit.Rules do
   end
 
   defp put_action(authorization, action, resource, condition)
-    when not is_list(condition) do
-      authorization
-      |> put_action(action, resource, [condition])
+       when not is_list(condition) do
+    authorization
+    |> put_action(action, resource, [condition])
   end
 
   defp put_action(authorization, action, resource, conditions) do

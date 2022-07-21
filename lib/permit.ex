@@ -8,9 +8,13 @@ defmodule Permit do
 
   alias Permit.Types
   alias Permit.Permissions
-  alias Permit.Permissions.ConditionClauses
+  import Permit.Permissions.ConditionClauses, only: [conditions_satisfied?: 3]
 
-  @type t :: %Permit{role: Types.role(), permissions: Permissions.t(), subject: Types.subject() | nil}
+  @type t :: %Permit{
+          role: Types.role(),
+          permissions: Permissions.t(),
+          subject: Types.subject() | nil
+        }
 
   defmacro __using__(opts) do
     alias Permit.Types
@@ -66,7 +70,8 @@ defmodule Permit do
     %Permit{authorization | subject: subject}
   end
 
-  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [any()]) :: Permit.t()
+  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [any()]) ::
+          Permit.t()
   def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
     updated_permissions =
       authorization.permissions
@@ -79,6 +84,6 @@ defmodule Permit do
   def verify_record(authorization, record, action) do
     authorization.permissions
     |> Permissions.clauses_list_for_action(action, record)
-    |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, authorization.subject))
+    |> Enum.any?(&conditions_satisfied?(&1, record, authorization.subject))
   end
 end
