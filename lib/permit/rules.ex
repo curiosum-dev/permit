@@ -25,6 +25,9 @@ defmodule Permit.Rules do
     |> delete(resource, conditions)
   end
 
+  def permission_to(authorization, action, resource, conditions \\ true),
+    do: put_action(authorization, action, resource, conditions)
+
   defp put_action(authorization, action, resource, condition)
        when not is_list(condition) do
     authorization

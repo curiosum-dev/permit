@@ -60,6 +60,11 @@ defmodule Permit do
         Permit.verify_record(authorization, resource, :delete)
       end
 
+      @spec do?(Permit.t(), Types.controller_action(), Types.resource()) :: boolean()
+      def do?(authorization, action, resource) do
+        Permit.verify_record(authorization, action, resource)
+      end
+
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
     end
@@ -80,7 +85,7 @@ defmodule Permit do
     %Permit{authorization | permissions: updated_permissions}
   end
 
-  @spec verify_record(Permit.t(), Types.resource(), Types.crud()) :: boolean()
+  @spec verify_record(Permit.t(), Types.resource(), Types.controller_action()) :: boolean()
   def verify_record(authorization, record, action) do
     authorization.permissions
     |> Permissions.clauses_list_for_action(action, record)
