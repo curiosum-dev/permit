@@ -83,7 +83,6 @@ defmodule Permit do
   @spec verify_record(Permit.t(), Types.resource(), Types.crud()) :: boolean()
   def verify_record(authorization, record, action) do
     authorization.permissions
-    |> Permissions.clauses_list_for_action(action, record)
-    |> Enum.any?(&conditions_satisfied?(&1, record, authorization.subject))
+    |> Permissions.granted?(action, record, authorization.subject)
   end
 end

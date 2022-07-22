@@ -7,6 +7,7 @@ defmodule Permit.Permissions.DNF do
   defstruct disjunctions: []
 
   alias __MODULE__
+  alias Permit.Types
   alias Permit.Permissions.ConditionClauses
   @type t :: %DNF{disjunctions: [ConditionClauses.t()]}
 
@@ -26,10 +27,9 @@ defmodule Permit.Permissions.DNF do
     %DNF{dnf | disjunctions: new_disjunctions}
   end
 
-  @spec to_list(DNF.t() | nil) :: [ConditionClauses.t()]
-  def to_list(nil), do: []
-
-  def to_list(%DNF{disjunctions: disjunctions}) do
+  @spec any_satisfied?(DNF.t(), Types.resource(), Types.subject()) :: boolean()
+  def any_satisfied?(%DNF{disjunctions: disjunctions}, record, subject) do
     disjunctions
+    |> Enum.any?(& ConditionClauses.conditions_satisfied?(&1, record, subject))
   end
 end
