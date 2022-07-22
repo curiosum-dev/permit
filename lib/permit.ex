@@ -70,7 +70,7 @@ defmodule Permit do
     %Permit{authorization | subject: subject}
   end
 
-  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [any()]) ::
+  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [Types.condition()]) ::
           Permit.t()
   def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
     updated_permissions =

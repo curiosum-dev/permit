@@ -21,7 +21,7 @@ defmodule Permit.Permissions do
   @spec new(conditions_by_action_and_resource()) :: Permissions.t()
   defp new(rca), do: %Permissions{conditions_by_action_resource: rca}
 
-  @spec add(Permissions.t(), Types.controller_action(), Types.resource_module(), [any()]) ::
+  @spec add(Permissions.t(), Types.controller_action(), Types.resource_module(), [Types.condition()]) ::
           Permissions.t()
   def add(permissions, action, resource, conditions) do
     permissions.conditions_by_action_resource

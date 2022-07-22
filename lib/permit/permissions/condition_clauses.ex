@@ -6,19 +6,23 @@ defmodule Permit.Permissions.ConditionClauses do
   defstruct conditions: []
 
   alias __MODULE__
-  @type t :: %ConditionClauses{conditions: [any()]}
+  alias Permit.Types
+  @type t :: %ConditionClauses{conditions: [Types.condition()]}
 
-  def new(conditions) do
-    %ConditionClauses{conditions: conditions}
-  end
+  @spec new([Types.condition()]) :: ConditionClauses.t()
+  def new(conditions),
+    do: %ConditionClauses{conditions: conditions}
 
   # Empty condition set means that an authorization subject is not authorized
   # to interact with a given record.
-  def conditions_satisfied?(%ConditionClauses{conditions: []}, _record, _ops), do: false
+  @spec conditions_satisfied?(ConditionClauses.t(), Types.resource(), Types.subject()) :: boolean()
+  def conditions_satisfied?(%ConditionClauses{conditions: []}, _record, _subject),
+    do: false
 
-  def conditions_satisfied?(%ConditionClauses{conditions: [true]}, _record, _ops), do: true
+  def conditions_satisfied?(%ConditionClauses{conditions: [true]}, _record, _subject),
+    do: true
 
-  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, module, _ops)
+  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, module, _subject)
       when is_atom(module) do
     conditions
     |> Enum.all?(&(!!&1))
@@ -27,16 +31,18 @@ defmodule Permit.Permissions.ConditionClauses do
   def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject)
       when is_struct(record) do
     conditions
-    |> Enum.all?(fn
-      {field, expected_value} ->
-        actual = Map.get(record, field)
-        expected_value == actual
-
-      function when is_function(function, 1) ->
-        !!function.(record)
-
-      function when is_function(function, 2) ->
-        !!function.(subject, record)
-    end)
+    |> Enum.all?(& valid?(&1, record, subject))
   end
+
+  defp valid?({field, expected_value}, record, subject) do
+    record
+    |> Map.get(field)
+    |> Kernel.==(expected_value)
+  end
+
+  defp valid?(function, record, subject) when is_function(function, 1),
+    do: !!function.(record)
+
+  defp valid?(function, record, subject) when is_function(function, 2),
+    do: !!function.(subject, record)
 end
