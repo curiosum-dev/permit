@@ -8,7 +8,6 @@ defmodule Permit do
 
   alias Permit.Types
   alias Permit.Permissions
-  import Permit.Permissions.ConditionClauses, only: [conditions_satisfied?: 3]
 
   @type t :: %Permit{
           role: Types.role(),

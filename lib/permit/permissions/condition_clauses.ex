@@ -34,13 +34,14 @@ defmodule Permit.Permissions.ConditionClauses do
     |> Enum.all?(& valid?(&1, record, subject))
   end
 
-  defp valid?({field, expected_value}, record, subject) do
+  @spec valid?(Types.condition(), Type.resource(), Type.subject()) :: boolean()
+  defp valid?({field, expected_value}, record, _subject) do
     record
     |> Map.get(field)
     |> Kernel.==(expected_value)
   end
 
-  defp valid?(function, record, subject) when is_function(function, 1),
+  defp valid?(function, record, _subject) when is_function(function, 1),
     do: !!function.(record)
 
   defp valid?(function, record, subject) when is_function(function, 2),

@@ -5,32 +5,16 @@ defmodule Permit.FakeApp.SessionController do
   alias Permit.FakeApp.User
 
   def create(conn, params) do
-    shallow_atomize_keys = fn map ->
-      map
-      |> Enum.map(fn {kk, vv} ->
-        {String.to_atom(kk), vv}
-      end)
-      |> Map.new()
-    end
-
-    original_or_atomized_key_map = fn
-      %{} = item ->
-        shallow_atomize_keys.(item)
-
-      item ->
-        item
-    end
-
     user =
       params
       |> Enum.map(fn {k, v} ->
         value =
           case v do
             val when is_list(v) ->
-              Enum.map(val, original_or_atomized_key_map)
+              Enum.map(val, &original_or_atomized_key_map/1)
 
             %{} ->
-              shallow_atomize_keys.(v)
+              shallow_atomize_keys(v)
 
             _ ->
               v
@@ -43,4 +27,18 @@ defmodule Permit.FakeApp.SessionController do
 
     assign(conn, :current_user, user)
   end
+
+  defp shallow_atomize_keys(map) do
+    map
+    |> Enum.map(fn {kk, vv} ->
+      {String.to_atom(kk), vv}
+    end)
+    |> Map.new()
+  end
+
+  defp original_or_atomized_key_map(%{} = item),
+    do: shallow_atomize_keys(item)
+
+  defp original_or_atomized_key_map(item),
+    do: item
 end
