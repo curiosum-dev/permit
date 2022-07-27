@@ -7,11 +7,15 @@ defmodule Permit.Permissions.ConditionClauses do
 
   alias __MODULE__
   alias Permit.Types
-  @type t :: %ConditionClauses{conditions: [Types.condition()]}
+  alias Permit.Permissions.Condition
+  @type t :: %ConditionClauses{conditions: [Condition.t()]}
 
   @spec new([Types.condition()]) :: ConditionClauses.t()
-  def new(conditions),
-    do: %ConditionClauses{conditions: conditions}
+  def new(conditions) do
+    conditions
+    |> Enum.map(& Condition.new/1)
+    |> then(& %ConditionClauses{conditions: &1})
+  end
 
   # Empty condition set means that an authorization subject is not authorized
   # to interact with a given record.
@@ -19,8 +23,7 @@ defmodule Permit.Permissions.ConditionClauses do
   def conditions_satisfied?(%ConditionClauses{conditions: []}, _record, _subject),
     do: false
 
-  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject)
-      when is_struct(record) do
+  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject) do
     conditions
     |> Enum.all?(& Condition.satisfied?(&1, record, subject))
   end

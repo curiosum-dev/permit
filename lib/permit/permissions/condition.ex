@@ -102,14 +102,14 @@ defmodule Permit.Permissions.Condition do
       |> then(function)
   end
 
-  def satisfied?(%Condition{condition: condition, condition_type: :operator}, module, _subject)
+  def satisfied?(%Condition{condition: condition}, module, _subject)
     when is_atom(module),
     do: !!condition
 
   def satisfied?(%Condition{condition: function, condition_type: :function_1}, record, _subject),
     do: !! function.(record)
 
-  def satisfied?(%Condition{condition: function, condition_type: :function_2}, record, subject),
+  def satisfied?(%Condition{condition: function, condition_type: :function_2}, record, subject)
     do: !! function.(subject, record)
 
 end
