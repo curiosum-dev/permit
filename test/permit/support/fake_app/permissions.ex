@@ -28,5 +28,10 @@ defmodule Permit.FakeApp.Permissions do
     |> all(Item, permission_level: {:<=, 2})
   end
 
+  def can(%{role: :thread_moderator} = role) do
+    grant(role)
+    |> all(Item, permission_level: {:<=, 3}, thread_name: {:=~, ~r/DMT/i})
+  end
+
   def can(role), do: grant(role)
 end
