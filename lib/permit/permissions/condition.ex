@@ -7,6 +7,8 @@ defmodule Permit.Permissions.Condition do
 
   alias __MODULE__
   alias Permit.Types
+  alias Permit.Permissions.Condition.ConditionHelper
+
   @type condition_type :: :const, :function_1, :function_2, :operator
   @type t :: %Condition{condition: Types.condition(), condition_type: condition_type(), semantics: (any() -> boolean())}
 
@@ -31,28 +33,38 @@ defmodule Permit.Permissions.Condition do
   defp alternative_operator_mapping(operator) when operator in @operators, do: operator
   defp alternative_operator_mapping(any_other), do: raise ArgumentError, message: "unsupported operator #{inspect(any_other)}"
 
-  defp interpret(operator)
+  defp interpret(operator, ops \\ [])
+
+  defp interpret(operator, _ops)
     when operator in @comparison_operators_primary do
       fn x ->
         & apply(Kernel, operator, [&1, x])
       end
   end
 
-  defp interpret(:=~), do: fn x ->
-    & &1 =~ x
+  defp interpret(:=~, _ops), do: fn pattern ->
+    & &1 =~ pattern
   end
 
-  defp interpret(like) when like in [:like, :ilike], do: fn _x ->
-    # https://stackoverflow.com/questions/712580/list-of-special-characters-for-sql-like-clause
-    # re =
-    #   x
-    #   |> String.replace()
-    # & &1 =~ re
-    raise RuntimeError, message: "TODO: Not implemented yet"
+  defp interpret(:ilike, ops),
+    do: interpret(:like, [{:ignore_case, true} | ops])
+
+  defp interpret(:like, ops) do
+    fn pattern ->
+      re = ConditionHelper.like_pattern_to_regex(pattern, ops)
+
+      & &1 =~ re
+    end
   end
 
   @spec new(Types.condition()) :: Condition.t()
   def new({key, {operator, value}})
+    when operator in @operators
+    and  is_atom(key),
+      do: new({key, {operator, value, []}})
+
+
+  def new({key, {operator, value, ops}})
     when operator in @operators
     and  is_atom(key) do
       operator = alternative_operator_mapping(operator)
@@ -60,7 +72,7 @@ defmodule Permit.Permissions.Condition do
       %Condition{
           condition: {key, {operator, value}},
           condition_type: :operator,
-          semantics: interpret(operator).(value)
+          semantics: interpret(operator, ops).(value)
         }
   end
 
@@ -95,7 +107,7 @@ defmodule Permit.Permissions.Condition do
   @spec satisfied?(Condition.t(), Types.resource(), Types.subject()) :: boolean()
   def satisfied?(%Condition{condition: condition, condition_type: :const}, _record, _subject),
     do: condition
-    
+
   def satisfied?(%Condition{condition: {key, _}, condition_type: :operator, semantics: function}, record, _subject)
     when is_struct(record) do
       record
