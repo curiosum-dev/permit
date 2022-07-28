@@ -26,6 +26,7 @@ defmodule Permit.Permissions.Condition do
   defp alternative_operator_mapping(:lt), do: :<
   defp alternative_operator_mapping(:le), do: :<=
   defp alternative_operator_mapping(:neq), do: :!=
+  defp alternative_operator_mapping(:eq), do: :==
   defp alternative_operator_mapping(:match), do: :=~
   defp alternative_operator_mapping(operator) when operator in @operators, do: operator
   defp alternative_operator_mapping(any_other), do: raise ArgumentError, message: "unsupported operator #{inspect(any_other)}"
@@ -33,7 +34,7 @@ defmodule Permit.Permissions.Condition do
   defp interpret(operator)
     when operator in @comparison_operators_primary do
       fn x ->
-        & apply(Kernel, operator, [x, &1])
+        & apply(Kernel, operator, [&1, x])
       end
   end
 
@@ -95,11 +96,22 @@ defmodule Permit.Permissions.Condition do
   def satisfied?(%Condition{condition: condition, condition_type: :const}, _record, _subject),
     do: condition
 
-  def satisfied?(%Condition{condition: {key, _}, condition_type: :operator, semantics: function}, record, _subject)
+  def satisfied?(%Condition{condition: {key, {:==, _}}, condition_type: :operator, semantics: function}, record, _subject)
     when is_struct(record) do
       record
       |> Map.get(key)
       |> then(function)
+  end
+
+  def satisfied?(%Condition{condition: {key, v}, condition_type: :operator, semantics: function}, record, _subject)
+    when is_struct(record) do
+      IO.inspect(record, label: :record)
+      IO.inspect(v, label: :v)
+      IO.inspect(key, label: :key)
+      record
+      |> Map.get(key)
+      |> then(function)
+      |> IO.inspect(label: :result)
   end
 
   def satisfied?(%Condition{condition: condition}, module, _subject)
@@ -109,7 +121,7 @@ defmodule Permit.Permissions.Condition do
   def satisfied?(%Condition{condition: function, condition_type: :function_1}, record, _subject),
     do: !! function.(record)
 
-  def satisfied?(%Condition{condition: function, condition_type: :function_2}, record, subject)
+  def satisfied?(%Condition{condition: function, condition_type: :function_2}, record, subject),
     do: !! function.(subject, record)
 
 end
