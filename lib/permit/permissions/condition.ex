@@ -95,23 +95,12 @@ defmodule Permit.Permissions.Condition do
   @spec satisfied?(Condition.t(), Types.resource(), Types.subject()) :: boolean()
   def satisfied?(%Condition{condition: condition, condition_type: :const}, _record, _subject),
     do: condition
-
-  def satisfied?(%Condition{condition: {key, {:==, _}}, condition_type: :operator, semantics: function}, record, _subject)
+    
+  def satisfied?(%Condition{condition: {key, _}, condition_type: :operator, semantics: function}, record, _subject)
     when is_struct(record) do
       record
       |> Map.get(key)
       |> then(function)
-  end
-
-  def satisfied?(%Condition{condition: {key, v}, condition_type: :operator, semantics: function}, record, _subject)
-    when is_struct(record) do
-      IO.inspect(record, label: :record)
-      IO.inspect(v, label: :v)
-      IO.inspect(key, label: :key)
-      record
-      |> Map.get(key)
-      |> then(function)
-      |> IO.inspect(label: :result)
   end
 
   def satisfied?(%Condition{condition: condition}, module, _subject)
