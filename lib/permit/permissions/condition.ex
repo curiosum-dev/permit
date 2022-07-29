@@ -7,7 +7,7 @@ defmodule Permit.Permissions.Condition do
 
   alias __MODULE__
   alias Permit.Types
-  alias Permit.Permissions.Condition.ConditionHelper
+  alias Permit.Permissions.Condition.LikePatternCompiler
 
   @type condition_type :: :const, :function_1, :function_2, :operator
   @type t :: %Condition{condition: Types.condition(), condition_type: condition_type(), semantics: (any() -> boolean())}
@@ -51,7 +51,7 @@ defmodule Permit.Permissions.Condition do
 
   defp interpret(:like, ops) do
     fn pattern ->
-      re = ConditionHelper.like_pattern_to_regex(pattern, ops)
+      re = LikePatternCompiler.to_regex(pattern, ops)
 
       & &1 =~ re
     end

@@ -1,11 +1,11 @@
-defmodule Permit.Permissions.Condition.ConditionHelper do
+defmodule Permit.Permissions.Condition.LikePatternCompiler do
   @moduledoc """
-     Condition helper functions
+     Like pattern compiler
   """
   @stack [{"%", ".*"}, {"_", "."}]
 
-  @spec like_pattern_to_regex(String.t(), keyword()) :: Regex.t()
-  def like_pattern_to_regex(pattern, ops \\ [ignore_case: false]) do
+  @spec to_regex(String.t(), keyword()) :: Regex.t()
+  def to_regex(pattern, ops \\ [ignore_case: false]) do
     caseless? = case_switch(Keyword.get(ops, :ignore_case))
 
     Keyword.get(ops, :escape, "")
