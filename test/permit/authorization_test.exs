@@ -54,6 +54,14 @@ defmodule Permit.AuthorizationTest do
        |> delete(TestObject, name: {:=~, ~r/put ?in/}, name: {:=~, ~r/P.T ?I./i})
     end
 
+    def can(%{role: :like_tester} = role) do
+       grant(role)
+       |> create(TestObject, name: {:like, "spe__a_"})
+       |> read(TestObject, name: {:ilike, "%xcEpt%"})
+       |> update(TestObject, name: {:like, "speci!%", escape: "!"})
+       |> delete(TestObject, name: {:like, "%!!%!%%!_%", escape: "!"})
+    end
+
     def can(%{role: :alternative} = role) do
        grant(role)
        |> create(TestObject, field_1: {:gt, 0}, field_2: {:le, 3})
@@ -76,9 +84,11 @@ defmodule Permit.AuthorizationTest do
   @other_user %{role: :user}
   @another_one_role %{role: :another}
   @alternative_role %{role: :alternative}
+  @like_role %{role: :like_tester}
 
   @special_object %TestObject{name: "special"}
   @exceptional_object %TestObject{name: "exceptional"}
+  @like_object %TestObject{name: "strange! name% with _ special characters"}
   @multi_field_object %TestObject{field_1: 1, field_2: 2}
   @multi_field_object_with_changed_field %TestObject{field_1: 1, field_2: 3}
   @multi_field_object_with_different_change %TestObject{field_1: 1, field_2: 4}
@@ -184,6 +194,20 @@ defmodule Permit.AuthorizationTest do
 
        assert TestAuthorization.can(@alternative_role)
               |> TestAuthorization.delete?(@multi_field_object_with_name)
+    end
+
+    test "should grant permissions to like_tester" do
+       assert TestAuthorization.can(@like_role)
+              |> TestAuthorization.create?(@special_object)
+
+       assert TestAuthorization.can(@like_role)
+              |> TestAuthorization.read?(@exceptional_object)
+
+       refute TestAuthorization.can(@like_role)
+              |> TestAuthorization.update?(@like_object)
+
+       assert TestAuthorization.can(@like_role)
+              |> TestAuthorization.delete?(@like_object)
     end
 
     test "should grant permissions to operator on multi-field objects" do
