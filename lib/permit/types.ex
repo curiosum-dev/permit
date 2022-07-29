@@ -16,7 +16,12 @@ defmodule Permit.Types do
   @type conn :: Plug.Conn.t()
   @type authorization_outcome :: {:authorized | :unauthorized, socket()}
   @type hook_outcome :: {:halt, socket()} | {:cont, socket()}
-  @type condition :: true | false | {atom(), any()} | (struct() -> boolean()) | (Types.subject(), struct() -> boolean())
+  @type condition ::
+          true
+          | false
+          | {atom(), any()}
+          | (struct() -> boolean())
+          | (Types.subject(), struct() -> boolean())
 
   @typedoc """
   - `:authorization_module` -- (Required) The app's authorization module that uses `use Permit`.

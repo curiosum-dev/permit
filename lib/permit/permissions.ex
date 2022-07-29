@@ -21,7 +21,9 @@ defmodule Permit.Permissions do
   @spec new(conditions_by_action_and_resource()) :: Permissions.t()
   defp new(rca), do: %Permissions{conditions_by_action_resource: rca}
 
-  @spec add(Permissions.t(), Types.controller_action(), Types.resource_module(), [Types.condition()]) ::
+  @spec add(Permissions.t(), Types.controller_action(), Types.resource_module(), [
+          Types.condition()
+        ]) ::
           Permissions.t()
   def add(permissions, action, resource, conditions) do
     permissions.conditions_by_action_resource
@@ -32,14 +34,16 @@ defmodule Permit.Permissions do
     |> new()
   end
 
-  @spec granted?(Permissions.t(), Types.controller_action(), Types.resource(), Types.subject()) :: boolean()
+  @spec granted?(Permissions.t(), Types.controller_action(), Types.resource(), Types.subject()) ::
+          boolean()
   def granted?(permissions, action, record, subject) do
     permissions
     |> dnf_for_action_and_record(action, record)
     |> DNF.any_satisfied?(record, subject)
   end
 
-   @spec dnf_for_action_and_record(Permissions.t(), Types.controller_action(), Types.resource()) :: DNF.t()
+  @spec dnf_for_action_and_record(Permissions.t(), Types.controller_action(), Types.resource()) ::
+          DNF.t()
   defp dnf_for_action_and_record(permissions, action, resource) do
     resource_module = resource_module_from_resource(resource)
 

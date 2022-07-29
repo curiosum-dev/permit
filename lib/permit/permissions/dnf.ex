@@ -30,6 +30,6 @@ defmodule Permit.Permissions.DNF do
   @spec any_satisfied?(DNF.t(), Types.resource(), Types.subject()) :: boolean()
   def any_satisfied?(%DNF{disjunctions: disjunctions}, record, subject) do
     disjunctions
-    |> Enum.any?(& ConditionClauses.conditions_satisfied?(&1, record, subject))
+    |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, subject))
   end
 end

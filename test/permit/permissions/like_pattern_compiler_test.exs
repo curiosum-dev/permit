@@ -1,7 +1,6 @@
 defmodule Permit.Permissions.LikePatternCompiler do
   use ExUnit.Case, async: true
 
-
   describe "to_regex/2" do
     import Permit.Permissions.Condition.LikePatternCompiler,
       only: [to_regex: 2]
@@ -22,14 +21,21 @@ defmodule Permit.Permissions.LikePatternCompiler do
 
     test "escape character works with %" do
       assert to_regex("CHUJCHUJa!!p!%a", ignore_case: true, escape: "!") == ~r/^CHUJCHUJa!p%a$/i
-      assert to_regex("!!!%%abc[du-pa]!!", ignore_case: false, escape: "!") == ~r/^!%.*abc\[du\-pa\]!$/
+
+      assert to_regex("!!!%%abc[du-pa]!!", ignore_case: false, escape: "!") ==
+               ~r/^!%.*abc\[du\-pa\]!$/
+
       assert to_regex("^a!!!%!!b$c(dupa)!%", escape: "!") == ~r/^\^a!%!b\$c\(dupa\)%$/
       assert to_regex("%!!.%!%!!*!!%", escape: "!") == ~r/^.*!\..*%!\*!.*$/
     end
 
     test "escape character works with _" do
-      assert to_regex("__!_CHUJCHUJa!!p!%a", ignore_case: true, escape: "!") == ~r/^.._CHUJCHUJa!p%a$/i
-      assert to_regex("!!!%!__%abc[du-pa]!!", ignore_case: false, escape: "!") == ~r/^!%_..*abc\[du\-pa\]!$/
+      assert to_regex("__!_CHUJCHUJa!!p!%a", ignore_case: true, escape: "!") ==
+               ~r/^.._CHUJCHUJa!p%a$/i
+
+      assert to_regex("!!!%!__%abc[du-pa]!!", ignore_case: false, escape: "!") ==
+               ~r/^!%_..*abc\[du\-pa\]!$/
+
       assert to_regex("^!!_a!!!%!!b$!%!_", escape: "!") == ~r/^\^!.a!%!b\$%_$/
       assert to_regex("%!%!_%_.%!%!!*!!%", escape: "!") == ~r/^.*%_.*.\..*%!\*!.*$/
     end

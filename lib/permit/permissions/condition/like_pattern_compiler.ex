@@ -18,6 +18,7 @@ defmodule Permit.Permissions.Condition.LikePatternCompiler do
 
   defp stack_of_replacements(""),
     do: @stack
+
   defp stack_of_replacements(esc),
     do: @stack ++ [{esc <> "_", "_"}, {esc <> "%", "%"}, {esc <> esc, esc}]
 
@@ -26,8 +27,8 @@ defmodule Permit.Permissions.Condition.LikePatternCompiler do
 
   defp create_replacements_composition(stack) do
     stack
-    |> Enum.reduce(& Regex.escape/1, fn {splitter, joiner}, k ->
-      & split_at_and_join(&1, splitter, joiner, k)
+    |> Enum.reduce(&Regex.escape/1, fn {splitter, joiner}, k ->
+      &split_at_and_join(&1, splitter, joiner, k)
     end)
   end
 
