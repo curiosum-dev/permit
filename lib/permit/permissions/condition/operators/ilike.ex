@@ -1,6 +1,6 @@
 defmodule Permit.Permissions.Condition.Operators.Ilike do
   @moduledoc """
-     Equality Operator
+     Ilike Operator
   """
   alias Permit.Permissions.Condition.Operators.GenOperator
   alias Permit.Permissions.Condition.LikePatternCompiler
