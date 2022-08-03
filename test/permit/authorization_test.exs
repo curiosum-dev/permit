@@ -77,6 +77,13 @@ defmodule Permit.AuthorizationTest do
       |> delete(TestObject, name: {:match, ~r/put ?in/}, name: {:match, ~r/P.T ?I./i})
     end
 
+    def can(%{role: :one_more} = role) do
+      grant(role)
+      |> update(TestObject, field_1: {:in, [1,2,3,4]}, field_2: {:in, [3]})
+      |> create(TestObject, field_1: {:in, [5]}, field_2: {:in, [3]})
+
+    end
+
     def can(role), do: grant(role)
   end
 
@@ -92,6 +99,7 @@ defmodule Permit.AuthorizationTest do
   @another_one_role %{role: :another}
   @alternative_role %{role: :alternative}
   @like_role %{role: :like_tester}
+  @one_more_role %{role: :one_more}
 
   @special_object %TestObject{name: "special"}
   @exceptional_object %TestObject{name: "exceptional"}
@@ -232,6 +240,15 @@ defmodule Permit.AuthorizationTest do
 
       refute TestAuthorization.can(@operator_role)
              |> TestAuthorization.delete?(@multi_field_object_with_other_field)
+    end
+
+    test "should grant permissions to in operator on multi-field objects" do
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.update?(@multi_field_object_with_name)
+
+      refute TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.create?(@multi_field_object_with_name)
+
     end
   end
 
