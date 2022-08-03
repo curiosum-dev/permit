@@ -17,67 +17,6 @@ defmodule Permit.Permissions.Condition do
           semantics: (any() -> boolean())
         }
 
-  # @comparison_operators_primary [
-  #   :>,
-  #   :>=,
-  #   :<,
-  #   :<=,
-  #   :==,
-  #   :!=
-  # ]
-  # @comparison_operators_alternative [
-  #   :gt,
-  #   :ge,
-  #   :lt,
-  #   :le,
-  #   :eq,
-  #   :neq
-  # ]
-
-  # @unconvertible_operators [ :=~ ]
-
-  # @string_operators [:like, :ilike, :=~, :match]
-
-  # @operators @comparison_operators_primary ++
-  #              @comparison_operators_alternative ++ @string_operators
-
-  # defp alternative_operator_mapping(:gt), do: :>
-  # defp alternative_operator_mapping(:ge), do: :>=
-  # defp alternative_operator_mapping(:lt), do: :<
-  # defp alternative_operator_mapping(:le), do: :<=
-  # defp alternative_operator_mapping(:neq), do: :!=
-  # defp alternative_operator_mapping(:eq), do: :==
-  # defp alternative_operator_mapping(:match), do: :=~
-  # defp alternative_operator_mapping(operator) when operator in @operators, do: operator
-
-  # defp alternative_operator_mapping(any_other),
-  #   do: raise(ArgumentError, message: "unsupported operator #{inspect(any_other)}")
-
-  # defp interpret(operator, ops \\ [])
-
-  # defp interpret(operator, _ops)
-  #      when operator in @comparison_operators_primary do
-  #   fn x ->
-  #     &apply(Kernel, operator, [&1, x])
-  #   end
-  # end
-
-  # defp interpret(:=~, _ops),
-  #   do: fn pattern ->
-  #     &(&1 =~ pattern)
-  #   end
-
-  # defp interpret(:ilike, ops),
-  #   do: interpret(:like, [{:ignore_case, true} | ops])
-
-  # defp interpret(:like, ops) do
-  #   fn pattern ->
-  #     re = LikePatternCompiler.to_regex(pattern, ops)
-
-  #     &(&1 =~ re)
-  #   end
-  # end
-
   @spec new(Types.condition()) :: Condition.t()
   def new({key, {operator, value}})
     when is_atom(operator) and is_atom(key),
@@ -86,21 +25,21 @@ defmodule Permit.Permissions.Condition do
   def new({key, {operator, value, ops}})
       when is_atom(key) do
     case Operators.get(operator) do
-      module when is_atom(module) ->
+      {:ok, module} ->
         %Condition{
           condition: {key, {operator, value, ops}},
           condition_type: {:operator, module},
           semantics: module.semantics(ops).(value)
         }
 
-      nil ->
+      :error ->
         raise "Unsupported operator #{inspect(operator)}"
     end
   end
 
   def new({key, nil})
     when is_atom(key) do
-      operator = Operators.get(:is_nil)
+      {:ok, operator} = Operators.get(:is_nil)
 
       %Condition{
         condition: {key, nil},
@@ -111,7 +50,7 @@ defmodule Permit.Permissions.Condition do
 
   def new({key, value})
     when is_atom(key) do
-      operator = Operators.get(:==)
+      {:ok, operator} = Operators.get(:==)
 
       %Condition{
         condition: {key, {:==, value}},
@@ -161,13 +100,13 @@ defmodule Permit.Permissions.Condition do
   def to_dynamic_query(%Condition{condition: condition, condition_type: :const}),
     do: {:ok, dynamic(^condition)}
 
-  def to_dynamic_query(%Condition{condition: {key, _} = condition, condition_type: {:operator, operator}}) do
+  def to_dynamic_query(%Condition{condition: {key, {_op, val, _ops}} = condition, condition_type: {:operator, operator}}) do
     case operator.dynamic_query(key) do
       nil ->
         {:error, {:condition_unconvertible, condition}}
 
       query ->
-        {:ok, query}
+        {:ok, query.(val)}
     end
   end
 

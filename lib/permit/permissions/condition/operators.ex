@@ -17,13 +17,14 @@ defmodule Permit.Permissions.Condition.Operators do
     Operators.IsNil
   ]
 
+  @spec get(atom()) :: {:ok, module()} | :error
   def get(operator) do
     @operators
     |> Enum.reduce_while(nil, fn op, _ ->
       if operator in [ op.symbol() | op.alternatives() ]do
-        {:halt, op}
+        {:halt, {:ok, op}}
       else
-        {:cont, nil}
+        {:cont, :error}
       end
     end)
   end

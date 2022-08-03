@@ -2,8 +2,6 @@ defmodule Permit do
   @moduledoc """
   Authorization facilities for the application.
   """
-
-  # create: %{}, read: %{}, update: %{}, delete: %{}
   defstruct role: nil, permissions: Permit.Permissions.new(), subject: nil
 
   alias Permit.Types
