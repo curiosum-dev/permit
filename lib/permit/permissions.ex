@@ -44,8 +44,14 @@ defmodule Permit.Permissions do
 
   @spec construct_query(Permissions.t(), Types.controller_action(), Types.resource()) :: {:ok, Ecto.Query.t()} | {:error, term()}
   def construct_query(permissions, action, resource) do
-    permissions.conditions_by_action_resource[{action, resource}]
-    |> DNF.to_query(resource)
+    permissions.conditions_by_action_resource[{action, resource_module_from_resource(resource)}]
+    |> case do
+      nil ->
+        {:error, {:undefined_conditions_for, {action, resource}}}
+
+      dnf ->
+        DNF.to_query(dnf, resource)
+    end
   end
 
   @spec dnf_for_action_and_record(Permissions.t(), Types.controller_action(), Types.resource()) ::

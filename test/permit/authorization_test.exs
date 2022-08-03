@@ -11,7 +11,15 @@ defmodule Permit.AuthorizationTest.Types do
 
   defmodule TestObject do
     @moduledoc false
-    defstruct [:name, :manager_id, :field_1, :field_2]
+#     defstruct [:name, :manager_id, :field_1, :field_2]
+    use Ecto.Schema
+
+    schema "test_objects" do
+       field :name, :string
+       field :manager_id, :integer, default: 0
+       field :field_1, :integer
+       field :field_2, :integer
+    end
   end
 end
 
@@ -225,6 +233,12 @@ defmodule Permit.AuthorizationTest do
 
       refute TestAuthorization.can(@operator_role)
              |> TestAuthorization.delete?(@multi_field_object_with_other_field)
+    end
+  end
+
+  describe "ecto query construction" do
+    test "should construct ecto query" do
+       assert {:ok, _query} = TestAuthorization.accessible_by(@like_role, :delete, @like_object)
     end
   end
 end
