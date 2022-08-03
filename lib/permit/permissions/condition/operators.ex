@@ -4,6 +4,7 @@ defmodule Permit.Permissions.Condition.Operators do
   """
 
   alias Permit.Permissions.Condition.Operators
+
   @operators [
     Operators.Eq,
     Operators.Gt,
@@ -21,7 +22,7 @@ defmodule Permit.Permissions.Condition.Operators do
   def get(operator) do
     @operators
     |> Enum.reduce_while(nil, fn op, _ ->
-      if operator in [ op.symbol() | op.alternatives() ]do
+      if operator in [op.symbol() | op.alternatives()] do
         {:halt, {:ok, op}}
       else
         {:cont, :error}

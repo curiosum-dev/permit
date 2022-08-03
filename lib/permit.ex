@@ -60,7 +60,8 @@ defmodule Permit do
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
 
-      @spec accessible_by(Types.subject(), Types.controller_action(), Types.resource()) :: ({:ok, Ecto.Query.t()} | {:error, term()})
+      @spec accessible_by(Types.subject(), Types.controller_action(), Types.resource()) ::
+              {:ok, Ecto.Query.t()} | {:error, term()}
       def accessible_by(current_user, action, resource) do
         unquote(permissions_module)
         |> apply(:can, [current_user])

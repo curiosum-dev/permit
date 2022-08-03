@@ -36,7 +36,7 @@ defmodule Permit.Permissions.ConditionClauses do
 
   def to_dynamic_query(%ConditionClauses{conditions: conditions}) do
     conditions
-    |> Enum.map(& Condition.to_dynamic_query/1)
+    |> Enum.map(&Condition.to_dynamic_query/1)
     |> Enum.reduce({:ok, dynamic(true)}, fn
       {:ok, condition_query}, {:ok, acc} ->
         {:ok, dynamic(^acc and ^condition_query)}
@@ -45,10 +45,10 @@ defmodule Permit.Permissions.ConditionClauses do
         {:error, errors}
 
       {:error, error}, {:error, errors} ->
-        {:error, [ error | errors ]}
+        {:error, [error | errors]}
 
       {:error, error}, {:ok, _} ->
-        {:error, [ error ]}
+        {:error, [error]}
     end)
   end
 end

@@ -39,13 +39,13 @@ defmodule Permit.Permissions.DNF do
     with {:ok, filter} <- maybe_convert(disjunctions) do
       record
       |> where(^filter)
-      |> then(& {:ok, &1})
+      |> then(&{:ok, &1})
     end
   end
 
   defp maybe_convert(disjunctions) do
     disjunctions
-    |> Enum.map(& ConditionClauses.to_dynamic_query/1)
+    |> Enum.map(&ConditionClauses.to_dynamic_query/1)
     |> Enum.reduce({:ok, dynamic(false)}, fn
       {:ok, conditions_query}, {:ok, acc} ->
         {:ok, dynamic(^acc or ^conditions_query)}
@@ -54,7 +54,7 @@ defmodule Permit.Permissions.DNF do
         {:error, errors}
 
       {:error, es}, {:error, errors} ->
-        {:error, es ++ errors }
+        {:error, es ++ errors}
 
       {:error, errors}, {:ok, _} ->
         {:error, errors}

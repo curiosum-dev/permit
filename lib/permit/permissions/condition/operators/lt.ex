@@ -12,9 +12,9 @@ defmodule Permit.Permissions.Condition.Operators.Lt do
 
   @impl GenOperator
   def alternatives,
-    do: [ :lt ]
+    do: [:lt]
 
   @impl GenOperator
   def dynamic_query(key),
-    do: & dynamic([r], field(r, ^key) < ^&1)
+    do: &dynamic([r], field(r, ^key) < ^&1)
 end

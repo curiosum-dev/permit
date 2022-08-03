@@ -21,9 +21,10 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
       def semantics(),
         do: semantics([])
 
-      def semantics(_ops), do: fn x ->
-        &apply(Kernel, symbol(), [&1, x])
-      end
+      def semantics(_ops),
+        do: fn x ->
+          &apply(Kernel, symbol(), [&1, x])
+        end
 
       def dynamic_query(_),
         do: nil

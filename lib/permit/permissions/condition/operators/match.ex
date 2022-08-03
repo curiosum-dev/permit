@@ -12,10 +12,11 @@ defmodule Permit.Permissions.Condition.Operators.Match do
 
   @impl GenOperator
   def alternatives,
-    do: [ :match ]
+    do: [:match]
 
   @impl GenOperator
-  def semantics(_ops), do: fn pattern ->
-    &(&1 =~ pattern)
-  end
+  def semantics(_ops),
+    do: fn pattern ->
+      &(&1 =~ pattern)
+    end
 end

@@ -41,7 +41,8 @@ defmodule Permit.Permissions do
     |> DNF.any_satisfied?(record, subject)
   end
 
-  @spec construct_query(Permissions.t(), Types.controller_action(), Types.resource()) :: {:ok, Ecto.Query.t()} | {:error, term()}
+  @spec construct_query(Permissions.t(), Types.controller_action(), Types.resource()) ::
+          {:ok, Ecto.Query.t()} | {:error, term()}
   def construct_query(permissions, action, resource) do
     resource = resource_module_from_resource(resource)
 

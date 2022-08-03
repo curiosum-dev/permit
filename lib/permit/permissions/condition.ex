@@ -19,7 +19,7 @@ defmodule Permit.Permissions.Condition do
 
   @spec new(Types.condition()) :: Condition.t()
   def new({key, {operator, value}})
-    when is_atom(operator) and is_atom(key),
+      when is_atom(operator) and is_atom(key),
       do: new({key, {operator, value, []}})
 
   def new({key, {operator, value, ops}})
@@ -38,25 +38,25 @@ defmodule Permit.Permissions.Condition do
   end
 
   def new({key, nil})
-    when is_atom(key) do
-      {:ok, operator} = Operators.get(:is_nil)
+      when is_atom(key) do
+    {:ok, operator} = Operators.get(:is_nil)
 
-      %Condition{
-        condition: {key, nil},
-        condition_type: {:operator, operator},
-        semantics: operator.semantics().(nil)
-      }
-    end
+    %Condition{
+      condition: {key, nil},
+      condition_type: {:operator, operator},
+      semantics: operator.semantics().(nil)
+    }
+  end
 
   def new({key, value})
-    when is_atom(key) do
-      {:ok, operator} = Operators.get(:==)
+      when is_atom(key) do
+    {:ok, operator} = Operators.get(:==)
 
-      %Condition{
-        condition: {key, {:==, value}},
-        condition_type: {:operator, operator},
-        semantics: operator.semantics().(value)
-      }
+    %Condition{
+      condition: {key, {:==, value}},
+      condition_type: {:operator, operator},
+      semantics: operator.semantics().(value)
+    }
   end
 
   def new(true),
@@ -100,7 +100,10 @@ defmodule Permit.Permissions.Condition do
   def to_dynamic_query(%Condition{condition: condition, condition_type: :const}),
     do: {:ok, dynamic(^condition)}
 
-  def to_dynamic_query(%Condition{condition: {key, {_op, val, _ops}} = condition, condition_type: {:operator, operator}}) do
+  def to_dynamic_query(%Condition{
+        condition: {key, {_op, val, _ops}} = condition,
+        condition_type: {:operator, operator}
+      }) do
     case operator.dynamic_query(key) do
       nil ->
         {:error, {:condition_unconvertible, condition}}

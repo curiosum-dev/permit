@@ -22,5 +22,5 @@ defmodule Permit.Permissions.Condition.Operators.Ilike do
 
   @impl GenOperator
   def dynamic_query(key),
-    do: & dynamic([r], ilike(field(r, ^key), ^&1))
+    do: &dynamic([r], ilike(field(r, ^key), ^&1))
 end

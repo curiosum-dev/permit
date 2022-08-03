@@ -11,13 +11,14 @@ defmodule Permit.Permissions.Condition.Operators.IsNil do
     do: :is_nil
 
   @impl GenOperator
-  def semantics(_ops), do: fn _ ->
-    &is_nil/1
-  end
+  def semantics(_ops),
+    do: fn _ ->
+      &is_nil/1
+    end
 
   @impl GenOperator
   def alternatives,
-    do: [ :nil? ]
+    do: [:nil?]
 
   @impl GenOperator
   def dynamic_query(key),
