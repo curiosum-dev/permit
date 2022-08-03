@@ -15,12 +15,26 @@ defmodule Permit.Permissions.Condition.Operators.In do
     do: []
 
   @impl GenOperator
-  def semantics(_ops),
-    do: fn x ->
-      & &1 in x
-    end
+  def semantics(ops) do
+    case Keyword.get(ops, :not, false) do
+      true ->
+        fn x ->
+          & &1 not in x
+        end
+
+      false ->
+        fn x ->
+          & &1 in x
+        end
+      end
+  end
 
   @impl GenOperator
-  def dynamic_query(key),
-    do: &dynamic([r], field(r, ^key) in ^&1)
+  def dynamic_query(key, ops) do
+    if Keyword.get(ops, :not, false) do
+      &dynamic([r], field(r, ^key) not in ^&1)
+    else
+      &dynamic([r], field(r, ^key) in ^&1)
+    end
+  end
 end

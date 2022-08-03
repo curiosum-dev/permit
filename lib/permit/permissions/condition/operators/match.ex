@@ -15,8 +15,11 @@ defmodule Permit.Permissions.Condition.Operators.Match do
     do: [:match]
 
   @impl GenOperator
-  def semantics(_ops),
-    do: fn pattern ->
-      &(&1 =~ pattern)
+  def semantics(ops) do
+    not? = if Keyword.get(ops, :not, false) do & not &1 else & &1 end
+    
+    fn pattern ->
+      & not?.(&1 =~ pattern)
     end
+  end
 end

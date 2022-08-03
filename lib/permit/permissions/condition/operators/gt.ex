@@ -15,6 +15,11 @@ defmodule Permit.Permissions.Condition.Operators.Gt do
     do: [:gt]
 
   @impl GenOperator
-  def dynamic_query(key),
-    do: &dynamic([r], field(r, ^key) > ^&1)
+  def dynamic_query(key, ops) do
+    if Keyword.get(ops, :not, false) do
+      &dynamic([r], field(r, ^key) <= ^&1)
+    else
+      &dynamic([r], field(r, ^key) > ^&1)
+    end
+  end
 end

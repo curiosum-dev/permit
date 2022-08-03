@@ -81,6 +81,8 @@ defmodule Permit.AuthorizationTest do
       grant(role)
       |> update(TestObject, field_1: {:in, [1,2,3,4]}, field_2: {:in, [3]})
       |> create(TestObject, field_1: {:in, [5]}, field_2: {:in, [3]})
+      |> read(TestObject, field_1: {{:not, :==}, 2}, name: {{:not, :like}, "%nt%"})
+      |> delete(TestObject, field_1: {{:not, :in}, [5]}, field_2: {:in, [3]})
 
     end
 
@@ -248,6 +250,12 @@ defmodule Permit.AuthorizationTest do
 
       refute TestAuthorization.can(@one_more_role)
              |> TestAuthorization.create?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.read?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.delete?(@multi_field_object_with_name)
 
     end
   end
