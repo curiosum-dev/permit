@@ -8,7 +8,7 @@ defmodule Permit.Permissions do
   alias __MODULE__
   alias Permit.Types
   alias Permit.Permissions.DNF
-  alias Permit.Permissions.ConditionClauses
+  # alias Permit.Permissions.ConditionClauses
 
   @type conditions_by_action_and_resource :: %{
           {Types.controller_action(), Types.resource_module()} => DNF.t()
@@ -40,6 +40,12 @@ defmodule Permit.Permissions do
     permissions
     |> dnf_for_action_and_record(action, record)
     |> DNF.any_satisfied?(record, subject)
+  end
+
+  @spec construct_query(Permissions.t(), Types.controller_action(), Types.resource()) :: {:ok, Ecto.Query.t()} | {:error, term()}
+  def construct_query(permissions, action, resource) do
+    permissions.conditions_by_action_resource[{action, resource}]
+    |> DNF.to_query(resource)
   end
 
   @spec dnf_for_action_and_record(Permissions.t(), Types.controller_action(), Types.resource()) ::

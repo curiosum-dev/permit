@@ -8,6 +8,7 @@ defmodule Permit.Permissions.ConditionClauses do
   alias __MODULE__
   alias Permit.Types
   alias Permit.Permissions.Condition
+  import Ecto.Query
   @type t :: %ConditionClauses{conditions: [Condition.t()]}
 
   @spec new([Types.condition()]) :: ConditionClauses.t()
@@ -27,5 +28,24 @@ defmodule Permit.Permissions.ConditionClauses do
   def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject) do
     conditions
     |> Enum.all?(&Condition.satisfied?(&1, record, subject))
+  end
+
+  # @spec to_dynamic_query
+  def to_dynamic_query(%ConditionClauses{conditions: []}),
+    do: dynamic(false)
+
+  def to_dynamic_query(%ConditionClauses{conditions: conditions}) do
+    conditions
+    |> Enum.map(& Condition.to_dynamic_query/1)
+    |> Enum.reduce({:ok, dynamic(true)}, fn
+      {:ok, condition_query}, {:ok, acc} ->
+        {:ok, dynamic(^acc and ^condition_query)}
+
+      {:ok, _}, {:error, errors} ->
+        {:error, errors}
+
+      {:error, error}, {:error, errors} ->
+        {:error, [ error | errors ]}
+    end)
   end
 end

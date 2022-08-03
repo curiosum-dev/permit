@@ -9,6 +9,7 @@ defmodule Permit.Permissions.DNF do
   alias __MODULE__
   alias Permit.Types
   alias Permit.Permissions.ConditionClauses
+  import Ecto.Query
   @type t :: %DNF{disjunctions: [ConditionClauses.t()]}
 
   @spec new([ConditionClauses.t()]) :: DNF.t()
@@ -31,5 +32,28 @@ defmodule Permit.Permissions.DNF do
   def any_satisfied?(%DNF{disjunctions: disjunctions}, record, subject) do
     disjunctions
     |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, subject))
+  end
+
+  @spec to_query(DNF.t(), Types.resource()) :: {:ok, Ecto.Query.t()} | {:error, term()}
+  def to_query(%DNF{disjunctions: disjunctions}, record) do
+    with {:ok, filter} <- maybe_convert(disjunctions) do
+      record
+      |> where(^filter)
+    end
+  end
+
+  defp maybe_convert(disjunctions) do
+    disjunctions
+    |> Enum.map(& ConditionClauses.to_dynamic_query/1)
+    |> Enum.reduce({:ok, dynamic(false)}, fn
+      {:ok, conditions_query}, {:ok, acc} ->
+        {:ok, dynamic(^acc or ^conditions_query)}
+
+      {:ok, _}, {:error, errors} ->
+        {:error, errors}
+
+      {:error, error}, {:error, errors} ->
+        {:error, [ error | errors ]}
+    end)
   end
 end
