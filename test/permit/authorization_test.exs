@@ -65,7 +65,7 @@ defmodule Permit.AuthorizationTest do
       grant(role)
       |> create(TestObject, name: {:like, "spe__a_"})
       |> read(TestObject, name: {:ilike, "%xcEpt%"})
-      |> update(TestObject, name: {:like, "speci!%", escape: "!"})
+      |> update(TestObject, name: {{:not, :like}, "speci!%", escape: "!"})
       |> delete(TestObject, name: {:like, "%!!%!%%!_%", escape: "!"})
     end
 
@@ -220,7 +220,7 @@ defmodule Permit.AuthorizationTest do
       assert TestAuthorization.can(@like_role)
              |> TestAuthorization.read?(@exceptional_object)
 
-      refute TestAuthorization.can(@like_role)
+      assert TestAuthorization.can(@like_role)
              |> TestAuthorization.update?(@like_object)
 
       assert TestAuthorization.can(@like_role)
