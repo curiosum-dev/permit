@@ -86,6 +86,7 @@ defmodule Permit.AuthorizationTest do
       permissions_module: TestPermissions
   end
 
+  @manager_role %{role: :manager}
   @admin_role %{role: :admin}
   @operator_role %{role: :operator}
   @other_user %{role: :user}
@@ -246,6 +247,9 @@ defmodule Permit.AuthorizationTest do
     test "should not construct ecto query" do
       assert {:error, condition_unconvertible: _, condition_unconvertible: _} =
                TestAuthorization.accessible_by(@another_one_role, :delete, @like_object)
+
+      assert {:error, condition_unconvertible: :function_2} =
+               TestAuthorization.accessible_by(@manager_role, :delete, @like_object)
     end
   end
 end
