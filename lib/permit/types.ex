@@ -7,6 +7,11 @@ defmodule Permit.Types do
           required(:role) => role(),
           optional(any()) => any()
         }
+  @type subject_with_role :: %{
+          required(:__struct__) => resource_module(),
+          required(:role) => role_record(),
+          optional(any()) => any()
+        }
   @type subject :: map() | struct()
   @type resource :: struct() | resource_module()
   @type id :: integer() | binary()
