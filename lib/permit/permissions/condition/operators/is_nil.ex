@@ -12,7 +12,7 @@ defmodule Permit.Permissions.Condition.Operators.IsNil do
 
   @impl GenOperator
   def semantics(ops) do
-    not? = if Keyword.get(ops, :not, false) do & not &1 else & &1 end
+    not? = maybe_negate(ops)
 
     fn _ ->
       & not?.(is_nil(&1))

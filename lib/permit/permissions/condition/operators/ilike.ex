@@ -13,7 +13,7 @@ defmodule Permit.Permissions.Condition.Operators.Ilike do
 
   @impl GenOperator
   def semantics(ops) do
-    not? = if Keyword.get(ops, :not, false) do & not &1 else & &1 end
+    not? = maybe_negate(ops)
 
     fn pattern ->
       re = LikePatternCompiler.to_regex(pattern, [{:ignore_case, true} | ops])

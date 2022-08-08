@@ -15,6 +15,14 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
       @behaviour GenOperator
       import Ecto.Query
 
+      defp maybe_negate(ops) do
+        if Keyword.get(ops, :not, false) do
+          & not &1
+        else
+          & &1
+        end
+      end
+
       def alternatives,
         do: unquote(Keyword.get(opts, :alternatives, []))
 
@@ -22,24 +30,15 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
         do: semantics([])
 
       def semantics(ops) do
-        not? = if Keyword.get(ops, :not, false) do & not &1 else & &1 end
+        not? = maybe_negate(ops)
+
         fn x ->
           & not?.(apply(Kernel, symbol(), [&1, x]))
         end
-
       end
 
       def dynamic_query(_, _),
         do: nil
-
-
-      # defmacro maybe_not(ops, t, f) do
-      #   if Keyword.get(unquote(ops), :not, false) do
-      #     f
-      #   else
-      #     t
-      #   end
-      # end
 
       defoverridable alternatives: 0,
                      semantics: 0,
