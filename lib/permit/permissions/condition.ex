@@ -8,6 +8,7 @@ defmodule Permit.Permissions.Condition do
   alias __MODULE__
   alias Permit.Types
   alias Permit.Permissions.Condition.Operators
+  require Permit.Permissions.Condition.Operators
   import Ecto.Query
 
   @type condition_type :: :const | :function_1 | :function_2 | {:operator, module()}
@@ -17,21 +18,53 @@ defmodule Permit.Permissions.Condition do
           semantics: (any() -> boolean())
         }
 
+  @eq_operators Operators.eq_operators()
+  @eq Operators.eq()
+  @operators Operators.all()
+
+
   @spec new(Types.condition()) :: Condition.t()
+    def new({key, {:not, nil}})
+      when is_atom(key) do
+    %Condition{
+      condition: {key, {@eq, nil, [not: true]}},
+      condition_type: {:operator, Operators.IsNil},
+      semantics: Operators.IsNil.semantics(not: true).(nil)
+    }
+  end
+
+  def new({key, nil})
+      when is_atom(key) do
+    %Condition{
+      condition: {key, {@eq, nil, []}},
+      condition_type: {:operator, Operators.IsNil},
+      semantics: Operators.IsNil.semantics().(nil)
+    }
+  end
+
   def new({key, {operator, value}})
-      when is_atom(operator) and is_atom(key),
+      when operator in @operators and is_atom(key) and not is_nil(value),
       do: new({key, {operator, value, []}})
 
     def new({key, {{:not, operator}, value}})
-      when is_atom(operator) and is_atom(key),
+      when operator in @operators and is_atom(key) and not is_nil(value),
       do: new({key, {operator, value, not: true}})
 
   def new({key, {{:not, operator}, value, ops}})
-      when is_atom(operator) and is_atom(key),
+      when operator in @operators and is_atom(key) and not is_nil(value),
         do: new({key, {operator, value, [{:not, true}, ops]}})
 
+  def new({key, {operator, nil, ops}})
+    when operator in @eq_operators and is_atom(key) do
+      if Keyword.get(ops, :not, false) do
+        new({key, {:not, nil}})
+      else
+        new({key, nil})
+      end
+  end
+
   def new({key, {operator, value, ops}})
-      when is_atom(operator) and is_atom(key) do
+      when is_atom(operator) and is_atom(key) and not is_nil(value) do
     case Operators.get(operator) do
       {:ok, module} ->
         %Condition{
@@ -45,23 +78,12 @@ defmodule Permit.Permissions.Condition do
     end
   end
 
-  def new({key, nil})
-      when is_atom(key) do
-    {:ok, operator} = Operators.get(:is_nil)
-
-    %Condition{
-      condition: {key, nil},
-      condition_type: {:operator, operator},
-      semantics: operator.semantics().(nil)
-    }
-  end
-
   def new({key, value})
-      when is_atom(key) do
-    {:ok, operator} = Operators.get(:==)
+      when is_atom(key) and not is_nil(value) do
+    {:ok, operator} = Operators.get(@eq)
 
     %Condition{
-      condition: {key, {:==, value}},
+      condition: {key, {@eq, value, []}},
       condition_type: {:operator, operator},
       semantics: operator.semantics().(value)
     }

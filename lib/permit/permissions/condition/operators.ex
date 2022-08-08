@@ -19,6 +19,13 @@ defmodule Permit.Permissions.Condition.Operators do
     Operators.In
   ]
 
+  @eq_operators [
+    Operators.Eq,
+    Operators.Neq
+  ]
+
+  @eq Operators.Eq
+
   @spec get(atom()) :: {:ok, module()} | :error
   def get(operator) do
     @operators
@@ -28,6 +35,24 @@ defmodule Permit.Permissions.Condition.Operators do
       else
         {:cont, :error}
       end
+    end)
+  end
+
+  defmacro eq_operators do
+    @eq_operators
+    |> Enum.reduce([], fn module, acc ->
+      [module.symbol() | module.alternatives()] ++ acc
+    end)
+  end
+
+  defmacro eq do
+    @eq.symbol()
+  end
+
+  defmacro all do
+    @operators
+    |> Enum.reduce([], fn op, acc ->
+      [op.symbol() | op.alternatives()] ++ acc
     end)
   end
 end
