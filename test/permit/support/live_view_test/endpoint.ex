@@ -37,6 +37,7 @@ defmodule Permit.LiveViewTest.Endpoint do
   def config(:pubsub_server), do: Phoenix.LiveView.PubSub
   def config(:render_errors), do: [view: __MODULE__]
   def config(:static_url), do: [path: "/static"]
+  def config(:logger), do: [level: :info]
   def config(which), do: super(which)
   def config(which, default), do: super(which, default)
 end
