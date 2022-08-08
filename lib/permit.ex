@@ -4,11 +4,16 @@ defmodule Permit do
   """
 
   # create: %{}, read: %{}, update: %{}, delete: %{}
-  defstruct role: nil, condition_lists: []
+  defstruct role: nil, permissions: Permit.Permissions.new(), subject: nil
 
   alias Permit.Types
+  alias Permit.Permissions
 
-  @type t :: %Permit{role: Types.role(), condition_lists: [list()]}
+  @type t :: %Permit{
+          role: Types.role(),
+          permissions: Permissions.t(),
+          subject: Types.subject() | nil
+        }
 
   defmacro __using__(opts) do
     alias Permit.Types
@@ -34,36 +39,24 @@ defmodule Permit do
         |> Permit.put_subject(subject)
       end
 
-      @spec read?(struct(), any()) :: boolean()
+      @spec read?(Permit.t(), Types.resource()) :: boolean()
       def read?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :read, resource)
-
-        Permit.verify_record(authorization, resource, condition_lists)
+        Permit.verify_record(authorization, resource, :read)
       end
 
-      @spec create?(struct(), any()) :: boolean()
+      @spec create?(Permit.t(), Types.resource()) :: boolean()
       def create?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :create, resource)
-
-        Permit.verify_record(authorization, resource, condition_lists)
+        Permit.verify_record(authorization, resource, :create)
       end
 
-      @spec update?(struct(), any()) :: boolean()
+      @spec update?(Permit.t(), Types.resource()) :: boolean()
       def update?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :update, resource)
-
-        Permit.verify_record(authorization, resource, condition_lists)
+        Permit.verify_record(authorization, resource, :update)
       end
 
-      @spec delete?(struct(), any()) :: boolean()
+      @spec delete?(Permit.t(), Types.resource()) :: boolean()
       def delete?(authorization, resource) do
-        condition_lists =
-          Permit.condition_lists_for_action(authorization, :delete, resource)
-
-        Permit.verify_record(authorization, resource, condition_lists)
+        Permit.verify_record(authorization, resource, :delete)
       end
 
       @spec repo() :: Ecto.Repo.t()
@@ -71,59 +64,24 @@ defmodule Permit do
     end
   end
 
-  @spec condition_lists_for_action(Permit.t(), Types.crud(), Types.resource()) :: [
-          list()
-        ]
-  def condition_lists_for_action(authorization, action, resource) do
-    resource_module =
-      case resource do
-        %struct_module{} ->
-          struct_module
-
-        other_atom ->
-          other_atom
-      end
-
-    authorization.condition_lists
-    |> Enum.filter(fn {a, _} -> a == action end)
-    |> Enum.map(fn {_, struct_condlist_mapping} ->
-      struct_condlist_mapping[resource_module]
-    end)
-    |> Enum.reject(&is_nil(&1))
-  end
-
+  @spec put_subject(Permit.t(), Types.role()) :: Permit.t()
   def put_subject(authorization, subject) do
-    Map.put(authorization, :subject, subject)
+    %Permit{authorization | subject: subject}
   end
 
-  def verify_record(authorization, record, condition_lists) do
-    condition_lists
-    |> Enum.any?(&conditions_satisfied?(authorization, record, &1))
+  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [Types.condition()]) ::
+          Permit.t()
+  def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
+    updated_permissions =
+      authorization.permissions
+      |> Permissions.add(action, resource, conditions)
+
+    %Permit{authorization | permissions: updated_permissions}
   end
 
-  # Empty condition set means that an authorization subject is not authorized
-  # to interact with a given record.
-  defp conditions_satisfied?(_authorization, _record, []), do: false
-
-  defp conditions_satisfied?(_authorization, _record, true), do: true
-
-  defp conditions_satisfied?(_authorization, module, conditions) when is_atom(module) do
-    conditions
-    |> Enum.all?(&(!!&1))
-  end
-
-  defp conditions_satisfied?(authorization, record, conditions) when is_struct(record) do
-    conditions
-    |> Enum.all?(fn
-      {field, expected_value} ->
-        actual = Map.get(record, field)
-        expected_value == actual
-
-      function when is_function(function, 1) ->
-        !!function.(record)
-
-      function when is_function(function, 2) ->
-        !!function.(authorization.subject, record)
-    end)
+  @spec verify_record(Permit.t(), Types.resource(), Types.crud()) :: boolean()
+  def verify_record(authorization, record, action) do
+    authorization.permissions
+    |> Permissions.granted?(action, record, authorization.subject)
   end
 end
