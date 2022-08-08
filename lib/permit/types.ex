@@ -22,8 +22,7 @@ defmodule Permit.Types do
   @type authorization_outcome :: {:authorized | :unauthorized, socket()}
   @type hook_outcome :: {:halt, socket()} | {:cont, socket()}
   @type condition ::
-          true
-          | false
+          boolean()
           | {atom(), any()}
           | (struct() -> boolean())
           | (Types.subject(), struct() -> boolean())

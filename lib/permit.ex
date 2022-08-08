@@ -2,8 +2,6 @@ defmodule Permit do
   @moduledoc """
   Authorization facilities for the application.
   """
-
-  # create: %{}, read: %{}, update: %{}, delete: %{}
   defstruct role: nil, permissions: Permit.Permissions.new(), subject: nil
 
   alias Permit.Types
@@ -65,6 +63,15 @@ defmodule Permit do
 
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
+
+      @spec accessible_by(Types.subject(), Types.controller_action(), Types.resource()) ::
+              {:ok, Ecto.Query.t()} | {:error, term()}
+      def accessible_by(current_user, action, resource) do
+        unquote(permissions_module)
+        |> apply(:can, [current_user])
+        |> Map.get(:permissions)
+        |> Permissions.construct_query(action, resource)
+      end
     end
   end
 

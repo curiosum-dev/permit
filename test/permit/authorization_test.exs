@@ -11,7 +11,14 @@ defmodule Permit.AuthorizationTest.Types do
 
   defmodule TestObject do
     @moduledoc false
-    defstruct [:name, :manager_id, :field_1, :field_2]
+    use Ecto.Schema
+
+    schema "test_objects" do
+      field(:name, :string)
+      field(:manager_id, :integer, default: 0)
+      field(:field_1, :integer)
+      field(:field_2, :integer)
+    end
   end
 end
 
@@ -58,7 +65,7 @@ defmodule Permit.AuthorizationTest do
       grant(role)
       |> create(TestObject, name: {:like, "spe__a_"})
       |> read(TestObject, name: {:ilike, "%xcEpt%"})
-      |> update(TestObject, name: {:like, "speci!%", escape: "!"})
+      |> update(TestObject, name: {{:not, :like}, "speci!%", escape: "!"})
       |> delete(TestObject, name: {:like, "%!!%!%%!_%", escape: "!"})
     end
 
@@ -70,6 +77,14 @@ defmodule Permit.AuthorizationTest do
       |> delete(TestObject, name: {:match, ~r/put ?in/}, name: {:match, ~r/P.T ?I./i})
     end
 
+    def can(%{role: :one_more} = role) do
+      grant(role)
+      |> update(TestObject, field_1: {:in, [1, 2, 3, 4]}, field_2: {:in, [3]})
+      |> create(TestObject, field_1: {:in, [5]}, field_2: {:in, [3]})
+      |> read(TestObject, field_1: {{:not, :==}, 2}, name: {{:not, :like}, "%nt%"})
+      |> delete(TestObject, field_1: {{:not, :in}, [5]}, field_2: {:in, [3]})
+    end
+
     def can(role), do: grant(role)
   end
 
@@ -79,12 +94,14 @@ defmodule Permit.AuthorizationTest do
       permissions_module: TestPermissions
   end
 
+  @manager_role %{role: :manager}
   @admin_role %{role: :admin}
   @operator_role %{role: :operator}
   @other_user %{role: :user}
   @another_one_role %{role: :another}
   @alternative_role %{role: :alternative}
   @like_role %{role: :like_tester}
+  @one_more_role %{role: :one_more}
 
   @user_with_admin_role %TestUser{role: %{role: :admin}, id: 1, overseer_id: 1}
   @user_with_operator_role %TestUser{role: %{role: :operator}, id: 2, overseer_id: 1}
@@ -207,7 +224,7 @@ defmodule Permit.AuthorizationTest do
       assert TestAuthorization.can(@like_role)
              |> TestAuthorization.read?(@exceptional_object)
 
-      refute TestAuthorization.can(@like_role)
+      assert TestAuthorization.can(@like_role)
              |> TestAuthorization.update?(@like_object)
 
       assert TestAuthorization.can(@like_role)
@@ -230,18 +247,49 @@ defmodule Permit.AuthorizationTest do
       refute TestAuthorization.can(@operator_role)
              |> TestAuthorization.delete?(@multi_field_object_with_other_field)
     end
+
+    test "should grant permissions to in operator on multi-field objects" do
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.update?(@multi_field_object_with_name)
+
+      refute TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.create?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.read?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.delete?(@multi_field_object_with_name)
+    end
+  end
+
+  describe "ecto query construction" do
+    test "should construct ecto query" do
+      assert {:ok, _query} = TestAuthorization.accessible_by(@like_role, :delete, @like_object)
+      assert {:ok, _query} = TestAuthorization.accessible_by(@like_role, :create, @like_object)
+      assert {:ok, _query} = TestAuthorization.accessible_by(@like_role, :read, @like_object)
+      assert {:ok, _query} = TestAuthorization.accessible_by(@like_role, :update, @like_object)
+    end
+
+    test "should not construct ecto query" do
+      assert {:error, condition_unconvertible: _, condition_unconvertible: _} =
+               TestAuthorization.accessible_by(@another_one_role, :delete, @like_object)
+
+      assert {:error, condition_unconvertible: :function_2} =
+               TestAuthorization.accessible_by(@manager_role, :delete, @like_object)
+    end
   end
 
   describe "permission granting to subject with role" do
     test "should grant permissions to subject with role" do
-       assert TestAuthorization.can(@user_with_operator_role)
-              |> TestAuthorization.read?(@exceptional_object)
+      assert TestAuthorization.can(@user_with_operator_role)
+             |> TestAuthorization.read?(@exceptional_object)
 
-       refute TestAuthorization.can(@user_with_operator_role)
+      refute TestAuthorization.can(@user_with_operator_role)
              |> TestAuthorization.update?(@exceptional_object)
     end
 
-     test "should grant permissions to operator on multi-field objects" do
+    test "should grant permissions to operator on multi-field objects" do
       assert TestAuthorization.can(@user_with_operator_role)
              |> TestAuthorization.update?(@multi_field_object)
 
@@ -258,7 +306,7 @@ defmodule Permit.AuthorizationTest do
              |> TestAuthorization.delete?(@multi_field_object_with_other_field)
     end
 
-     test "should grant all permissions to admin on any object" do
+    test "should grant all permissions to admin on any object" do
       assert TestAuthorization.can(@user_with_admin_role)
              |> TestAuthorization.create?(@special_object)
 
