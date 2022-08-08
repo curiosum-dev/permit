@@ -19,14 +19,14 @@ defmodule Permit.Permissions.Condition.Operators.In do
     case Keyword.get(ops, :not, false) do
       true ->
         fn x ->
-          & &1 not in x
+          &(&1 not in x)
         end
 
       false ->
         fn x ->
-          & &1 in x
+          &(&1 in x)
         end
-      end
+    end
   end
 
   @impl GenOperator

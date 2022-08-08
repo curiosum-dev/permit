@@ -19,7 +19,7 @@ defmodule Permit.Permissions.Condition.Operators.Match do
     not? = maybe_negate(ops)
 
     fn pattern ->
-      & not?.(&1 =~ pattern)
+      &not?.(&1 =~ pattern)
     end
   end
 end

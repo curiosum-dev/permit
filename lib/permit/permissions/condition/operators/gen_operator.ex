@@ -17,7 +17,7 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
 
       defp maybe_negate(ops) do
         if Keyword.get(ops, :not, false) do
-          & not &1
+          &(not &1)
         else
           & &1
         end
@@ -33,7 +33,7 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
         not? = maybe_negate(ops)
 
         fn x ->
-          & not?.(apply(Kernel, symbol(), [&1, x]))
+          &not?.(apply(Kernel, symbol(), [&1, x]))
         end
       end
 

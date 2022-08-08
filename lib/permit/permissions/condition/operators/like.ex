@@ -18,7 +18,7 @@ defmodule Permit.Permissions.Condition.Operators.Like do
     fn pattern ->
       re = LikePatternCompiler.to_regex(pattern, [{:ignore_case, false} | ops])
 
-      & not?.(&1 =~ re)
+      &not?.(&1 =~ re)
     end
   end
 

@@ -15,7 +15,7 @@ defmodule Permit.Permissions.Condition.Operators.IsNil do
     not? = maybe_negate(ops)
 
     fn _ ->
-      & not?.(is_nil(&1))
+      &not?.(is_nil(&1))
     end
   end
 

@@ -22,9 +22,8 @@ defmodule Permit.Permissions.Condition do
   @eq Operators.eq()
   @operators Operators.all()
 
-
   @spec new(Types.condition()) :: Condition.t()
-    def new({key, {:not, nil}})
+  def new({key, {:not, nil}})
       when is_atom(key) do
     %Condition{
       condition: {key, {@eq, nil, [not: true]}},
@@ -46,21 +45,21 @@ defmodule Permit.Permissions.Condition do
       when operator in @operators and is_atom(key) and not is_nil(value),
       do: new({key, {operator, value, []}})
 
-    def new({key, {{:not, operator}, value}})
+  def new({key, {{:not, operator}, value}})
       when operator in @operators and is_atom(key) and not is_nil(value),
       do: new({key, {operator, value, not: true}})
 
   def new({key, {{:not, operator}, value, ops}})
       when operator in @operators and is_atom(key) and not is_nil(value),
-        do: new({key, {operator, value, [{:not, true}, ops]}})
+      do: new({key, {operator, value, [{:not, true}, ops]}})
 
   def new({key, {operator, nil, ops}})
-    when operator in @eq_operators and is_atom(key) do
-      if Keyword.get(ops, :not, false) do
-        new({key, {:not, nil}})
-      else
-        new({key, nil})
-      end
+      when operator in @eq_operators and is_atom(key) do
+    if Keyword.get(ops, :not, false) do
+      new({key, {:not, nil}})
+    else
+      new({key, nil})
+    end
   end
 
   def new({key, {operator, value, ops}})

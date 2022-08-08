@@ -22,5 +22,4 @@ defmodule Permit.Permissions.Condition.Operators.Lt do
       &dynamic([r], field(r, ^key) < ^&1)
     end
   end
-
 end

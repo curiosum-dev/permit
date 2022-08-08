@@ -79,11 +79,10 @@ defmodule Permit.AuthorizationTest do
 
     def can(%{role: :one_more} = role) do
       grant(role)
-      |> update(TestObject, field_1: {:in, [1,2,3,4]}, field_2: {:in, [3]})
+      |> update(TestObject, field_1: {:in, [1, 2, 3, 4]}, field_2: {:in, [3]})
       |> create(TestObject, field_1: {:in, [5]}, field_2: {:in, [3]})
       |> read(TestObject, field_1: {{:not, :==}, 2}, name: {{:not, :like}, "%nt%"})
       |> delete(TestObject, field_1: {{:not, :in}, [5]}, field_2: {:in, [3]})
-
     end
 
     def can(role), do: grant(role)
@@ -261,7 +260,6 @@ defmodule Permit.AuthorizationTest do
 
       assert TestAuthorization.can(@one_more_role)
              |> TestAuthorization.delete?(@multi_field_object_with_name)
-
     end
   end
 
@@ -284,14 +282,14 @@ defmodule Permit.AuthorizationTest do
 
   describe "permission granting to subject with role" do
     test "should grant permissions to subject with role" do
-       assert TestAuthorization.can(@user_with_operator_role)
-              |> TestAuthorization.read?(@exceptional_object)
+      assert TestAuthorization.can(@user_with_operator_role)
+             |> TestAuthorization.read?(@exceptional_object)
 
-       refute TestAuthorization.can(@user_with_operator_role)
+      refute TestAuthorization.can(@user_with_operator_role)
              |> TestAuthorization.update?(@exceptional_object)
     end
 
-     test "should grant permissions to operator on multi-field objects" do
+    test "should grant permissions to operator on multi-field objects" do
       assert TestAuthorization.can(@user_with_operator_role)
              |> TestAuthorization.update?(@multi_field_object)
 
@@ -308,7 +306,7 @@ defmodule Permit.AuthorizationTest do
              |> TestAuthorization.delete?(@multi_field_object_with_other_field)
     end
 
-     test "should grant all permissions to admin on any object" do
+    test "should grant all permissions to admin on any object" do
       assert TestAuthorization.can(@user_with_admin_role)
              |> TestAuthorization.create?(@special_object)
 
