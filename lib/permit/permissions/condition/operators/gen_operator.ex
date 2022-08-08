@@ -8,12 +8,20 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
   @callback alternatives() :: [atom()]
   @callback semantics() :: (any() -> (any() -> boolean()))
   @callback semantics(keyword()) :: (any() -> (any() -> boolean()))
-  @callback dynamic_query(term()) :: Ecto.Query.t()
+  @callback dynamic_query(term(), keyword()) :: (any() -> Ecto.Query.DynamicExpr.t())
 
   defmacro __using__(opts) do
     quote do
       @behaviour GenOperator
       import Ecto.Query
+
+      defp maybe_negate(ops) do
+        if Keyword.get(ops, :not, false) do
+          & not &1
+        else
+          & &1
+        end
+      end
 
       def alternatives,
         do: unquote(Keyword.get(opts, :alternatives, []))
@@ -21,18 +29,21 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
       def semantics(),
         do: semantics([])
 
-      def semantics(_ops),
-        do: fn x ->
-          &apply(Kernel, symbol(), [&1, x])
-        end
+      def semantics(ops) do
+        not? = maybe_negate(ops)
 
-      def dynamic_query(_),
+        fn x ->
+          & not?.(apply(Kernel, symbol(), [&1, x]))
+        end
+      end
+
+      def dynamic_query(_, _),
         do: nil
 
       defoverridable alternatives: 0,
                      semantics: 0,
                      semantics: 1,
-                     dynamic_query: 1
+                     dynamic_query: 2
     end
   end
 end

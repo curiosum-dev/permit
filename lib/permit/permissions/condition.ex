@@ -22,8 +22,16 @@ defmodule Permit.Permissions.Condition do
       when is_atom(operator) and is_atom(key),
       do: new({key, {operator, value, []}})
 
+    def new({key, {{:not, operator}, value}})
+      when is_atom(operator) and is_atom(key),
+      do: new({key, {operator, value, not: true}})
+
+  def new({key, {{:not, operator}, value, ops}})
+      when is_atom(operator) and is_atom(key),
+        do: new({key, {operator, value, [{:not, true}, ops]}})
+
   def new({key, {operator, value, ops}})
-      when is_atom(key) do
+      when is_atom(operator) and is_atom(key) do
     case Operators.get(operator) do
       {:ok, module} ->
         %Condition{
@@ -101,10 +109,10 @@ defmodule Permit.Permissions.Condition do
     do: {:ok, dynamic(^condition)}
 
   def to_dynamic_query(%Condition{
-        condition: {key, {_op, val, _ops}} = condition,
+        condition: {key, {_op, val, ops}} = condition,
         condition_type: {:operator, operator}
       }) do
-    case operator.dynamic_query(key) do
+    case operator.dynamic_query(key, ops) do
       nil ->
         {:error, {:condition_unconvertible, condition}}
 

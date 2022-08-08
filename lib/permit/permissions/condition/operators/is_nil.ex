@@ -11,16 +11,24 @@ defmodule Permit.Permissions.Condition.Operators.IsNil do
     do: :is_nil
 
   @impl GenOperator
-  def semantics(_ops),
-    do: fn _ ->
-      &is_nil/1
+  def semantics(ops) do
+    not? = maybe_negate(ops)
+
+    fn _ ->
+      & not?.(is_nil(&1))
     end
+  end
 
   @impl GenOperator
   def alternatives,
     do: [:nil?]
 
   @impl GenOperator
-  def dynamic_query(key),
-    do: fn _ -> dynamic([r], is_nil(field(r, ^key))) end
+  def dynamic_query(key, ops) do
+    if Keyword.get(ops, :not, false) do
+      fn _ -> dynamic([r], not is_nil(field(r, ^key))) end
+    else
+      fn _ -> dynamic([r], is_nil(field(r, ^key))) end
+    end
+  end
 end

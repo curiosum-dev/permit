@@ -15,7 +15,8 @@ defmodule Permit.Permissions.Condition.Operators do
     Operators.Like,
     Operators.Ilike,
     Operators.Match,
-    Operators.IsNil
+    Operators.IsNil,
+    Operators.In
   ]
 
   @spec get(atom()) :: {:ok, module()} | :error

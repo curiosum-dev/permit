@@ -65,7 +65,7 @@ defmodule Permit.AuthorizationTest do
       grant(role)
       |> create(TestObject, name: {:like, "spe__a_"})
       |> read(TestObject, name: {:ilike, "%xcEpt%"})
-      |> update(TestObject, name: {:like, "speci!%", escape: "!"})
+      |> update(TestObject, name: {{:not, :like}, "speci!%", escape: "!"})
       |> delete(TestObject, name: {:like, "%!!%!%%!_%", escape: "!"})
     end
 
@@ -75,6 +75,15 @@ defmodule Permit.AuthorizationTest do
       |> read(TestObject, field_1: {:lt, 1}, field_2: {:ge, 3})
       |> update(TestObject, field_1: {:neq, 2}, field_2: {:eq, 3})
       |> delete(TestObject, name: {:match, ~r/put ?in/}, name: {:match, ~r/P.T ?I./i})
+    end
+
+    def can(%{role: :one_more} = role) do
+      grant(role)
+      |> update(TestObject, field_1: {:in, [1,2,3,4]}, field_2: {:in, [3]})
+      |> create(TestObject, field_1: {:in, [5]}, field_2: {:in, [3]})
+      |> read(TestObject, field_1: {{:not, :==}, 2}, name: {{:not, :like}, "%nt%"})
+      |> delete(TestObject, field_1: {{:not, :in}, [5]}, field_2: {:in, [3]})
+
     end
 
     def can(role), do: grant(role)
@@ -93,6 +102,7 @@ defmodule Permit.AuthorizationTest do
   @another_one_role %{role: :another}
   @alternative_role %{role: :alternative}
   @like_role %{role: :like_tester}
+  @one_more_role %{role: :one_more}
 
   @special_object %TestObject{name: "special"}
   @exceptional_object %TestObject{name: "exceptional"}
@@ -211,7 +221,7 @@ defmodule Permit.AuthorizationTest do
       assert TestAuthorization.can(@like_role)
              |> TestAuthorization.read?(@exceptional_object)
 
-      refute TestAuthorization.can(@like_role)
+      assert TestAuthorization.can(@like_role)
              |> TestAuthorization.update?(@like_object)
 
       assert TestAuthorization.can(@like_role)
@@ -233,6 +243,21 @@ defmodule Permit.AuthorizationTest do
 
       refute TestAuthorization.can(@operator_role)
              |> TestAuthorization.delete?(@multi_field_object_with_other_field)
+    end
+
+    test "should grant permissions to in operator on multi-field objects" do
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.update?(@multi_field_object_with_name)
+
+      refute TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.create?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.read?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@one_more_role)
+             |> TestAuthorization.delete?(@multi_field_object_with_name)
+
     end
   end
 

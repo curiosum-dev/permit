@@ -15,8 +15,11 @@ defmodule Permit.Permissions.Condition.Operators.Match do
     do: [:match]
 
   @impl GenOperator
-  def semantics(_ops),
-    do: fn pattern ->
-      &(&1 =~ pattern)
+  def semantics(ops) do
+    not? = maybe_negate(ops)
+
+    fn pattern ->
+      & not?.(&1 =~ pattern)
     end
+  end
 end
