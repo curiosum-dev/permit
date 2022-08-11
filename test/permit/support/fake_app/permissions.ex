@@ -1,5 +1,5 @@
 defmodule Permit.FakeApp.Permissions do
-  import Permit.Rules
+  use Permit.Rules
 
   alias Permit.FakeApp.Item
 

@@ -2,28 +2,42 @@ defmodule Permit.Rules do
   @moduledoc """
   Provides functions used for defining the application's permission set.
   """
+  defmacro __using__(opts) do
+
+    actions_module = Keyword.get(opts, :actions_module, quote do Permit.Actions.CrudActions end)
+    action_functions =
+      actions_module
+      |> Macro.expand(__CALLER__)
+      |> apply(:list_actions, [])
+      |> Enum.map(fn name ->
+        quote do
+          # @spec unquote(name)(Permit.t(), Types.resource()) :: boolean()
+          def unquote(name)(authorization, resource, conditions \\ true) do
+            permission_to(authorization, unquote(name), resource, conditions)
+          end
+        end
+      end)
+
+    quote do
+      import Permit.Rules
+
+      unquote(action_functions)
+
+      def all(authorization, resource, conditions \\ true) do
+        unquote(actions_module)
+        |> apply(:list_actions, [])
+        |> Enum.reduce(authorization, fn action, auth ->
+          apply(__MODULE__, action, [auth, resource, conditions])
+        end)
+      end
+
+      def actions_module,
+        do: unquote(actions_module)
+    end
+  end
+
   @spec grant(any) :: Permit.t()
   def grant(role), do: %Permit{role: role}
-
-  def read(authorization, resource, conditions \\ true),
-    do: put_action(authorization, :read, resource, conditions)
-
-  def create(authorization, resource, conditions \\ true),
-    do: put_action(authorization, :create, resource, conditions)
-
-  def update(authorization, resource, conditions \\ true),
-    do: put_action(authorization, :update, resource, conditions)
-
-  def delete(authorization, resource, conditions \\ true),
-    do: put_action(authorization, :delete, resource, conditions)
-
-  def all(authorization, resource, conditions \\ true) do
-    authorization
-    |> create(resource, conditions)
-    |> read(resource, conditions)
-    |> update(resource, conditions)
-    |> delete(resource, conditions)
-  end
 
   def permission_to(authorization, action, resource, conditions \\ true),
     do: put_action(authorization, action, resource, conditions)

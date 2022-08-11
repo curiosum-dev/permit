@@ -30,7 +30,7 @@ defmodule Permit.AuthorizationTest do
 
   defmodule TestPermissions do
     @moduledoc false
-    import Permit.Rules
+    use Permit.Rules
 
     def can(%{role: :admin} = role) do
       grant(role)

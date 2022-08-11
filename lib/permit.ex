@@ -18,6 +18,21 @@ defmodule Permit do
 
     permissions_module = Keyword.fetch!(opts, :permissions_module)
 
+    predicates =
+      permissions_module
+      |> Macro.expand(__CALLER__)
+      |> apply(:actions_module, [])
+      |> apply(:list_actions, [])
+      |> Enum.map(&add_predicate_name/1)
+      |> Enum.map(fn {predicate, name} ->
+        quote do
+          @spec unquote(predicate)(Permit.t(), Types.resource()) :: boolean()
+          def unquote(predicate)(authorization, resource) do
+            Permit.verify_record(authorization, resource, unquote(name))
+          end
+        end
+      end)
+
     quote do
       @doc """
       Initializes a structure holding permissions for a given user role.
@@ -41,25 +56,8 @@ defmodule Permit do
         |> Permit.put_subject(subject)
       end
 
-      @spec read?(Permit.t(), Types.resource()) :: boolean()
-      def read?(authorization, resource) do
-        Permit.verify_record(authorization, resource, :read)
-      end
-
-      @spec create?(Permit.t(), Types.resource()) :: boolean()
-      def create?(authorization, resource) do
-        Permit.verify_record(authorization, resource, :create)
-      end
-
-      @spec update?(Permit.t(), Types.resource()) :: boolean()
-      def update?(authorization, resource) do
-        Permit.verify_record(authorization, resource, :update)
-      end
-
-      @spec delete?(Permit.t(), Types.resource()) :: boolean()
-      def delete?(authorization, resource) do
-        Permit.verify_record(authorization, resource, :delete)
-      end
+      # by default delete?, update?, read?, create?
+      unquote(predicates)
 
       @spec do?(Permit.t(), Types.controller_action(), Types.resource()) :: boolean()
       def do?(authorization, action, resource) do
@@ -102,4 +100,8 @@ defmodule Permit do
     authorization.permissions
     |> Permissions.granted?(action, record, authorization.subject)
   end
+
+  defp add_predicate_name(atom),
+    do: {Atom.to_string(atom) <> "?" |> String.to_atom(), atom}
+
 end
