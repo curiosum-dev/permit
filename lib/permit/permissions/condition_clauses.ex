@@ -6,37 +6,49 @@ defmodule Permit.Permissions.ConditionClauses do
   defstruct conditions: []
 
   alias __MODULE__
-  @type t :: %ConditionClauses{conditions: [any()]}
+  alias Permit.Types
+  alias Permit.Permissions.Condition
+  import Ecto.Query
+  @type t :: %ConditionClauses{conditions: [Condition.t()]}
 
+  @spec new([Types.condition()]) :: ConditionClauses.t()
   def new(conditions) do
-    %ConditionClauses{conditions: conditions}
+    conditions
+    |> Enum.map(&Condition.new/1)
+    |> then(&%ConditionClauses{conditions: &1})
   end
 
   # Empty condition set means that an authorization subject is not authorized
   # to interact with a given record.
-  def conditions_satisfied?(%ConditionClauses{conditions: []}, _record, _ops), do: false
+  @spec conditions_satisfied?(ConditionClauses.t(), Types.resource(), Types.subject()) ::
+          boolean()
+  def conditions_satisfied?(%ConditionClauses{conditions: []}, _record, _subject),
+    do: false
 
-  def conditions_satisfied?(%ConditionClauses{conditions: [true]}, _record, _ops), do: true
-
-  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, module, _ops)
-      when is_atom(module) do
+  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject) do
     conditions
-    |> Enum.all?(&(!!&1))
+    |> Enum.all?(&Condition.satisfied?(&1, record, subject))
   end
 
-  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject)
-      when is_struct(record) do
+  @spec to_dynamic_query(ConditionClauses.t()) :: {:ok, Ecto.Query.t()} | {:error, keyword()}
+  def to_dynamic_query(%ConditionClauses{conditions: []}),
+    do: {:ok, dynamic(false)}
+
+  def to_dynamic_query(%ConditionClauses{conditions: conditions}) do
     conditions
-    |> Enum.all?(fn
-      {field, expected_value} ->
-        actual = Map.get(record, field)
-        expected_value == actual
+    |> Enum.map(&Condition.to_dynamic_query/1)
+    |> Enum.reduce({:ok, dynamic(true)}, fn
+      {:ok, condition_query}, {:ok, acc} ->
+        {:ok, dynamic(^acc and ^condition_query)}
 
-      function when is_function(function, 1) ->
-        !!function.(record)
+      {:ok, _}, {:error, errors} ->
+        {:error, errors}
 
-      function when is_function(function, 2) ->
-        !!function.(subject, record)
+      {:error, error}, {:error, errors} ->
+        {:error, [error | errors]}
+
+      {:error, error}, {:ok, _} ->
+        {:error, [error]}
     end)
   end
 end

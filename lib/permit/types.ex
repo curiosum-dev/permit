@@ -7,6 +7,11 @@ defmodule Permit.Types do
           required(:role) => role(),
           optional(any()) => any()
         }
+  @type subject_with_role :: %{
+          required(:__struct__) => resource_module(),
+          required(:role) => role_record(),
+          optional(any()) => any()
+        }
   @type subject :: map() | struct()
   @type resource :: struct() | resource_module()
   @type id :: integer() | binary()
@@ -16,6 +21,11 @@ defmodule Permit.Types do
   @type conn :: Plug.Conn.t()
   @type authorization_outcome :: {:authorized | :unauthorized, socket()}
   @type hook_outcome :: {:halt, socket()} | {:cont, socket()}
+  @type condition ::
+          boolean()
+          | {atom(), any()}
+          | (struct() -> boolean())
+          | (Types.subject(), struct() -> boolean())
 
   @typedoc """
   - `:authorization_module` -- (Required) The app's authorization module that uses `use Permit`.

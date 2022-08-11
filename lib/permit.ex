@@ -2,13 +2,10 @@ defmodule Permit do
   @moduledoc """
   Authorization facilities for the application.
   """
-
-  # create: %{}, read: %{}, update: %{}, delete: %{}
   defstruct role: nil, permissions: Permit.Permissions.new(), subject: nil
 
   alias Permit.Types
   alias Permit.Permissions
-  import Permit.Permissions.ConditionClauses, only: [conditions_satisfied?: 3]
 
   @type t :: %Permit{
           role: Types.role(),
@@ -27,6 +24,10 @@ defmodule Permit do
 
       Returns a Permit struct.
       """
+
+      @spec can(Types.subject_with_role()) :: Permit.t()
+      def can(%{role: role} = subject) when is_struct(subject),
+        do: can(role, subject)
 
       @spec can(Types.role_record(), Types.subject() | nil) :: Permit.t()
       def can(role, subject \\ nil)
@@ -67,6 +68,15 @@ defmodule Permit do
 
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
+
+      @spec accessible_by(Types.subject(), Types.controller_action(), Types.resource()) ::
+              {:ok, Ecto.Query.t()} | {:error, term()}
+      def accessible_by(current_user, action, resource) do
+        unquote(permissions_module)
+        |> apply(:can, [current_user])
+        |> Map.get(:permissions)
+        |> Permissions.construct_query(action, resource)
+      end
     end
   end
 
@@ -75,7 +85,9 @@ defmodule Permit do
     %Permit{authorization | subject: subject}
   end
 
-  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [any()]) ::
+  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [
+          Types.condition()
+        ]) ::
           Permit.t()
   def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
     updated_permissions =
@@ -88,7 +100,6 @@ defmodule Permit do
   @spec verify_record(Permit.t(), Types.resource(), Types.controller_action()) :: boolean()
   def verify_record(authorization, record, action) do
     authorization.permissions
-    |> Permissions.clauses_list_for_action(action, record)
-    |> Enum.any?(&conditions_satisfied?(&1, record, authorization.subject))
+    |> Permissions.granted?(action, record, authorization.subject)
   end
 end

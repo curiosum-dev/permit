@@ -134,6 +134,114 @@ defmodule Permit.PlugTest do
     end
   end
 
+  describe "moderator_1" do
+    setup do
+      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :moderator_1}]})}
+    end
+
+    test "authorizes :index action", %{conn: conn} do
+      conn = call(conn, :get, "/items")
+      assert conn.resp_body == "listing all items"
+    end
+
+    test "authorizes :show action on item 1", %{conn: conn} do
+      conn = call(conn, :get, "/items/1")
+      assert conn.resp_body =~ ~r[Item]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+    end
+
+    test "authorizes :edit action on item 1", %{conn: conn} do
+      conn = call(conn, :get, "/items/1/edit")
+      assert conn.resp_body =~ ~r[Item]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+    end
+
+    test "authorizes :details action on item 1 and preloads resource via :action_crud_mapping and :preload_resource_in options",
+         %{conn: conn} do
+      conn = call(conn, :get, "/details/1")
+      assert conn.resp_body =~ ~r[Item]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+    end
+
+    test "does not authorize :details on item 2", %{conn: conn} do
+      conn = call(conn, :get, "/details/2")
+      assert_unauthorized(conn, "/?foo")
+    end
+
+    test "does not authorize :show action on item 2", %{conn: conn} do
+      conn = call(conn, :get, "/items/2")
+      assert_unauthorized(conn, "/?foo")
+    end
+
+    test "does not authorize :edit action on item 2", %{conn: conn} do
+      conn = call(conn, :get, "/items/2/edit")
+      assert_unauthorized(conn, "/?foo")
+    end
+  end
+
+  describe "thread_moderator" do
+    setup do
+      %{
+        conn:
+          create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :thread_moderator}]})
+      }
+    end
+
+    test "authorizes :index action", %{conn: conn} do
+      conn = call(conn, :get, "/items")
+      assert conn.resp_body == "listing all items"
+    end
+
+    test "authorizes :show action on item 2", %{conn: conn} do
+      conn = call(conn, :get, "/items/2")
+      assert conn.resp_body =~ ~r[Item]
+      assert %Item{id: 2} = conn.assigns[:loaded_resource]
+    end
+
+    test "authorizes :edit action on item 2", %{conn: conn} do
+      conn = call(conn, :get, "/items/2/edit")
+      assert conn.resp_body =~ ~r[Item]
+      assert %Item{id: 2} = conn.assigns[:loaded_resource]
+    end
+
+    test "authorizes :details action on item 2 and preloads resource via :action_crud_mapping and :preload_resource_in options",
+         %{conn: conn} do
+      conn = call(conn, :get, "/details/2")
+      assert conn.resp_body =~ ~r[Item]
+      assert %Item{id: 2} = conn.assigns[:loaded_resource]
+    end
+
+    test "does not authorize :details on item 1", %{conn: conn} do
+      conn = call(conn, :get, "/details/1")
+      assert_unauthorized(conn, "/?foo")
+    end
+
+    test "does not authorize :show action on item 1", %{conn: conn} do
+      conn = call(conn, :get, "/items/1")
+      assert_unauthorized(conn, "/?foo")
+    end
+
+    test "does not authorize :edit action on item 1", %{conn: conn} do
+      conn = call(conn, :get, "/items/1/edit")
+      assert_unauthorized(conn, "/?foo")
+    end
+
+    test "does not authorize :details on item 3", %{conn: conn} do
+      conn = call(conn, :get, "/details/3")
+      assert_unauthorized(conn, "/?foo")
+    end
+
+    test "does not authorize :show action on item 3", %{conn: conn} do
+      conn = call(conn, :get, "/items/3")
+      assert_unauthorized(conn, "/?foo")
+    end
+
+    test "does not authorize :edit action on item 3", %{conn: conn} do
+      conn = call(conn, :get, "/items/3/edit")
+      assert_unauthorized(conn, "/?foo")
+    end
+  end
+
   defp assert_unauthorized(conn, fallback_path) do
     assert conn.private.phoenix_flash["error"]
     assert Map.new(conn.resp_headers)["location"] == fallback_path

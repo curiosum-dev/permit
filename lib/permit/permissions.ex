@@ -8,7 +8,6 @@ defmodule Permit.Permissions do
   alias __MODULE__
   alias Permit.Types
   alias Permit.Permissions.DNF
-  alias Permit.Permissions.ConditionClauses
 
   @type conditions_by_action_and_resource :: %{
           {Types.controller_action(), Types.resource_module()} => DNF.t()
@@ -21,7 +20,9 @@ defmodule Permit.Permissions do
   @spec new(conditions_by_action_and_resource()) :: Permissions.t()
   defp new(rca), do: %Permissions{conditions_by_action_resource: rca}
 
-  @spec add(Permissions.t(), Types.controller_action(), Types.resource_module(), [any()]) ::
+  @spec add(Permissions.t(), Types.controller_action(), Types.resource_module(), [
+          Types.condition()
+        ]) ::
           Permissions.t()
   def add(permissions, action, resource, conditions) do
     permissions.conditions_by_action_resource
@@ -32,14 +33,36 @@ defmodule Permit.Permissions do
     |> new()
   end
 
-  @spec clauses_list_for_action(Permissions.t(), Types.controller_action(), Types.resource()) ::
-          ConditionClauses.t()
-  def clauses_list_for_action(permissions, action, resource) do
+  @spec granted?(Permissions.t(), Types.controller_action(), Types.resource(), Types.subject()) ::
+          boolean()
+  def granted?(permissions, action, record, subject) do
+    permissions
+    |> dnf_for_action_and_record(action, record)
+    |> DNF.any_satisfied?(record, subject)
+  end
+
+  @spec construct_query(Permissions.t(), Types.controller_action(), Types.resource()) ::
+          {:ok, Ecto.Query.t()} | {:error, term()}
+  def construct_query(permissions, action, resource) do
+    resource = resource_module_from_resource(resource)
+
+    permissions.conditions_by_action_resource[{action, resource}]
+    |> case do
+      nil ->
+        {:error, {:undefined_conditions_for, {action, resource}}}
+
+      dnf ->
+        DNF.to_query(dnf, resource)
+    end
+  end
+
+  @spec dnf_for_action_and_record(Permissions.t(), Types.controller_action(), Types.resource()) ::
+          DNF.t()
+  defp dnf_for_action_and_record(permissions, action, resource) do
     resource_module = resource_module_from_resource(resource)
 
     permissions.conditions_by_action_resource
-    |> Map.get({action, resource_module})
-    |> DNF.to_list()
+    |> Map.get({action, resource_module}, DNF.new())
   end
 
   @spec resource_module_from_resource(Types.resource()) :: Types.resource_module()

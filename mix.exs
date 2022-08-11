@@ -4,11 +4,23 @@ defmodule Permit.MixProject do
   def project do
     [
       app: :permit,
-      version: "0.1.0",
-      elixir: "~> 1.13",
+      version: "0.0.1",
+      elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      description:
+        "Plain-Elixir, DSL-less, extensible, agent-agnostic authorization library for Elixir.",
+      package: package()
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/curiosum-dev/permit/"},
+      maintainers: ["Michał Buszkiewicz", "Piotr Lisowski"],
+      files: ["lib", "mix.exs", "README*"]
     ]
   end
 
@@ -35,7 +47,8 @@ defmodule Permit.MixProject do
       {:phoenix_live_view, "~> 0.16", optional: true},
       {:jason, "~> 1.3", only: :test},
       {:floki, ">= 0.30.0", only: :test},
-      {:dialyxir, "~> 1.1", only: [:dev, :test]}
+      {:dialyxir, "~> 1.1", only: [:dev, :test]},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
 
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
