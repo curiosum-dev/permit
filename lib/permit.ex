@@ -43,8 +43,10 @@ defmodule Permit do
       @spec can(Types.subject_with_role()) :: Permit.t()
       def can(%{role: role} = subject) when is_struct(subject),
         do: can(role, subject)
+      def can(%{roles: roles} = subject) when is_struct(subject) and is_list(roles),
+        do: can(roles, subject)
 
-      @spec can(Types.role_record(), Types.subject() | nil) :: Permit.t()
+      @spec can(Types.role(), Types.subject() | nil) :: Permit.t()
       def can(role, subject \\ nil)
 
       def can(role, nil) when is_map(role) do

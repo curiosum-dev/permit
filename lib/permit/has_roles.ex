@@ -26,5 +26,5 @@ defmodule Permit.HasRoles do
   """
   alias Permit.Types
 
-  @callback roles(term()) :: [Types.role_record()]
+  @callback roles(term()) :: [Types.role()]
 end

@@ -2,6 +2,8 @@ defmodule Permit.Rules do
   @moduledoc """
   Provides functions used for defining the application's permission set.
   """
+  alias Permit.Types
+
   defmacro __using__(opts) do
 
     actions_module = Keyword.get(opts, :actions_module, quote do Permit.Actions.CrudActions end)
@@ -36,7 +38,8 @@ defmodule Permit.Rules do
     end
   end
 
-  @spec grant(any) :: Permit.t()
+  @spec grant(Types.role() | [Types.role()]) :: Permit.t()
+  # def grant(roles) when is_list(roles), do: %Permit{roles: roles}
   def grant(role), do: %Permit{role: role}
 
   def permission_to(authorization, action, resource, conditions \\ true),

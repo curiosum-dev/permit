@@ -100,30 +100,14 @@ defmodule Permit.Resolver do
 
   @spec check(
           module(),
-          Types.crud(),
+          Types.controller_action(),
           Types.role_record(),
           Types.resource_module() | Types.resource(),
           Types.subject()
         ) :: boolean()
-  defp check(authorization_module, crud_action, role_data, resource_or_module, subject)
-
-  defp check(authorization_module, :read, role_data, resource_or_module, subject) do
-    authorization_module.can(role_data, subject) |> authorization_module.read?(resource_or_module)
-  end
-
-  defp check(authorization_module, :create, role_data, resource_or_module, subject) do
+  defp check(authorization_module, action, role_data, resource_or_module, subject) do
     authorization_module.can(role_data, subject)
-    |> authorization_module.create?(resource_or_module)
-  end
-
-  defp check(authorization_module, :update, role_data, resource_or_module, subject) do
-    authorization_module.can(role_data, subject)
-    |> authorization_module.update?(resource_or_module)
-  end
-
-  defp check(authorization_module, :delete, role_data, resource_or_module, subject) do
-    authorization_module.can(role_data, subject)
-    |> authorization_module.delete?(resource_or_module)
+    |> Permit.verify_record(resource_or_module, action)
   end
 
   @spec crud_action(atom(), keyword(Types.crud())) :: Types.crud()
