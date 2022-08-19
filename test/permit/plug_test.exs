@@ -10,7 +10,7 @@ defmodule Permit.PlugTest do
 
   describe "admin" do
     setup do
-      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :admin}]})}
+      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [:admin]})}
     end
 
     test "authorizes :index action", %{conn: conn} do
@@ -34,8 +34,7 @@ defmodule Permit.PlugTest do
   describe "admin, using loader function instead of repo" do
     setup do
       %{
-        conn:
-          create_conn(RouterUsingLoader, :post, "/sign_in", %{id: 1, roles: [%{role: :admin}]})
+        conn: create_conn(RouterUsingLoader, :post, "/sign_in", %{id: 1, roles: [:admin]})
       }
     end
 
@@ -59,7 +58,7 @@ defmodule Permit.PlugTest do
 
   describe "user" do
     setup do
-      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :user}]})}
+      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [:user]})}
     end
 
     test "does not authorize :index action", %{conn: conn} do
@@ -85,7 +84,7 @@ defmodule Permit.PlugTest do
 
   describe "owner" do
     setup do
-      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :owner}]})}
+      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [:owner]})}
     end
 
     test "authorizes :index action", %{conn: conn} do
@@ -107,7 +106,7 @@ defmodule Permit.PlugTest do
 
   describe "inspector" do
     setup do
-      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :inspector}]})}
+      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [:inspector]})}
     end
 
     test "authorizes :index action", %{conn: conn} do
@@ -136,7 +135,7 @@ defmodule Permit.PlugTest do
 
   describe "moderator_1" do
     setup do
-      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :moderator_1}]})}
+      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [:moderator_1]})}
     end
 
     test "authorizes :index action", %{conn: conn} do
@@ -182,8 +181,7 @@ defmodule Permit.PlugTest do
   describe "thread_moderator" do
     setup do
       %{
-        conn:
-          create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :thread_moderator}]})
+        conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [:thread_moderator]})
       }
     end
 

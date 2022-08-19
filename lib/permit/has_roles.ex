@@ -1,6 +1,6 @@
-defmodule Permit.HasRoles do
+defprotocol Permit.HasRoles do
   @moduledoc """
-  This behaviour must be implemented by each module representing an authorization subject
+  This protocol must be implemented by each module representing an authorization subject
   (usually this means an Ecto.Schema module for a User).
 
   The roles/1 callback must return a list of maps or structs matching the Types.role/record()
@@ -24,7 +24,5 @@ defmodule Permit.HasRoles do
         def roles(user), do: user.roles
       end
   """
-  alias Permit.Types
-
-  @callback roles(term()) :: [Types.role()]
+  def roles(subject)
 end

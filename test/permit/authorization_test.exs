@@ -1,12 +1,12 @@
 defmodule Permit.AuthorizationTest.Types do
   defmodule TestUser do
     @moduledoc false
-    @behaviour Permit.HasRoles
 
     defstruct [:id, :role, :overseer_id]
 
-    @impl Permit.HasRoles
-    def roles(user), do: [user.role]
+    defimpl Permit.HasRoles, for: Permit.AuthorizationTest.Types.TestUser do
+      def roles(user), do: [user.role]
+    end
   end
 
   defmodule TestObject do
@@ -32,12 +32,12 @@ defmodule Permit.AuthorizationTest do
     @moduledoc false
     use Permit.Rules
 
-    def can(%{role: :admin} = role) do
+    def can(:admin = role) do
       grant(role)
       |> all(TestObject)
     end
 
-    def can(%{role: :operator} = role) do
+    def can(:operator = role) do
       grant(role)
       |> all(TestObject, name: "special")
       |> read(TestObject, name: "exceptional")
@@ -47,13 +47,13 @@ defmodule Permit.AuthorizationTest do
       |> create(TestObject, field_2: 6)
     end
 
-    def can(%{role: :manager} = role) do
+    def can(:manager = role) do
       grant(role)
       |> all(TestObject, fn user, object -> object.manager_id == user.id end)
       |> all(TestUser, fn user, other_user -> other_user.overseer_id == user.id end)
     end
 
-    def can(%{role: :another} = role) do
+    def can(:another = role) do
       grant(role)
       |> create(TestObject, field_1: {:>, 0}, field_2: {:<=, 3})
       |> read(TestObject, field_1: {:<, 1}, field_2: {:>=, 3})
@@ -61,7 +61,7 @@ defmodule Permit.AuthorizationTest do
       |> delete(TestObject, name: {:=~, ~r/put ?in/}, name: {:=~, ~r/P.T ?I./i})
     end
 
-    def can(%{role: :like_tester} = role) do
+    def can(:like_tester = role) do
       grant(role)
       |> create(TestObject, name: {:like, "spe__a_"})
       |> read(TestObject, name: {:ilike, "%xcEpt%"})
@@ -69,7 +69,7 @@ defmodule Permit.AuthorizationTest do
       |> delete(TestObject, name: {:like, "%!!%!%%!_%", escape: "!"})
     end
 
-    def can(%{role: :alternative} = role) do
+    def can(:alternative = role) do
       grant(role)
       |> create(TestObject, field_1: {:gt, 0}, field_2: {:le, 3})
       |> read(TestObject, field_1: {:lt, 1}, field_2: {:ge, 3})
@@ -77,7 +77,7 @@ defmodule Permit.AuthorizationTest do
       |> delete(TestObject, name: {:match, ~r/put ?in/}, name: {:match, ~r/P.T ?I./i})
     end
 
-    def can(%{role: :one_more} = role) do
+    def can(:one_more = role) do
       grant(role)
       |> update(TestObject, field_1: {:in, [1, 2, 3, 4]}, field_2: {:in, [3]})
       |> create(TestObject, field_1: {:in, [5]}, field_2: {:in, [3]})
@@ -94,18 +94,18 @@ defmodule Permit.AuthorizationTest do
       permissions_module: TestPermissions
   end
 
-  @manager_role %{role: :manager}
-  @admin_role %{role: :admin}
-  @operator_role %{role: :operator}
-  @other_user %{role: :user}
-  @another_one_role %{role: :another}
-  @alternative_role %{role: :alternative}
-  @like_role %{role: :like_tester}
-  @one_more_role %{role: :one_more}
+  @manager_role :manager
+  @admin_role :admin
+  @operator_role :operator
+  @other_user :user
+  @another_one_role :another
+  @alternative_role :alternative
+  @like_role :like_tester
+  @one_more_role :one_more
 
-  @user_with_admin_role %TestUser{role: %{role: :admin}, id: 1, overseer_id: 1}
-  @user_with_operator_role %TestUser{role: %{role: :operator}, id: 2, overseer_id: 1}
-  @user_with_other_user %TestUser{role: %{role: :user}, id: 3, overseer_id: 1}
+  @user_with_admin_role %TestUser{role: :admin, id: 1, overseer_id: 1}
+  @user_with_operator_role %TestUser{role: :operator, id: 2, overseer_id: 1}
+  @user_with_other_user %TestUser{role: :user, id: 3, overseer_id: 1}
 
   @special_object %TestObject{name: "special"}
   @exceptional_object %TestObject{name: "exceptional"}
@@ -139,9 +139,10 @@ defmodule Permit.AuthorizationTest do
 
     test "should grant all permissions on special_object to special_user" do
       assert TestAuthorization.can(@operator_role)
-#       |> IO.inspect()
-      |> TestAuthorization.read?(@special_object)
-#       |> IO.inspect()
+             #       |> IO.inspect()
+             |> TestAuthorization.read?(@special_object)
+
+      #       |> IO.inspect()
 
       assert TestAuthorization.can(@operator_role)
              |> TestAuthorization.create?(@special_object)

@@ -6,11 +6,11 @@ defmodule Permit do
 
   alias Permit.Types
   alias Permit.Permissions
+  alias Permit.HasRoles
 
   @type t :: %Permit{
-          role: Types.role(),
           permissions: Permissions.t(),
-          subject: Types.subject() | nil
+          subject: Permit.HasRoles.t()
         }
 
   defmacro __using__(opts) do
@@ -40,22 +40,17 @@ defmodule Permit do
       Returns a Permit struct.
       """
 
-      @spec can(Types.subject_with_role()) :: Permit.t()
-      def can(%{role: role} = subject) when is_struct(subject),
-        do: can(role, subject)
-      def can(%{roles: roles} = subject) when is_struct(subject) and is_list(roles),
-        do: can(roles, subject)
-
-      @spec can(Types.role(), Types.subject() | nil) :: Permit.t()
-      def can(role, subject \\ nil)
-
-      def can(role, nil) when is_map(role) do
-        unquote(permissions_module).can(role)
-      end
-
-      def can(role, subject) when is_map(role) do
-        can(role)
-        |> Permit.put_subject(subject)
+      @spec can(HasRoles.t()) :: Permit.t()
+      def can(subject) do
+        subject
+        |> HasRoles.roles()
+        |> Stream.map(fn role ->
+          unquote(permissions_module).can(role)
+        end)
+        |> Enum.reduce(fn auth1, auth2 ->
+          %Permit{auth1 | permissions: Permissions.join(auth1.permissions, auth2.permissions)}
+        end)
+        |> Permit.change_subject(subject)
       end
 
       # by default delete?, update?, read?, create?
@@ -80,8 +75,8 @@ defmodule Permit do
     end
   end
 
-  @spec put_subject(Permit.t(), Types.role()) :: Permit.t()
-  def put_subject(authorization, subject) do
+  @spec change_subject(Permit.t(), Permit.HasRole.t()) :: Permit.t()
+  def change_subject(authorization, subject) do
     %Permit{authorization | subject: subject}
   end
 
@@ -104,6 +99,5 @@ defmodule Permit do
   end
 
   defp add_predicate_name(atom),
-    do: {Atom.to_string(atom) <> "?" |> String.to_atom(), atom}
-
+    do: {(Atom.to_string(atom) <> "?") |> String.to_atom(), atom}
 end

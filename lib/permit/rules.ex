@@ -5,8 +5,15 @@ defmodule Permit.Rules do
   alias Permit.Types
 
   defmacro __using__(opts) do
+    actions_module =
+      Keyword.get(
+        opts,
+        :actions_module,
+        quote do
+          Permit.Actions.CrudActions
+        end
+      )
 
-    actions_module = Keyword.get(opts, :actions_module, quote do Permit.Actions.CrudActions end)
     action_functions =
       actions_module
       |> Macro.expand(__CALLER__)
@@ -38,7 +45,7 @@ defmodule Permit.Rules do
     end
   end
 
-  @spec grant(Types.role() | [Types.role()]) :: Permit.t()
+  @spec grant(Permit.HasRole.t()) :: Permit.t()
   # def grant(roles) when is_list(roles), do: %Permit{roles: roles}
   def grant(role), do: %Permit{role: role}
 

@@ -12,12 +12,13 @@ defmodule Permit.Actions do
       @behaviour Actions
 
       @impl Actions
-      def mappings, do: %{
-        create: [],
-        read: [],
-        update: [],
-        delete: []
-      }
+      def mappings,
+        do: %{
+          create: [],
+          read: [],
+          update: [],
+          delete: []
+        }
 
       @impl Actions
       def list_actions,
@@ -26,5 +27,4 @@ defmodule Permit.Actions do
       defoverridable mappings: 0, list_actions: 0
     end
   end
-
 end

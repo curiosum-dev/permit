@@ -30,7 +30,8 @@ defmodule Permit.Permissions.ConditionClauses do
     |> Enum.all?(&Condition.satisfied?(&1, record, subject))
   end
 
-  @spec to_dynamic_query(ConditionClauses.t()) :: {:ok, Ecto.Query.DynamicExpr.t()} | {:error, keyword()}
+  @spec to_dynamic_query(ConditionClauses.t()) ::
+          {:ok, Ecto.Query.DynamicExpr.t()} | {:error, keyword()}
   def to_dynamic_query(%ConditionClauses{conditions: []}),
     do: {:ok, dynamic(false)}
 
