@@ -40,6 +40,9 @@ defmodule Permit do
       Returns a Permit struct.
       """
 
+      def actions_module,
+        do: unquote(permissions_module).actions_module()
+
       @spec can(HasRoles.t()) :: Permit.t()
       def can(subject) do
         subject

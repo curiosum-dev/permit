@@ -120,7 +120,6 @@ defmodule Permit.AuthorizeHook do
   defp just_authorize(socket) do
     authorization_module = socket.view.authorization_module()
     resource_module = socket.view.resource_module()
-    mapping = socket.view.action_crud_mapping()
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
 
@@ -128,8 +127,7 @@ defmodule Permit.AuthorizeHook do
          subject,
          authorization_module,
          resource_module,
-         action,
-         mapping
+         action
        ) do
       {:authorized, socket}
     else
@@ -142,7 +140,6 @@ defmodule Permit.AuthorizeHook do
   defp preload_and_authorize(socket, params) do
     authorization_module = socket.view.authorization_module()
     resource_module = socket.view.resource_module()
-    mapping = socket.view.action_crud_mapping()
     loader_fn = socket.view.loader_fn()
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
@@ -152,7 +149,6 @@ defmodule Permit.AuthorizeHook do
            authorization_module,
            resource_module,
            action,
-           mapping,
            params,
            loader_fn
          ) do

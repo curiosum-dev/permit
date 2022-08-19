@@ -14,15 +14,20 @@ defmodule Permit.Actions do
       @impl Actions
       def mappings,
         do: %{
-          create: [],
-          read: [],
-          update: [],
-          delete: []
+          create: [:create],
+          read: [:read],
+          update: [:update],
+          delete: [:delete]
         }
 
       @impl Actions
       def list_actions,
         do: Map.keys(mappings())
+
+      def map(action) do
+        mappings()
+        |> Map.get(action)
+      end
 
       defoverridable mappings: 0, list_actions: 0
     end

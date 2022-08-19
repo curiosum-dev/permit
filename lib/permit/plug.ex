@@ -20,7 +20,7 @@ defmodule Permit.Plug do
 
   # Permissions module - just as an example
   defmodule MyApp.Authorization.Permissions do
-    import Permit.Rules
+    use Permit.Rules
 
     def can(%{role: :manager} = role) do
       # A :manager can do all CRUD actions on RouteTemplate, and can do :read on User
@@ -44,10 +44,6 @@ defmodule Permit.Plug do
       loader_fn: fn id -> Lvauth.Repo.get(Customer, id) end,
       resource_module: Lvauth.Management.Customer,
       id_param_name: "id",
-      action_crud_mapping: [
-        details: :read,
-        clone: :update
-      ],
       except: [:example],
       user_from_conn: fn conn -> conn.assigns[:signed_in_user] end
       handle_unauthorized: fn conn -> redirect(conn, to: "/foo") end
@@ -146,15 +142,14 @@ defmodule Permit.Plug do
           Plug.Conn.t()
   defp just_authorize(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
-    action_crud_mapping = Keyword.fetch!(opts, :action_crud_mapping)
+    # action_crud_mapping = Keyword.fetch!(opts, :action_crud_mapping)
 
     check_result =
       Resolver.authorized_without_preloading?(
         subject,
         authorization_module,
         resource_module,
-        controller_action,
-        action_crud_mapping
+        controller_action
       )
 
     if check_result, do: conn, else: opts[:handle_unauthorized].(conn)
@@ -170,7 +165,7 @@ defmodule Permit.Plug do
           Plug.Conn.t()
   defp authorize_and_preload_resource(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
-    action_crud_mapping = Keyword.fetch!(opts, :action_crud_mapping)
+    # action_crud_mapping = Keyword.fetch!(opts, :action_crud_mapping)
 
     repo = authorization_module.repo()
 
@@ -187,7 +182,7 @@ defmodule Permit.Plug do
         authorization_module,
         resource_module,
         controller_action,
-        action_crud_mapping,
+        # action_crud_mapping,
         conn.params,
         loader_fn
       )
