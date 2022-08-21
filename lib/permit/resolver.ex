@@ -5,7 +5,7 @@ defmodule Permit.Resolver do
   providing integration with e.g. Plug or LiveView.
   """
   alias Permit.Types
-  alias Permit.HasRoles
+  require Permit
 
   @spec authorized_without_preloading?(
           Types.subject(),

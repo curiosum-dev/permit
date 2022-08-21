@@ -45,9 +45,8 @@ defmodule Permit.Rules do
     end
   end
 
-  @spec grant(Permit.HasRole.t()) :: Permit.t()
-  # def grant(roles) when is_list(roles), do: %Permit{roles: roles}
-  def grant(role), do: %Permit{role: role}
+  @spec grant(Types.role()) :: Permit.t()
+  def grant(role), do: %Permit{roles: [role]}
 
   def permission_to(authorization, action, resource, conditions \\ true),
     do: put_action(authorization, action, resource, conditions)
