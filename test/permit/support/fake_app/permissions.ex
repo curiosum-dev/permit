@@ -18,19 +18,19 @@ defmodule Permit.FakeApp.Permissions do
     |> read(Item)
   end
 
-  def can(:moderator_1 = role) do
+  def can(%{role: :moderator, level: 1} = role) do
     grant(role)
     |> all(Item, permission_level: {:<=, 1})
   end
 
-  def can(:moderator_2 = role) do
+  def can(%{role: :moderator, level: 2} = role) do
     grant(role)
     |> all(Item, permission_level: {{:not, :>}, 2})
   end
 
-  def can(:thread_moderator = role) do
+  def can(%{role: :thread_moderator, thread_name: thread} = role) do
     grant(role)
-    |> all(Item, permission_level: {:<=, 3}, thread_name: {:=~, ~r/DMT/i})
+    |> all(Item, permission_level: {:<=, 3}, thread_name: {:=~, Regex.compile!(thread, "i")})
   end
 
   def can(role), do: grant(role)

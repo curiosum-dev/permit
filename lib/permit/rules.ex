@@ -2,7 +2,7 @@ defmodule Permit.Rules do
   @moduledoc """
   Provides functions used for defining the application's permission set.
   """
-  alias Permit.HasRoles
+  alias Permit.Types
 
   defmacro __using__(opts) do
     actions_module =
@@ -45,8 +45,8 @@ defmodule Permit.Rules do
     end
   end
 
-  @spec grant(HasRoles.t()) :: Permit.t()
-  def grant(role), do: %Permit{roles: HasRoles.roles(role)}
+  @spec grant(Types.role()) :: Permit.t()
+  def grant(role), do: %Permit{roles: [role]}
 
   def permission_to(authorization, action, resource, conditions \\ true),
     do: put_action(authorization, action, resource, conditions)
