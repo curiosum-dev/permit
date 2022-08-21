@@ -2,23 +2,7 @@ defmodule Permit.Types do
   @type resource_module :: module()
   @type controller_action :: atom()
   @type crud :: :create | :read | :update | :delete
-  @type role ::
-          %{
-            required(:role) => role(),
-            optional(any()) => any()
-          }
-          | atom()
-  @type subject_with_role ::
-          %{
-            required(:__struct__) => resource_module(),
-            required(:role) => role(),
-            optional(any()) => any()
-          }
-          | %{
-              required(:__struct__) => resource_module(),
-              required(:roles) => [role()],
-              optional(any()) => any()
-            }
+  @type role :: term()
   @type subject :: map() | struct()
   @type resource :: struct() | resource_module()
   @type id :: integer() | binary()
