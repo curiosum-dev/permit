@@ -52,14 +52,18 @@ defmodule Permit do
           unquote(permissions_module).can(role)
         end)
         |> Enum.reduce(fn auth1, auth2 ->
-          %Permit{auth1 |
-            permissions: Permissions.join(auth1.permissions, auth2.permissions)
-          }
+          %Permit{auth1 | permissions: Permissions.join(auth1.permissions, auth2.permissions)}
         end)
-        |> then(& %Permit{&1 |
-            roles: HasRoles.roles(who),
-            subject: if is_struct(who) do who end
-          })
+        |> then(
+          &%Permit{
+            &1
+            | roles: HasRoles.roles(who),
+              subject:
+                if is_struct(who) do
+                  who
+                end
+          }
+        )
       end
 
       # by default delete?, update?, read?, create?

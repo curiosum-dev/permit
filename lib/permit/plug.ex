@@ -165,8 +165,6 @@ defmodule Permit.Plug do
           Plug.Conn.t()
   defp authorize_and_preload_resource(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
-    # action_crud_mapping = Keyword.fetch!(opts, :action_crud_mapping)
-
     repo = authorization_module.repo()
 
     loader_fn =
@@ -182,7 +180,6 @@ defmodule Permit.Plug do
         authorization_module,
         resource_module,
         controller_action,
-        # action_crud_mapping,
         conn.params,
         loader_fn
       )

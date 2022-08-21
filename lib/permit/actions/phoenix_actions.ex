@@ -6,10 +6,11 @@ defmodule Permit.Actions.PhoenixActions do
 
   @impl Permit.Actions
   def mappings,
-    do: Map.merge(super(), %{
-      new: [:create],
-      index: [:read],
-      show: [:read],
-      edit: [:update]
-    })
+    do:
+      Map.merge(super(), %{
+        new: [:create],
+        index: [:read],
+        show: [:read],
+        edit: [:update]
+      })
 end
