@@ -54,25 +54,11 @@ defmodule Permit do
         |> Enum.reduce(fn auth1, auth2 ->
           %Permit{auth1 | permissions: Permissions.join(auth1.permissions, auth2.permissions)}
         end)
-        |> then(
-          &%Permit{
-            &1
-            | roles: HasRoles.roles(who),
-              subject:
-                if is_struct(who) do
-                  who
-                end
-          }
-        )
+        |> Map.put(:roles, HasRoles.roles(who))
+        |> Map.put(:subject, is_struct(who) && who || nil)
       end
 
-      # by default delete?, update?, read?, create?
       unquote(predicates)
-
-      @spec do?(Permit.t(), Types.controller_action(), Types.resource()) :: boolean()
-      def do?(authorization, action, resource) do
-        Permit.verify_record(authorization, action, resource)
-      end
 
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
@@ -86,6 +72,15 @@ defmodule Permit do
         |> Permissions.construct_query(action, resource)
       end
     end
+  end
+
+  @spec has_subject(Permit.t()) :: boolean()
+  def has_subject(%Permit{subject: nil}), do: false
+  def has_subject(%Permit{subject: _}), do: true
+
+  @spec do?(Permit.t(), Types.controller_action(), Types.resource()) :: boolean()
+  def do?(authorization, action, resource) do
+    Permit.verify_record(authorization, action, resource)
   end
 
   @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [
