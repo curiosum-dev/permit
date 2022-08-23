@@ -2,14 +2,14 @@ defmodule Permit do
   @moduledoc """
   Authorization facilities for the application.
   """
-  defstruct roles: nil, permissions: Permit.Permissions.new(), subject: nil
+  defstruct roles: [], permissions: Permit.Permissions.new(), subject: nil
 
   alias Permit.Types
   alias Permit.Permissions
   alias Permit.HasRoles
 
   @type t :: %Permit{
-          roles: [Types.role()] | nil,
+          roles: [Types.role()],
           permissions: Permissions.t(),
           subject: Types.subject() | nil
         }
@@ -42,6 +42,8 @@ defmodule Permit do
       """
 
       @spec can(HasRoles.t()) :: Permit.t()
+      def can(nil),
+        do: raise "Unable to create permit authorization for nil role/user"
       def can(who) do
         who
         |> HasRoles.roles()
