@@ -3,9 +3,10 @@ defmodule Permit.Actions do
 
   """
   alias __MODULE__
+  alias Permit.Types
 
-  @callback list_actions() :: [atom()]
-  @callback mappings() :: %{atom() => [atom()]}
+  @callback list_actions() :: [Types.controller_action()]
+  @callback mappings() :: %{Types.controller_action() => [Types.crud()]}
 
   defmacro __using__(_opts) do
     quote do
