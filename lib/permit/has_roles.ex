@@ -24,5 +24,6 @@ defprotocol Permit.HasRoles do
         def roles(user), do: user.roles
       end
   """
+  @fallback_to_any true
   def roles(subject)
 end
