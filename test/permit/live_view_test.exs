@@ -424,27 +424,27 @@ defmodule Permit.LiveViewTest do
   end
 
   def admin_role(context) do
-    {:ok, Map.put(context, :roles, [%{role: :admin}])}
+    {:ok, Map.put(context, :roles, [:admin])}
   end
 
   def owner_role(context) do
-    {:ok, Map.put(context, :roles, [%{role: :owner}])}
+    {:ok, Map.put(context, :roles, [:owner])}
   end
 
   def inspector_role(context) do
-    {:ok, Map.put(context, :roles, [%{role: :inspector}])}
+    {:ok, Map.put(context, :roles, [:inspector])}
   end
 
   def moderator_1_role(context) do
-    {:ok, Map.put(context, :roles, [%{role: :moderator_1}])}
+    {:ok, Map.put(context, :roles, [%{role: :moderator, level: 1}])}
   end
 
   def moderator_2_role(context) do
-    {:ok, Map.put(context, :roles, [%{role: :moderator_2}])}
+    {:ok, Map.put(context, :roles, [%{role: :moderator, level: 2}])}
   end
 
   def dmt_thread_moderator_role(context) do
-    {:ok, Map.put(context, :roles, [%{role: :thread_moderator}])}
+    {:ok, Map.put(context, :roles, [%{role: :thread_moderator, thread_name: "dmt"}])}
   end
 
   def init_session(%{roles: roles}) do

@@ -2,13 +2,14 @@ defmodule Permit do
   @moduledoc """
   Authorization facilities for the application.
   """
-  defstruct role: nil, permissions: Permit.Permissions.new(), subject: nil
+  defstruct roles: [], permissions: Permit.Permissions.new(), subject: nil
 
   alias Permit.Types
   alias Permit.Permissions
+  alias Permit.HasRoles
 
   @type t :: %Permit{
-          role: Types.role(),
+          roles: [Types.role()],
           permissions: Permissions.t(),
           subject: Types.subject() | nil
         }
@@ -40,23 +41,24 @@ defmodule Permit do
       Returns a Permit struct.
       """
 
-      @spec can(Types.subject_with_role()) :: Permit.t()
-      def can(%{role: role} = subject) when is_struct(subject),
-        do: can(role, subject)
-
-      def can(%{roles: roles} = subject) when is_struct(subject) and is_list(roles),
-        do: can(roles, subject)
-
-      @spec can(Types.role(), Types.subject() | nil) :: Permit.t()
-      def can(role, subject \\ nil)
-
-      def can(role, nil) when is_map(role) do
-        unquote(permissions_module).can(role)
-      end
-
-      def can(role, subject) when is_map(role) do
-        can(role)
-        |> Permit.put_subject(subject)
+      @spec can(HasRoles.t()) :: Permit.t()
+      def can(nil),
+        do: raise "Unable to create permit authorization for nil role/user"
+      def can(who) do
+        who
+        |> HasRoles.roles()
+        |> Stream.map(fn role ->
+          unquote(permissions_module).can(role)
+        end)
+        |> Enum.reduce(fn auth1, auth2 ->
+          %Permit{auth1 |
+            permissions: Permissions.join(auth1.permissions, auth2.permissions)
+          }
+        end)
+        |> then(& %Permit{&1 |
+            roles: HasRoles.roles(who),
+            subject: if is_struct(who) do who end
+          })
       end
 
       # by default delete?, update?, read?, create?
@@ -79,11 +81,6 @@ defmodule Permit do
         |> Permissions.construct_query(action, resource)
       end
     end
-  end
-
-  @spec put_subject(Permit.t(), Types.role()) :: Permit.t()
-  def put_subject(authorization, subject) do
-    %Permit{authorization | subject: subject}
   end
 
   @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [

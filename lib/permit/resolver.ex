@@ -5,6 +5,7 @@ defmodule Permit.Resolver do
   providing integration with e.g. Plug or LiveView.
   """
   alias Permit.Types
+  require Permit
 
   @spec authorized_without_preloading?(
           Types.subject(),
@@ -21,15 +22,12 @@ defmodule Permit.Resolver do
         action_crud_mapping
       )
       when not is_nil(subject) do
-    Enum.any?(subject.__struct__.roles(subject), fn role_data ->
-      check(
-        authorization_module,
-        crud_action(live_or_controller_action, action_crud_mapping),
-        role_data,
-        resource_module,
-        subject
-      )
-    end)
+    check(
+      authorization_module,
+      crud_action(live_or_controller_action, action_crud_mapping),
+      resource_module,
+      subject
+    )
   end
 
   @spec authorize_with_preloading!(
@@ -62,15 +60,12 @@ defmodule Permit.Resolver do
          record when not is_nil(record) <-
            fetch_resource(authorization_module.repo, loader_fn, resource_module, params),
          true <-
-           Enum.any?(subject.__struct__.roles(subject), fn role_data ->
-             check(
-               authorization_module,
-               crud_action(live_or_controller_action, action_crud_mapping),
-               role_data,
-               record,
-               subject
-             )
-           end) do
+           check(
+             authorization_module,
+             crud_action(live_or_controller_action, action_crud_mapping),
+             record,
+             subject
+           ) do
       {:authorized, record}
     else
       _ -> :unauthorized
@@ -101,12 +96,11 @@ defmodule Permit.Resolver do
   @spec check(
           module(),
           Types.controller_action(),
-          Types.role_record(),
           Types.resource_module() | Types.resource(),
-          Types.subject()
+          Permit.HasRole.t()
         ) :: boolean()
-  defp check(authorization_module, action, role_data, resource_or_module, subject) do
-    authorization_module.can(role_data, subject)
+  defp check(authorization_module, action, resource_or_module, subject) do
+    authorization_module.can(subject)
     |> Permit.verify_record(resource_or_module, action)
   end
 

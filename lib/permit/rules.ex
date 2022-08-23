@@ -52,8 +52,8 @@ defmodule Permit.Rules do
     end
   end
 
-  @spec grant(Types.role() | [Types.role()]) :: Permit.t()
-  def grant(role), do: %Permit{role: role}
+  @spec grant(Types.role()) :: Permit.t()
+  def grant(role), do: %Permit{roles: [role]}
 
   def permission_to(authorization, action, resource, conditions \\ true),
     do: put_action(authorization, action, resource, conditions)

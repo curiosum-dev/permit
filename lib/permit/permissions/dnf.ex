@@ -43,6 +43,11 @@ defmodule Permit.Permissions.DNF do
     end
   end
 
+  @spec join(DNF.t(), DNF.t()) :: DNF.t()
+  def join(%DNF{disjunctions: d1}, %DNF{disjunctions: d2}) do
+    %DNF{disjunctions: d1 ++ d2}
+  end
+
   defp maybe_convert(disjunctions) do
     disjunctions
     |> Enum.map(&ConditionClauses.to_dynamic_query/1)
