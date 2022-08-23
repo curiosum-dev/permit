@@ -43,6 +43,7 @@ defmodule Permit do
       @spec can(Types.subject_with_role()) :: Permit.t()
       def can(%{role: role} = subject) when is_struct(subject),
         do: can(role, subject)
+
       def can(%{roles: roles} = subject) when is_struct(subject) and is_list(roles),
         do: can(roles, subject)
 
@@ -77,25 +78,24 @@ defmodule Permit do
         |> Map.get(:permissions)
         |> Permissions.construct_query(action, resource)
       end
-
-        @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [
-          Types.condition()
-        ]) ::
-          Permit.t()
-        def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
-          updated_permissions =
-            
-            authorization.permissions
-            |> Permissions.add(action, resource, conditions)
-
-          %Permit{authorization | permissions: updated_permissions}
-        end
     end
   end
 
   @spec put_subject(Permit.t(), Types.role()) :: Permit.t()
   def put_subject(authorization, subject) do
     %Permit{authorization | subject: subject}
+  end
+
+  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [
+          Types.condition()
+        ]) ::
+          Permit.t()
+  def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
+    updated_permissions =
+      authorization.permissions
+      |> Permissions.add(action, resource, conditions)
+
+    %Permit{authorization | permissions: updated_permissions}
   end
 
   @spec verify_record(Permit.t(), Types.resource(), Types.controller_action()) :: boolean()
@@ -105,6 +105,5 @@ defmodule Permit do
   end
 
   defp add_predicate_name(atom),
-    do: {Atom.to_string(atom) <> "?" |> String.to_atom(), atom}
-
+    do: {(Atom.to_string(atom) <> "?") |> String.to_atom(), atom}
 end

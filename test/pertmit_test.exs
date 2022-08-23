@@ -7,12 +7,12 @@ defmodule Permit.PermitTest do
 
     @impl Permit.Actions
     def mappings do
-      Map.merge(super(), %{
+      %{
         a: [:create],
         b: [:read],
         c: [:delete],
         d: [:update]
-      })
+      }
     end
   end
 
@@ -29,7 +29,6 @@ defmodule Permit.PermitTest do
   end
 
   describe "__using__/1" do
-
     test "should generate predicates" do
       TestActions.list_actions()
       |> Enum.each(fn action ->
@@ -38,12 +37,10 @@ defmodule Permit.PermitTest do
           |> Atom.to_string()
           |> Kernel.<>("?")
           |> String.to_existing_atom()
-          |> then(& {&1, 2})
+          |> then(&{&1, 2})
 
         assert predicate in TestAuthorization.__info__(:functions)
       end)
     end
-
   end
-
 end

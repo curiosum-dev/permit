@@ -22,13 +22,11 @@ defmodule Permit.Permissions.PermissionsActions do
   end
 
   describe "__using__/1" do
-
     test "should generate functions" do
       TestActions.list_actions()
       |> Enum.each(fn function ->
         assert {function, 2} in TestPermissions.__info__(:functions)
       end)
     end
-
   end
 end

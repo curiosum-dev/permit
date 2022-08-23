@@ -5,8 +5,15 @@ defmodule Permit.Rules do
   alias Permit.Types
 
   defmacro __using__(opts) do
+    actions_module =
+      Keyword.get(
+        opts,
+        :actions_module,
+        quote do
+          Permit.Actions.CrudActions
+        end
+      )
 
-    actions_module = Keyword.get(opts, :actions_module, quote do Permit.Actions.CrudActions end)
     action_functions =
       actions_module
       |> Macro.expand(__CALLER__)
@@ -15,7 +22,14 @@ defmodule Permit.Rules do
         quote do
           @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: boolean()
           def unquote(name)(authorization, resource, conditions \\ true) do
-            permission_to(authorization, unquote(name), resource, conditions)
+            case unquote(actions_module).include_crud_mapping() do
+              true -> [unquote(name) | unquote(actions_module).mappings()[unquote(name)]]
+              false -> [unquote(name)]
+            end
+            |> Enum.uniq()
+            |> Enum.reduce(authorization, fn action, perm ->
+              permission_to(perm, action, resource, conditions)
+            end)
           end
         end
       end)

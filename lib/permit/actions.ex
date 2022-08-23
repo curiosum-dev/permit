@@ -13,12 +13,16 @@ defmodule Permit.Actions do
     quote do
       @behaviour Actions
 
-      def crud_mapping, do: %{
-        create: [:create],
-        read: [:read],
-        update: [:update],
-        delete: [:delete]
-      }
+      def crud_mapping,
+        do: %{
+          create: [:create],
+          read: [:read],
+          update: [:update],
+          delete: [:delete]
+        }
+
+      @impl Actions
+      def include_crud_mapping, do: true
 
       @impl Actions
       def mappings,
@@ -34,8 +38,7 @@ defmodule Permit.Actions do
         |> Map.keys()
       end
 
-      defoverridable mappings: 0, list_actions: 0
+      defoverridable mappings: 0, list_actions: 0, include_crud_mapping: 0
     end
   end
-
 end
