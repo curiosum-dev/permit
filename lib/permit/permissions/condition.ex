@@ -122,10 +122,13 @@ defmodule Permit.Permissions.Condition do
   def satisfied?(%Condition{condition: function, condition_type: :function_1}, record, _subject),
     do: !!function.(record)
 
+  def satisfied?(%Condition{condition: _fun, condition_type: :function_2}, _record, subject) when is_nil(subject),
+    do: raise "Unable to use function/2 condition feature without subject. First argument of this function is nonexisting subject"
+
   def satisfied?(%Condition{condition: function, condition_type: :function_2}, record, subject),
     do: !!function.(subject, record)
 
-  @spec to_dynamic_query(Condition.t()) :: {:ok, term} | {:error, term()}
+  @spec to_dynamic_query(Condition.t()) :: {:ok, Ecto.Query.DynamicExpr.t()} | {:error, term()}
   def to_dynamic_query(%Condition{condition: condition, condition_type: :const}),
     do: {:ok, dynamic(^condition)}
 

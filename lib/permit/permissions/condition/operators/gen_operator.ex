@@ -8,7 +8,7 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
   @callback alternatives() :: [atom()]
   @callback semantics() :: (any() -> (any() -> boolean()))
   @callback semantics(keyword()) :: (any() -> (any() -> boolean()))
-  @callback dynamic_query(term(), keyword()) :: (any() -> Ecto.Query.DynamicExpr.t())
+  @callback dynamic_query(term(), keyword()) :: (any() -> Ecto.Query.DynamicExpr.t()) | nil
 
   defmacro __using__(opts) do
     quote do
