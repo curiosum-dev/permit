@@ -2,10 +2,24 @@ defmodule Permit.PermitTest do
   @moduledoc false
   use Permit.Case
 
+  defmodule TestActions do
+    use Permit.Actions
+
+    @impl Permit.Actions
+    def mappings do
+      Map.merge(super(), %{
+        a: [:create],
+        b: [:read],
+        c: [:delete],
+        d: [:update]
+      })
+    end
+  end
+
   defmodule TestPermissions do
     @moduledoc false
     use Permit.Rules,
-      actions_module: Permit.Actions.PhoenixActions
+      actions_module: TestActions
   end
 
   defmodule TestAuthorization do
@@ -17,7 +31,7 @@ defmodule Permit.PermitTest do
   describe "__using__/1" do
 
     test "should generate predicates" do
-      Permit.Actions.PhoenixActions.list_actions()
+      TestActions.list_actions()
       |> Enum.each(fn action ->
         predicate =
           action
