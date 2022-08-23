@@ -77,24 +77,25 @@ defmodule Permit do
         |> Map.get(:permissions)
         |> Permissions.construct_query(action, resource)
       end
+
+        @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [
+          Types.condition()
+        ]) ::
+          Permit.t()
+        def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
+          updated_permissions =
+            
+            authorization.permissions
+            |> Permissions.add(action, resource, conditions)
+
+          %Permit{authorization | permissions: updated_permissions}
+        end
     end
   end
 
   @spec put_subject(Permit.t(), Types.role()) :: Permit.t()
   def put_subject(authorization, subject) do
     %Permit{authorization | subject: subject}
-  end
-
-  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [
-          Types.condition()
-        ]) ::
-          Permit.t()
-  def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
-    updated_permissions =
-      authorization.permissions
-      |> Permissions.add(action, resource, conditions)
-
-    %Permit{authorization | permissions: updated_permissions}
   end
 
   @spec verify_record(Permit.t(), Types.resource(), Types.controller_action()) :: boolean()

@@ -139,9 +139,7 @@ defmodule Permit.AuthorizationTest do
 
     test "should grant all permissions on special_object to special_user" do
       assert TestAuthorization.can(@operator_role)
-#       |> IO.inspect()
-      |> TestAuthorization.read?(@special_object)
-#       |> IO.inspect()
+             |> TestAuthorization.read?(@special_object)
 
       assert TestAuthorization.can(@operator_role)
              |> TestAuthorization.create?(@special_object)

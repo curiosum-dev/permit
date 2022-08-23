@@ -13,7 +13,7 @@ defmodule Permit.Rules do
       |> apply(:list_actions, [])
       |> Enum.map(fn name ->
         quote do
-          # @spec unquote(name)(Permit.t(), Types.resource()) :: boolean()
+          @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: boolean()
           def unquote(name)(authorization, resource, conditions \\ true) do
             permission_to(authorization, unquote(name), resource, conditions)
           end
@@ -39,7 +39,6 @@ defmodule Permit.Rules do
   end
 
   @spec grant(Types.role() | [Types.role()]) :: Permit.t()
-  # def grant(roles) when is_list(roles), do: %Permit{roles: roles}
   def grant(role), do: %Permit{role: role}
 
   def permission_to(authorization, action, resource, conditions \\ true),
