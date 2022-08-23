@@ -2,6 +2,7 @@ defmodule Permit.FakeApp.Permissions do
   use Permit.Rules
 
   alias Permit.FakeApp.Item
+  alias Permit.FakeApp.User
 
   def can(:admin = role) do
     grant(role)
@@ -31,6 +32,11 @@ defmodule Permit.FakeApp.Permissions do
   def can(%{role: :thread_moderator, thread_name: thread} = role) do
     grant(role)
     |> all(Item, permission_level: {:<=, 3}, thread_name: {:=~, Regex.compile!(thread, "i")})
+  end
+
+  def can(%User{id: id} = role) do
+    grant(role)
+    |> all(Item, owner_id: id)
   end
 
   def can(role), do: grant(role)
