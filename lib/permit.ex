@@ -11,7 +11,7 @@ defmodule Permit do
   @type t :: %Permit{
           roles: [Types.role()] | nil,
           permissions: Permissions.t(),
-          subject: Permit.HasRoles.t() | nil
+          subject: Types.subject() | nil
         }
 
   defmacro __using__(opts) do
