@@ -13,10 +13,10 @@ defmodule Permit.Actions do
 
       @impl Actions
       def mappings, do: %{
-        create: [],
-        read: [],
-        update: [],
-        delete: []
+        create: [:create],
+        read: [:read],
+        update: [:update],
+        delete: [:delete]
       }
 
       @impl Actions
