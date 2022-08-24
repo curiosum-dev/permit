@@ -16,6 +16,7 @@ defmodule Permit.FakeApp.Permissions do
 
   def can(:inspector = role) do
     grant(role)
+    |> show(Item)
     |> read(Item)
   end
 

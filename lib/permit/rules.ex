@@ -20,13 +20,13 @@ defmodule Permit.Rules do
       |> apply(:list_actions, [])
       |> Enum.map(fn name ->
         quote do
-          @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: boolean()
+          @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
           def unquote(name)(authorization, resource, conditions \\ true) do
             case unquote(actions_module).include_crud_mapping() do
-              true -> [unquote(name) | unquote(actions_module).mappings()[unquote(name)]]
+              true -> [unquote(name) | unquote(actions_module).to_crud(unquote(name))]
               false -> [unquote(name)]
             end
-            |> Enum.uniq()
+            |> Enum.uniq_by(& &1)
             |> Enum.reduce(authorization, fn action, perm ->
               permission_to(perm, action, resource, conditions)
             end)

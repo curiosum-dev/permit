@@ -26,9 +26,8 @@ defmodule Permit.Permissions do
           Permissions.t()
   def add(permissions, action, resource, conditions) do
     permissions.conditions_by_action_resource
-    |> Map.update({action, resource}, DNF.add_clauses(DNF.new(), conditions), fn
-      nil -> DNF.add_clauses(DNF.new(), conditions)
-      dnf -> DNF.add_clauses(dnf, conditions)
+    |> Map.update({action, resource}, DNF.add_clauses(DNF.new(), conditions), fn dnf ->
+      DNF.add_clauses(dnf, conditions)
     end)
     |> new()
   end

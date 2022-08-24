@@ -25,8 +25,12 @@ defmodule Permit.Actions do
       def include_crud_mapping, do: true
 
       @impl Actions
-      def mappings,
-        do: crud_mapping()
+      def mappings do
+        case include_crud_mapping() do
+          true -> crud_mapping()
+          false -> %{}
+        end
+      end
 
       @impl Actions
       def list_actions do
@@ -36,6 +40,11 @@ defmodule Permit.Actions do
         end
         |> Map.merge(mappings())
         |> Map.keys()
+      end
+
+      def to_crud(action) do
+        mappings()
+        |> Map.get(action, [])
       end
 
       defoverridable mappings: 0, list_actions: 0, include_crud_mapping: 0

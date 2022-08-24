@@ -73,10 +73,13 @@ defmodule Permit.Resolver do
   defp check(authorization_module, action, resource_or_module, subject) do
     auth = authorization_module.can(subject)
 
-    authorization_module.actions_module.map(action)
-    |> Enum.all?(fn action ->
-      Permit.verify_record(auth, resource_or_module, action)
-    end)
+    Permit.verify_record(auth, resource_or_module, action)
+    |> Kernel.or(
+      authorization_module.actions_module.to_crud(action)
+      |> Enum.all?(fn action ->
+        Permit.verify_record(auth, resource_or_module, action)
+      end)
+    )
   end
 
   @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
