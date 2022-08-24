@@ -9,12 +9,23 @@ defmodule Permit.AuthorizationTest.Types do
     end
   end
 
+  defmodule TestUserAsRole do
+    @moduledoc false
+
+    defstruct [:id, :role, :overseer_id]
+
+    defimpl Permit.HasRoles, for: Permit.AuthorizationTest.Types.TestUserAsRole do
+      def roles(user), do: [user]
+    end
+  end
+
   defmodule TestObject do
     @moduledoc false
     use Ecto.Schema
 
     schema "test_objects" do
       field(:name, :string)
+      field(:owner_id, :integer)
       field(:manager_id, :integer, default: 0)
       field(:field_1, :integer)
       field(:field_2, :integer)
@@ -26,7 +37,7 @@ defmodule Permit.AuthorizationTest do
   @moduledoc false
   use Permit.Case
 
-  alias Permit.AuthorizationTest.Types.{TestObject, TestUser}
+  alias Permit.AuthorizationTest.Types.{TestObject, TestUser, TestUserAsRole}
 
   defmodule TestPermissions do
     @moduledoc false
@@ -85,6 +96,11 @@ defmodule Permit.AuthorizationTest do
       |> delete(TestObject, field_1: {{:not, :in}, [5]}, field_2: {:in, [3]})
     end
 
+    def can(%TestUserAsRole{id: id} = role) do
+      grant(role)
+      |> all(TestObject, owner_id: id)
+    end
+
     def can(role), do: grant(role)
   end
 
@@ -106,7 +122,9 @@ defmodule Permit.AuthorizationTest do
   @user_with_admin_role %TestUser{role: :admin, id: 1, overseer_id: 1}
   @user_with_operator_role %TestUser{role: :operator, id: 2, overseer_id: 1}
   @user_with_other_user %TestUser{role: :user, id: 3, overseer_id: 1}
+  @user_owner %TestUserAsRole{role: :satan, id: 666, overseer_id: 1}
 
+  @object_with_owner %TestObject{name: "object", owner_id: 666}
   @special_object %TestObject{name: "special"}
   @exceptional_object %TestObject{name: "exceptional"}
   @like_object %TestObject{name: "strange! name% with _ special characters"}
@@ -137,12 +155,23 @@ defmodule Permit.AuthorizationTest do
       end
     end
 
+    test "should grant all permissions on object_with_owner to owner of that object" do
+      assert TestAuthorization.can(@user_owner)
+             |> TestAuthorization.read?(@object_with_owner)
+
+      assert TestAuthorization.can(@user_owner)
+             |> TestAuthorization.create?(@object_with_owner)
+
+      assert TestAuthorization.can(@user_owner)
+             |> TestAuthorization.update?(@object_with_owner)
+
+      assert TestAuthorization.can(@user_owner)
+             |> TestAuthorization.delete?(@object_with_owner)
+    end
+
     test "should grant all permissions on special_object to special_user" do
       assert TestAuthorization.can(@operator_role)
-             #       |> IO.inspect()
              |> TestAuthorization.read?(@special_object)
-
-      #       |> IO.inspect()
 
       assert TestAuthorization.can(@operator_role)
              |> TestAuthorization.create?(@special_object)

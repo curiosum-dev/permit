@@ -3,7 +3,7 @@ defmodule Permit.Types do
   @type controller_action :: atom()
   @type crud :: :create | :read | :update | :delete
   @type role :: term()
-  @type subject :: map() | struct()
+  @type subject :: struct()
   @type resource :: struct() | resource_module()
   @type id :: integer() | binary()
   @type id_param_name :: binary()

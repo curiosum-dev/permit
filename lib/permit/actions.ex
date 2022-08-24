@@ -3,16 +3,17 @@ defmodule Permit.Actions do
 
   """
   alias __MODULE__
+  alias Permit.Types
 
-  @callback list_actions() :: [atom()]
-  @callback mappings() :: %{atom() => [atom()]}
+  @callback list_actions() :: [Types.controller_action()]
+  @callback mappings() :: %{Types.controller_action() => [Types.crud()]}
+  @callback include_crud_mapping() :: boolean()
 
   defmacro __using__(_opts) do
     quote do
       @behaviour Actions
 
-      @impl Actions
-      def mappings,
+      def crud_mapping,
         do: %{
           create: [:create],
           read: [:read],
@@ -21,15 +22,23 @@ defmodule Permit.Actions do
         }
 
       @impl Actions
-      def list_actions,
-        do: Map.keys(mappings())
+      def include_crud_mapping, do: true
 
-      def map(action) do
-        mappings()
-        |> Map.get(action)
+      @impl Actions
+      def mappings,
+        do: crud_mapping()
+
+      @impl Actions
+      def list_actions do
+        case include_crud_mapping() do
+          true -> crud_mapping()
+          false -> %{}
+        end
+        |> Map.merge(mappings())
+        |> Map.keys()
       end
 
-      defoverridable mappings: 0, list_actions: 0
+      defoverridable mappings: 0, list_actions: 0, include_crud_mapping: 0
     end
   end
 end
