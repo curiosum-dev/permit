@@ -5,13 +5,13 @@ defmodule Permit.Actions.PhoenixActions do
   use Permit.Actions
 
   @impl Permit.Actions
-  def mappings do
+  def grouping_schema do
     %{
       new: [:create],
       index: [:read],
       show: [:read],
       edit: [:update]
     }
-    |> Map.merge(crud_mapping())
+    |> Map.merge(crud_grouping())
   end
 end

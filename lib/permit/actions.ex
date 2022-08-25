@@ -5,49 +5,43 @@ defmodule Permit.Actions do
   alias __MODULE__
   alias Permit.Types
 
-  @callback list_actions() :: [Types.controller_action()]
-  @callback mappings() :: %{Types.controller_action() => [Types.crud()]}
-  @callback include_crud_mapping() :: boolean()
+  @callback grouping_schema() :: %{Types.controller_action() => [Types.action_group()]}
 
   defmacro __using__(_opts) do
     quote do
       @behaviour Actions
 
-      def crud_mapping,
+      def crud_grouping,
         do: %{
-          create: [:create],
-          read: [:read],
-          update: [:update],
-          delete: [:delete]
+          create: [],
+          read: [],
+          update: [],
+          delete: []
         }
 
       @impl Actions
-      def include_crud_mapping, do: true
+      def grouping_schema,
+        do: crud_grouping()
 
-      @impl Actions
-      def mappings do
-        case include_crud_mapping() do
-          true -> crud_mapping()
-          false -> %{}
-        end
-      end
-
-      @impl Actions
       def list_actions do
-        case include_crud_mapping() do
-          true -> crud_mapping()
-          false -> %{}
-        end
-        |> Map.merge(mappings())
+        grouping_schema()
         |> Map.keys()
       end
 
-      def to_crud(action) do
-        mappings()
+      def list_groups do
+        grouping_schema()
+        |> Map.values()
+        |> List.flatten()
+        |> Kernel.++(list_actions())
+        |> Enum.uniq()
+      end
+
+      def groups_for(action) do
+        grouping_schema()
         |> Map.get(action, [])
       end
 
-      defoverridable mappings: 0, list_actions: 0, include_crud_mapping: 0
+      defoverridable grouping_schema: 0
     end
   end
 end

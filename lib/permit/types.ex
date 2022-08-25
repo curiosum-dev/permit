@@ -2,6 +2,7 @@ defmodule Permit.Types do
   @type resource_module :: module()
   @type controller_action :: atom()
   @type crud :: :create | :read | :update | :delete
+  @type action_group :: atom()
   @type role :: term()
   @type subject :: struct()
   @type resource :: struct() | resource_module()

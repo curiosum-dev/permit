@@ -75,7 +75,7 @@ defmodule Permit.Resolver do
 
     Permit.verify_record(auth, resource_or_module, action)
     |> Kernel.or(
-      authorization_module.actions_module.to_crud(action)
+      authorization_module.actions_module.groups_for(action)
       |> Enum.all?(fn action ->
         Permit.verify_record(auth, resource_or_module, action)
       end)
