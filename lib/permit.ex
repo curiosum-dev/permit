@@ -46,7 +46,8 @@ defmodule Permit do
 
       @spec can(HasRoles.t()) :: Permit.t()
       def can(nil),
-        do: raise "Unable to create permit authorization for nil role/user"
+        do: raise("Unable to create permit authorization for nil role/user")
+
       def can(who) do
         who
         |> HasRoles.roles()
@@ -57,7 +58,7 @@ defmodule Permit do
           %Permit{auth1 | permissions: Permissions.join(auth1.permissions, auth2.permissions)}
         end)
         |> Map.put(:roles, HasRoles.roles(who))
-        |> Map.put(:subject, is_struct(who) && who || nil)
+        |> Map.put(:subject, (is_struct(who) && who) || nil)
       end
 
       unquote(predicates)
