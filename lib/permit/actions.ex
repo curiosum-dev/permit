@@ -74,7 +74,7 @@ defmodule Permit.Actions do
 
   defp traverse_actions_with_trace(actions_module, starting_point, group_action_verifier, join_parent, join_siblings, trace) do
     if starting_point in trace do
-      throw trace
+      throw Enum.reverse([starting_point | trace])
     else
       actions_module.grouping_schema()[starting_point]
       |> case do
