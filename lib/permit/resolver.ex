@@ -15,7 +15,7 @@ defmodule Permit.Resolver do
         ) :: boolean()
   def authorized_without_preloading?(subject, authorization_module, resource_module, action)
       when not is_nil(subject) do
-    check(authorization_module, action, resource_module, subject)
+    check(action, authorization_module, resource_module, subject)
   end
 
   @spec authorize_with_preloading!(
@@ -36,11 +36,11 @@ defmodule Permit.Resolver do
       )
       when not is_nil(subject) do
     with true <-
-           check(authorization_module, action, resource_module, subject),
+           check(action, authorization_module, resource_module, subject),
          record <-
            fetch_resource(authorization_module.repo, loader_fn, resource_module, params),
          true <-
-           check(authorization_module, action, record, subject) do
+           check(action, authorization_module, record, subject) do
       {:authorized, record}
     else
       _ -> :unauthorized
@@ -65,21 +65,31 @@ defmodule Permit.Resolver do
   end
 
   @spec check(
-          module(),
           Types.controller_action(),
+          module(),
           Types.resource_module() | Types.resource(),
           Permit.HasRole.t()
         ) :: boolean()
-  defp check(authorization_module, action, resource_or_module, subject) do
+  defp check(action, authorization_module, resource_or_module, subject) do
     auth = authorization_module.can(subject)
+    actions_module = authorization_module.actions_module()
 
-    Permit.verify_record(auth, resource_or_module, action)
-    |> Kernel.or(
-      authorization_module.actions_module.groups_for(action)
-      |> Enum.all?(fn action ->
-        Permit.verify_record(auth, resource_or_module, action)
-      end)
+    Permit.Actions.traverse_actions(
+      actions_module,
+      action,
+      &Permit.verify_record(auth, resource_or_module, &1),
+      &Kernel.or/2,
+      &join_auxillary_groups/1
     )
+  end
+
+  defp join_auxillary_groups(groups_stream) do
+    groups_stream
+    |> Enum.into([])
+    |> case do
+      [] -> false
+      groups -> Enum.all?(groups)
+    end
   end
 
   @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
