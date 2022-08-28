@@ -74,23 +74,16 @@ defmodule Permit.Resolver do
     auth = authorization_module.can(subject)
     actions_module = authorization_module.actions_module()
 
-    Permit.Actions.traverse_actions(
+    {:ok, permitted?} = Permit.Actions.traverse_actions(
       actions_module,
       action,
-      &Permit.verify_record(auth, resource_or_module, &1),
-      &Kernel.or/2,
-      &join_auxillary_groups/1
+      &Permit.verify_record(auth, resource_or_module, &1)
     )
+
+    permitted?
   end
 
-  defp join_auxillary_groups(groups_stream) do
-    groups_stream
-    |> Enum.into([])
-    |> case do
-      [] -> false
-      groups -> Enum.all?(groups)
-    end
-  end
+
 
   @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
           Types.loader()
