@@ -46,23 +46,32 @@ defmodule Permit.Actions do
   end
 
   @spec traverse_actions(
-      module(),
-      Types.controller_action(),
-      (Types.controller_action() -> any()),
-      (any(), any() -> any()),
-      (Enumerable.t() -> any()))
-        :: {:ok, any()} |
-           {:error, :cycle_in_grouping_schema_definition, [Types.action_group()]} |
-           {:error, :action_not_defined, Types.action_group()}
+          module(),
+          Types.controller_action(),
+          (Types.controller_action() -> any()),
+          (any(), any() -> any()),
+          (Enumerable.t() -> any())
+        ) ::
+          {:ok, any()}
+          | {:error, :cycle_in_grouping_schema_definition, [Types.action_group()]}
+          | {:error, :action_not_defined, Types.action_group()}
   def traverse_actions(
-    actions_module,
-    starting_point,
-    group_action_verifier,
-    _join_parent \\ &Kernel.or/2,
-    _join_siblings \\ &join_auxillary_groups/1) do
+        actions_module,
+        starting_point,
+        group_action_verifier,
+        join_parent \\ &Kernel.or/2,
+        join_siblings \\ &join_auxillary_groups/1
+      ) do
     try do
-      traverse_actions_with_trace(actions_module, starting_point, group_action_verifier, [])
-      |> then(& {:ok, &1})
+      traverse_actions_with_trace(
+        actions_module,
+        starting_point,
+        group_action_verifier,
+        join_parent,
+        join_siblings,
+        []
+      )
+      |> then(&{:ok, &1})
     catch
       {:action_not_defined, action} ->
         {:error, :action_not_defined, action}
@@ -72,29 +81,41 @@ defmodule Permit.Actions do
     end
   end
 
-  defp traverse_actions_with_trace(actions_module, starting_point, group_action_verifier, trace) do
-    if starting_point in trace do
-      throw {:cycle, Enum.reverse([starting_point | trace])}
-    else
-      actions_module.grouping_schema()[starting_point]
-      |> case do
-        nil ->
-          throw {:action_not_defined, starting_point}
+  defp traverse_actions_with_trace(
+         actions_module,
+         starting_point,
+         group_action_verifier,
+         join_parent,
+         join_siblings,
+         trace
+       ) do
+    cond do
+      starting_point in trace ->
+        throw({:cycle, Enum.reverse([starting_point | trace])})
 
-        groups ->
-          group_action_verifier.(starting_point)
-          |> Kernel.or(
-            groups
-            |> Stream.map(fn action ->
-              traverse_actions_with_trace(actions_module, action, group_action_verifier, [starting_point | trace])
-            end)
-            |> join_auxillary_groups()
-          )
-      end
+      groups = actions_module.grouping_schema()[starting_point] ->
+        join_parent.(
+          group_action_verifier.(starting_point),
+          groups
+          |> Stream.map(fn action ->
+            traverse_actions_with_trace(
+              actions_module,
+              action,
+              group_action_verifier,
+              join_parent,
+              join_siblings,
+              [starting_point | trace]
+            )
+          end)
+          |> then(join_siblings)
+        )
+
+      true ->
+        throw({:action_not_defined, starting_point})
     end
   end
 
-   defp join_auxillary_groups(groups_stream) do
+  defp join_auxillary_groups(groups_stream) do
     groups_stream
     |> Enum.into([])
     |> case do

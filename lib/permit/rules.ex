@@ -22,7 +22,7 @@ defmodule Permit.Rules do
         quote do
           @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
           def unquote(name)(authorization, resource, conditions \\ true) do
-              permission_to(authorization, unquote(name), resource, conditions)
+            permission_to(authorization, unquote(name), resource, conditions)
           end
         end
       end)

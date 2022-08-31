@@ -74,16 +74,15 @@ defmodule Permit.Resolver do
     auth = authorization_module.can(subject)
     actions_module = authorization_module.actions_module()
 
-    {:ok, permitted?} = Permit.Actions.traverse_actions(
-      actions_module,
-      action,
-      &Permit.verify_record(auth, resource_or_module, &1)
-    )
+    {:ok, permitted?} =
+      Permit.Actions.traverse_actions(
+        actions_module,
+        action,
+        &Permit.verify_record(auth, resource_or_module, &1)
+      )
 
     permitted?
   end
-
-
 
   @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
           Types.loader()
