@@ -142,8 +142,6 @@ defmodule Permit.Plug do
           Plug.Conn.t()
   defp just_authorize(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
-    # action_crud_mapping = Keyword.fetch!(opts, :action_crud_mapping)
-
     check_result =
       Resolver.authorized_without_preloading?(
         subject,
