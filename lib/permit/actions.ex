@@ -23,13 +23,19 @@ defmodule Permit.Actions do
       def grouping_schema,
         do: crud_grouping()
 
-      def list_actions do
+      def unified_schema() do
         grouping_schema()
+        |> Enum.map(&translate/1)
+        |> Enum.into(%{})
+      end
+
+      def list_actions do
+        unified_schema()
         |> Map.keys()
       end
 
       def list_groups do
-        grouping_schema()
+        unified_schema()
         |> Map.values()
         |> List.flatten()
         |> Kernel.++(list_actions())
@@ -37,9 +43,24 @@ defmodule Permit.Actions do
       end
 
       def groups_for(action) do
-        grouping_schema()
+        unified_schema()
         |> Map.get(action, [])
       end
+
+      def action_defined(action) do
+        unified_schema()[action]
+        |> case do
+          nil -> false
+          _ -> true
+        end
+      end
+
+      defp translate({key, values} = pair)
+        when is_atom(key) and is_list(values), do: pair
+      defp translate({key, value})
+        when is_atom(key) and is_atom(value), do: {key, [value]}
+      defp translate(key)
+        when is_atom(key), do: {key, []}
 
       defoverridable grouping_schema: 0
     end
@@ -48,30 +69,18 @@ defmodule Permit.Actions do
   @spec traverse_actions(
           module(),
           Types.controller_action(),
-          (Types.controller_action() -> any()),
-          (any(), any() -> any()),
-          (Enumerable.t() -> any())
+          (Types.controller_action() -> boolean())
         ) ::
           {:ok, any()}
           | {:error, :cycle_in_grouping_schema_definition, [Types.action_group()]}
           | {:error, :action_not_defined, Types.action_group()}
-  def traverse_actions(
-        actions_module,
-        starting_point,
-        group_action_verifier,
-        join_parent \\ &Kernel.or/2,
-        join_siblings \\ &join_auxillary_groups/1
-      ) do
+  def traverse_actions(actions_module, starting_point, verify) do
     try do
-      traverse_actions_with_trace(
-        actions_module,
-        starting_point,
-        group_action_verifier,
-        join_parent,
-        join_siblings,
-        []
-      )
-      |> then(&{:ok, &1})
+      traverse_with_trace(actions_module, starting_point, verify, [])
+      |> case do
+        true -> {:ok, true}
+        _ -> {:ok, false}
+      end
     catch
       {:action_not_defined, action} ->
         {:error, :action_not_defined, action}
@@ -81,34 +90,20 @@ defmodule Permit.Actions do
     end
   end
 
-  defp traverse_actions_with_trace(
-         actions_module,
-         starting_point,
-         group_action_verifier,
-         join_parent,
-         join_siblings,
-         trace
-       ) do
+  defp traverse_with_trace(module, starting_point, verify, trace) do
     cond do
       starting_point in trace ->
         throw({:cycle, Enum.reverse([starting_point | trace])})
 
-      groups = actions_module.grouping_schema()[starting_point] ->
-        join_parent.(
-          group_action_verifier.(starting_point),
-          groups
-          |> Stream.map(fn action ->
-            traverse_actions_with_trace(
-              actions_module,
-              action,
-              group_action_verifier,
-              join_parent,
-              join_siblings,
-              [starting_point | trace]
-            )
-          end)
-          |> then(join_siblings)
-        )
+      module.action_defined(starting_point) ->
+        verify.(starting_point) or
+        starting_point
+        |> module.groups_for()
+        |> Stream.map(fn action ->
+          traverse_with_trace(module, action, verify, [starting_point | trace])
+        end)
+        |> join_auxillary_groups()
+
 
       true ->
         throw({:action_not_defined, starting_point})
