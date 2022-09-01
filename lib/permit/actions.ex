@@ -77,10 +77,7 @@ defmodule Permit.Actions do
   def traverse_actions(actions_module, starting_point, verify) do
     try do
       traverse_with_trace(actions_module, starting_point, verify, [])
-      |> case do
-        true -> {:ok, true}
-        _ -> {:ok, false}
-      end
+      |> then(&{:ok, &1})
     catch
       {:action_not_defined, action} ->
         {:error, :action_not_defined, action}
