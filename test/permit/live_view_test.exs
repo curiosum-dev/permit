@@ -34,7 +34,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "can do :show", %{conn: conn} do
@@ -43,7 +43,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "can do :new on items", %{conn: conn} do
@@ -53,7 +53,7 @@ defmodule Permit.LiveViewTest do
 
       assert :mounted in Map.keys(assigns)
       assert :unauthorized not in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
   end
 
@@ -82,7 +82,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "cannot do :show on non-owned item", %{conn: conn} do
@@ -91,7 +91,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "can do :edit on owned item", %{conn: conn} do
@@ -100,7 +100,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "cannot do :edit on non-owned item", %{conn: conn} do
@@ -109,7 +109,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "can do :new on items", %{conn: conn} do
@@ -119,7 +119,7 @@ defmodule Permit.LiveViewTest do
 
       assert :mounted in Map.keys(assigns)
       assert :unauthorized not in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
   end
 
@@ -148,7 +148,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "can do :show", %{conn: conn} do
@@ -157,7 +157,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "cannot do :new on items", %{conn: conn} do
@@ -166,7 +166,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
   end
 
@@ -187,7 +187,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "can do :show on item 1", %{conn: conn} do
@@ -196,7 +196,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "cant do :edit on item 2", %{conn: conn} do
@@ -205,7 +205,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "cant do :show on item 2 ", %{conn: conn} do
@@ -214,7 +214,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "cant do :edit on item 3", %{conn: conn} do
@@ -223,7 +223,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "cant do :show on item 3", %{conn: conn} do
@@ -232,7 +232,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "can do :new on items", %{conn: conn} do
@@ -242,7 +242,7 @@ defmodule Permit.LiveViewTest do
 
       assert :mounted in Map.keys(assigns)
       assert :unauthorized not in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
   end
 
@@ -263,7 +263,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "can do :show on item 1", %{conn: conn} do
@@ -272,7 +272,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 1}} = assigns
+      assert %{loaded_resources: [%Item{id: 1}]} = assigns
     end
 
     test "can do :edit on item 2", %{conn: conn} do
@@ -281,7 +281,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 2}} = assigns
+      assert %{loaded_resources: [%Item{id: 2}]} = assigns
     end
 
     test "cant do :show on item 2 ", %{conn: conn} do
@@ -290,7 +290,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 2}} = assigns
+      assert %{loaded_resources: [%Item{id: 2}]} = assigns
     end
 
     test "cant do :edit on item 3", %{conn: conn} do
@@ -299,7 +299,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "cant do :show on item 3", %{conn: conn} do
@@ -308,7 +308,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "can do :new on items", %{conn: conn} do
@@ -318,7 +318,7 @@ defmodule Permit.LiveViewTest do
 
       assert :mounted in Map.keys(assigns)
       assert :unauthorized not in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
   end
 
@@ -339,7 +339,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "cant do :show on item 1", %{conn: conn} do
@@ -348,16 +348,17 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "can do :edit on item 2", %{conn: conn} do
+      IO.inspect(conn, label: "#{__MODULE__} conn")
       {:ok, lv, _html} = live(conn, "/items/2/edit")
 
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 2}} = assigns
+      assert %{loaded_resources: [%Item{id: 2}]} = assigns
     end
 
     test "cant do :show on item 2 ", %{conn: conn} do
@@ -366,7 +367,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resource: %Item{id: 2}} = assigns
+      assert %{loaded_resources: [%Item{id: 2}]} = assigns
     end
 
     test "cant do :edit on item 3", %{conn: conn} do
@@ -375,7 +376,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "cant do :show on item 3", %{conn: conn} do
@@ -384,7 +385,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
 
     test "can do :new on items", %{conn: conn} do
@@ -394,7 +395,7 @@ defmodule Permit.LiveViewTest do
 
       assert :mounted in Map.keys(assigns)
       assert :unauthorized not in Map.keys(assigns)
-      assert :loaded_resource not in Map.keys(assigns)
+      assert :loaded_resources not in Map.keys(assigns)
     end
   end
 
@@ -404,11 +405,11 @@ defmodule Permit.LiveViewTest do
     test "is successful, authorizes and preloads resource", %{conn: conn} do
       {:ok, lv, _html} = live(conn, "/items")
 
-      assert :loaded_resource not in (lv |> get_assigns() |> Map.keys())
+      assert :loaded_resources not in (lv |> get_assigns() |> Map.keys())
 
       lv |> element("#navigate_show") |> render_click()
 
-      assert %{loaded_resource: %Item{id: 1}, loaded_resource_was_visible_in_handle_params: true} =
+      assert %{loaded_resources: [%Item{id: 1}], loaded_resource_was_visible_in_handle_params: true} =
                get_assigns(lv)
     end
 
@@ -418,7 +419,7 @@ defmodule Permit.LiveViewTest do
       lv |> element("#navigate_edit") |> render_click()
 
       assigns = get_assigns(lv)
-      assert :loaded_resource not in (assigns |> Map.keys())
+      assert :loaded_resources not in (assigns |> Map.keys())
       assert %{unauthorized: true} = assigns
     end
   end
@@ -444,6 +445,7 @@ defmodule Permit.LiveViewTest do
   end
 
   def dmt_thread_moderator_role(context) do
+    IO.inspect(context, label: "#{__MODULE__} context")
     {:ok, Map.put(context, :roles, [%{role: :thread_moderator, thread_name: "dmt"}])}
   end
 

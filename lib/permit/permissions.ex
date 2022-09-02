@@ -40,9 +40,9 @@ defmodule Permit.Permissions do
     |> DNF.any_satisfied?(record, subject)
   end
 
-  @spec construct_query(Permissions.t(), Types.action_group(), Types.resource()) ::
+  @spec construct_query(Permissions.t(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
           {:ok, Ecto.Query.t()} | {:error, term()}
-  def construct_query(permissions, action, resource) do
+  def construct_query(permissions, action, resource, prefilter \\ & &1) do
     resource = resource_module_from_resource(resource)
 
     permissions.conditions_by_action_resource[{action, resource}]
@@ -51,7 +51,8 @@ defmodule Permit.Permissions do
         {:error, {:undefined_conditions_for, {action, resource}}}
 
       dnf ->
-        DNF.to_query(dnf, resource)
+        IO.inspect(dnf, label: " 'action #{action}'  'resource #{resource}' #{__MODULE__} dnf")
+        DNF.to_query(dnf, resource, prefilter)
     end
   end
 

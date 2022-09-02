@@ -52,7 +52,7 @@ defmodule Permit.Plug do
       # 1. If assigns[:current_user] is present, the "id" param will be used to call
       #    Repo.get(Customer, params["id"]).
       # 2. can(role) |> read?(record) will be called on the loaded record and each user role.
-      # 3. If authorization succeeds, the record will be stored in assigns[:loaded_resource].
+      # 3. If authorization succeeds, the record will be stored in assigns[:loaded_resources].
       # 4. If any of the steps described above fails, the pipeline will be halted.
     end
 
@@ -70,7 +70,7 @@ defmodule Permit.Plug do
       # 1. If assigns[:current_user] is present, the "id" param will be used to call
       #    Repo.get(Customer, params["id"]).
       # 2. can(role) |> update?(record) will be called on the loaded record (as configured in :action_crud_mapping) and each role of user
-      # 3. If authorization succeeds, the record will be stored in assigns[:loaded_resource].
+      # 3. If authorization succeeds, the record will be stored in assigns[:loaded_resources].
       # 4. If any of the steps described above fails, the pipeline will be halted.
     end
   end
@@ -164,48 +164,24 @@ defmodule Permit.Plug do
           Plug.Conn.t()
   defp authorize_and_preload_resource(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
-    repo = authorization_module.repo()
 
-    loader_fn =
-      Keyword.get(
-        opts,
-        :loader_fn,
-        default_loader_fn(repo, resource_module, opts[:id_param_name])
-      )
+    loader_fn = Keyword.fetch!(opts, :loader_fn)
 
-    check_result =
-      Resolver.authorize_with_preloading!(
-        subject,
-        authorization_module,
-        resource_module,
-        controller_action,
-        conn.params,
-        loader_fn
-      )
 
-    case check_result do
+    Resolver.authorize_with_preloading!(
+      subject,
+      authorization_module,
+      resource_module,
+      controller_action,
+      fn resource -> loader_fn.(controller_action, resource, conn.params) end
+    )
+    |> case do
       {:authorized, record} ->
         conn
         |> assign(:loaded_resource, record)
 
       :unauthorized ->
         opts[:handle_unauthorized].(conn)
-    end
-  end
-
-  @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
-          Types.loader()
-  defp default_loader_fn(repo, resource_module, "id") do
-    fn id ->
-      repo.get(resource_module, id)
-    end
-  end
-
-  defp default_loader_fn(repo, resource_module, id_param_name) do
-    id_param_atom = String.to_existing_atom(id_param_name)
-
-    fn id ->
-      repo.get_by(resource_module, [{id_param_atom, id}])
     end
   end
 end

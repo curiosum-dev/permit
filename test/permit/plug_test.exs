@@ -21,7 +21,7 @@ defmodule Permit.PlugTest do
     test "authorizes :show action", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "raises when record does not exist", %{conn: conn} do
@@ -46,7 +46,7 @@ defmodule Permit.PlugTest do
     test "authorizes :show action", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "raises when record does not exist", %{conn: conn} do
@@ -95,7 +95,7 @@ defmodule Permit.PlugTest do
     test "authorizes :show action for object with matching :owner_id", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "does not authorize :show action for object without matching :owner_id", %{conn: conn} do
@@ -117,14 +117,14 @@ defmodule Permit.PlugTest do
     test "authorizes :show action", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [ %Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "authorizes :details action and preloads resource via :action_crud_mapping and :preload_resource_in options",
          %{conn: conn} do
       conn = call(conn, :get, "/details/1")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "does not authorize :edit action", %{conn: conn} do
@@ -149,20 +149,20 @@ defmodule Permit.PlugTest do
     test "authorizes :show action on item 1", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "authorizes :edit action on item 1", %{conn: conn} do
       conn = call(conn, :get, "/items/1/edit")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "authorizes :details action on item 1 and preloads resource via :action_crud_mapping and :preload_resource_in options",
          %{conn: conn} do
       conn = call(conn, :get, "/details/1")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 1} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
     end
 
     test "does not authorize :details on item 2", %{conn: conn} do
@@ -200,20 +200,20 @@ defmodule Permit.PlugTest do
     test "authorizes :show action on item 2", %{conn: conn} do
       conn = call(conn, :get, "/items/2")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 2} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 2}] = conn.assigns[:loaded_resources]
     end
 
     test "authorizes :edit action on item 2", %{conn: conn} do
       conn = call(conn, :get, "/items/2/edit")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 2} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 2}] = conn.assigns[:loaded_resources]
     end
 
     test "authorizes :details action on item 2 and preloads resource via :action_crud_mapping and :preload_resource_in options",
          %{conn: conn} do
       conn = call(conn, :get, "/details/2")
       assert conn.resp_body =~ ~r[Item]
-      assert %Item{id: 2} = conn.assigns[:loaded_resource]
+      assert [%Item{id: 2}] = conn.assigns[:loaded_resources]
     end
 
     test "does not authorize :details on item 1", %{conn: conn} do

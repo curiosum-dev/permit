@@ -27,6 +27,9 @@ defmodule Permit.PermitTest do
     use Permit,
       permissions_module: TestPermissions
   end
+  alias Permit.FakeApp.Item
+  alias Permit.FakeApp.Repo
+
 
   describe "__using__/1" do
     test "should generate predicates" do

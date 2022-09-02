@@ -46,9 +46,12 @@ defmodule Permit.MixProject do
     [
       {:ecto, "~> 3.0"},
       {:phoenix_live_view, "~> 0.16", optional: true},
+      {:phoenix_ecto, "~> 4.4", only: :test},
+      {:ecto_sql, "~> 3.7", only: :test},
+      {:postgrex, "~> 0.15.13", only: :test},
       {:jason, "~> 1.3", only: :test},
       {:floki, ">= 0.30.0", only: :test},
-      {:dialyxir, "~> 1.1", only: [:dev, :test]},
+      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
 
       # {:dep_from_hexpm, "~> 0.3.0"},

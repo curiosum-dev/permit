@@ -23,45 +23,39 @@ defmodule Permit.Resolver do
           module(),
           Types.resource_module(),
           Types.controller_action(),
-          map(),
           function()
-        ) :: {:authorized, Ecto.Schema.t()} | :unauthorized
+        ) :: {:authorized, [struct()]} | :unauthorized
   def authorize_with_preloading!(
         subject,
         authorization_module,
         resource_module,
         action,
-        params,
         loader_fn
       )
       when not is_nil(subject) do
     with true <-
            check(action, authorization_module, resource_module, subject),
-         record <-
-           fetch_resource(authorization_module.repo, loader_fn, resource_module, params),
-         true <-
-           check(action, authorization_module, record, subject) do
-      {:authorized, record}
+         records <-
+           fetch_resource(authorization_module, resource_module, action, subject, loader_fn) do
+      {:authorized, records}
     else
       _ -> :unauthorized
     end
   end
 
   @spec fetch_resource(
-          Ecto.Repo.t(),
-          function(),
+          module(),
           Types.resource_module(),
-          map()
-        ) :: struct()
-  defp fetch_resource(repo, loader_fn, resource_module, params) do
-    id_param_name = "id"
-    id_param_value = params[id_param_name]
-
-    loader_fn = loader_fn || default_loader_fn(repo, resource_module, id_param_name)
-
-    with nil <- loader_fn.(id_param_value) do
-      raise Ecto.NoResultsError, queryable: resource_module
-    end
+          Types.controller_action(),
+          Permit.HasRole.t(),
+          function()
+        ) :: [struct()]
+  defp fetch_resource(authorization_module, resource_module, action, subject, loader_fn) do
+    subject
+    |> authorization_module.accessible_by!(action, resource_module, loader_fn)
+    |> IO.inspect(label: "#{__MODULE__} accesible")
+    |> authorization_module.repo.all()
+    |> IO.inspect(label: "#{__MODULE__} repo all")
   end
 
   @spec check(
@@ -82,21 +76,5 @@ defmodule Permit.Resolver do
       )
 
     permitted?
-  end
-
-  @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::
-          Types.loader()
-  defp default_loader_fn(repo, resource_module, "id") do
-    fn id ->
-      repo.get(resource_module, id)
-    end
-  end
-
-  defp default_loader_fn(repo, resource_module, id_param_name) do
-    id_param_atom = String.to_existing_atom(id_param_name)
-
-    fn id ->
-      repo.get_by(resource_module, [{id_param_atom, id}])
-    end
   end
 end

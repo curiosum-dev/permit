@@ -1,5 +1,20 @@
 defmodule Permit.FakeApp.Item do
-  defstruct [:id, :owner_id, :permission_level, thread_name: ""]
+  @moduledoc false
+  use Ecto.Schema
+  import Ecto.Changeset
 
-  def __schema__(:query), do: %Ecto.Query{}
+  schema "items" do
+    field :permission_level, :integer
+    field :thread_name, :string
+
+    belongs_to :user, Permit.FakeApp.User, foreign_key: :owner_id
+
+    timestamps()
+  end
+
+  @doc false
+  def changeset(item, attrs) do
+    item
+    |> cast(attrs, [:permission_level, :thread_name, :owner_id])
+  end
 end

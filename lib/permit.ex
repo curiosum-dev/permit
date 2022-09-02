@@ -66,13 +66,23 @@ defmodule Permit do
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
 
-      @spec accessible_by(Types.subject(), Types.action_group(), Types.resource()) ::
+      @spec accessible_by(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
               {:ok, Ecto.Query.t()} | {:error, term()}
-      def accessible_by(current_user, action, resource) do
+      def accessible_by(current_user, action, resource, prefilter \\ & &1) do
+        IO.inspect(current_user)
         unquote(permissions_module)
         |> apply(:can, [current_user])
         |> Map.get(:permissions)
-        |> Permissions.construct_query(action, resource)
+        |> Permissions.construct_query(action, resource, prefilter)
+      end
+
+      @spec accessible_by!(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
+              Ecto.Query.t()
+      def accessible_by!(current_user, action, resource, prefilter \\ & &1) do
+        case accessible_by(current_user, action, resource, prefilter) do
+          {:ok, query} -> query
+          {:error, error} -> raise error
+        end
       end
     end
   end

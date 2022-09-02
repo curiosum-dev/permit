@@ -34,11 +34,13 @@ defmodule Permit.Permissions.DNF do
     |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, subject))
   end
 
-  @spec to_query(DNF.t(), Types.resource_module()) :: {:ok, Ecto.Query.t()} | {:error, term()}
-  def to_query(%DNF{disjunctions: disjunctions}, record) do
-    with {:ok, filter} <- maybe_convert(disjunctions) do
-      record
+  @spec to_query(DNF.t(), Types.resource_module(), (Types.resource_module() -> Ecto.Query.t())) :: {:ok, Ecto.Query.t()} | {:error, term()}
+  def to_query(%DNF{disjunctions: disjunctions}, record, prefilter \\ & &1) do
+    with {:ok, filter} <- maybe_convert(disjunctions) |> IO.inspect(label: "#{__MODULE__} filter") do
+      prefilter.(record)
+      |> IO.inspect(label: "#{__MODULE__} prefilter")
       |> where(^filter)
+      |> IO.inspect(label: "#{__MODULE__} where")
       |> then(&{:ok, &1})
     end
   end
