@@ -55,6 +55,14 @@ defmodule Permit.Actions do
         end
       end
 
+      def dependent_actions(action) do
+        list_actions()
+        |> Enum.map(fn key ->
+          action in unified_schema()[key] && action
+        end)
+        |> Enum.filter(& &1 != nil)
+      end
+
       defp translate({key, values} = pair)
         when is_atom(key) and is_list(values), do: pair
       defp translate({key, value})

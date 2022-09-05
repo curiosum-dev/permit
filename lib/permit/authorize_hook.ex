@@ -151,7 +151,6 @@ defmodule Permit.AuthorizeHook do
       action,
       fn resource -> loader_fn.(action, resource, params) end
     )
-    |> IO.inspect()
     |> case do
       {:authorized, records} ->
         {:authorized, assign(socket, :loaded_resources, records)}

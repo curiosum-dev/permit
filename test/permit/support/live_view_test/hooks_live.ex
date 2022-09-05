@@ -15,8 +15,8 @@ defmodule Permit.LiveViewTest.HooksLive do
       else
         id
       end
-      
-    Permit.FakeApp.Item.Context.filter_by_id(Item, id) |> IO.inspect()
+
+    Permit.FakeApp.Item.Context.filter_by_id(Item, id)
   end
 
   @impl true

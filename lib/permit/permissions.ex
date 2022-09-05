@@ -51,8 +51,16 @@ defmodule Permit.Permissions do
         {:error, {:undefined_conditions_for, {action, resource}}}
 
       dnf ->
-        IO.inspect(dnf, label: " 'action #{action}'  'resource #{resource}' #{__MODULE__} dnf")
         DNF.to_query(dnf, resource, prefilter)
+    end
+  end
+
+  @spec conditions_defied_for?(Permissions.t(), Types.controller_action(), Types.resource()) :: boolean()
+  def conditions_defied_for?(permissions, action, resource) do
+    permissions.conditions_by_action_resource[{action, resource}]
+    |> case do
+      nil -> false
+      _ -> true
     end
   end
 

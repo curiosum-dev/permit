@@ -36,11 +36,9 @@ defmodule Permit.Permissions.DNF do
 
   @spec to_query(DNF.t(), Types.resource_module(), (Types.resource_module() -> Ecto.Query.t())) :: {:ok, Ecto.Query.t()} | {:error, term()}
   def to_query(%DNF{disjunctions: disjunctions}, record, prefilter \\ & &1) do
-    with {:ok, filter} <- maybe_convert(disjunctions) |> IO.inspect(label: "#{__MODULE__} filter") do
+    with {:ok, filter} <- maybe_convert(disjunctions) do
       prefilter.(record)
-      |> IO.inspect(label: "#{__MODULE__} prefilter")
       |> where(^filter)
-      |> IO.inspect(label: "#{__MODULE__} where")
       |> then(&{:ok, &1})
     end
   end

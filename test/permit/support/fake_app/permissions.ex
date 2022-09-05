@@ -31,7 +31,7 @@ defmodule Permit.FakeApp.Permissions do
 
   def can(%{role: :thread_moderator, thread_name: thread} = role) do
     grant(role)
-    |> all(Item, permission_level: {:<=, 3}, thread_name: {:=~, Regex.compile!(thread, "i")})
+    |> all(Item, permission_level: {:<=, 3}, thread_name: {:ilike, thread})
   end
 
   def can(%User{id: id} = role) do

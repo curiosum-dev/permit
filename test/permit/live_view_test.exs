@@ -352,7 +352,6 @@ defmodule Permit.LiveViewTest do
     end
 
     test "can do :edit on item 2", %{conn: conn} do
-      IO.inspect(conn, label: "#{__MODULE__} conn")
       {:ok, lv, _html} = live(conn, "/items/2/edit")
 
       assigns = get_assigns(lv)
@@ -445,7 +444,6 @@ defmodule Permit.LiveViewTest do
   end
 
   def dmt_thread_moderator_role(context) do
-    IO.inspect(context, label: "#{__MODULE__} context")
     {:ok, Map.put(context, :roles, [%{role: :thread_moderator, thread_name: "dmt"}])}
   end
 

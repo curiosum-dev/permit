@@ -53,9 +53,7 @@ defmodule Permit.Resolver do
   defp fetch_resource(authorization_module, resource_module, action, subject, loader_fn) do
     subject
     |> authorization_module.accessible_by!(action, resource_module, loader_fn)
-    |> IO.inspect(label: "#{__MODULE__} accesible")
     |> authorization_module.repo.all()
-    |> IO.inspect(label: "#{__MODULE__} repo all")
   end
 
   @spec check(

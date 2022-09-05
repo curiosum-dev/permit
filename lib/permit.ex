@@ -7,6 +7,7 @@ defmodule Permit do
   alias Permit.Types
   alias Permit.Permissions
   alias Permit.HasRoles
+  alias Permit.Permissions.UndefinedConditionError
 
   @type t :: %Permit{
           roles: [Types.role()],
@@ -69,9 +70,11 @@ defmodule Permit do
       @spec accessible_by(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
               {:ok, Ecto.Query.t()} | {:error, term()}
       def accessible_by(current_user, action, resource, prefilter \\ & &1) do
-        IO.inspect(current_user)
-        unquote(permissions_module)
-        |> apply(:can, [current_user])
+        # unquote(permissions_module)
+        # __MODULE__
+        # |> apply(:can, [current_user])
+        current_user
+        |> can()
         |> Map.get(:permissions)
         |> Permissions.construct_query(action, resource, prefilter)
       end
@@ -81,10 +84,19 @@ defmodule Permit do
       def accessible_by!(current_user, action, resource, prefilter \\ & &1) do
         case accessible_by(current_user, action, resource, prefilter) do
           {:ok, query} -> query
-          {:error, error} -> raise error
+          {:error, {:undefined_conditions_for, key}} -> raise UndefinedConditionError, {key, can(current_user).permissions.conditions_by_action_resource}
         end
       end
     end
+  end
+
+  @spec complement_permissions(Permit.t(), module()) :: Permit.t()
+  def complement_permissions(auth, actions_module) do
+    actions_module.list_actions()
+    |> Enum.map(fn action ->
+      auth.permissions
+      |> Permissions.conditions_defied_for?(action)
+    end)
   end
 
   @spec has_subject(Permit.t()) :: boolean()
