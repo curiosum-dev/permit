@@ -1,4 +1,4 @@
-defmodule Permit.Permissions.DNF do
+defmodule Permit.Permissions.DisjunctiveNormalForm do
   @moduledoc """
     Conditions written as logical formula in disjunctive normal form
     Disjunction of dual clauses
@@ -6,7 +6,7 @@ defmodule Permit.Permissions.DNF do
 
   defstruct disjunctions: []
 
-  alias __MODULE__
+  alias __MODULE__, as: DNF
   alias Permit.Types
   alias Permit.Permissions.ConditionClauses
   import Ecto.Query
@@ -34,13 +34,23 @@ defmodule Permit.Permissions.DNF do
     |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, subject))
   end
 
-  @spec to_query(DNF.t(), Types.resource_module(), (Types.resource_module() -> Ecto.Query.t())) :: {:ok, Ecto.Query.t()} | {:error, term()}
-  def to_query(%DNF{disjunctions: disjunctions}, record, prefilter \\ & &1) do
-    with {:ok, filter} <- maybe_convert(disjunctions) do
-      prefilter.(record)
-      |> where(^filter)
-      |> then(&{:ok, &1})
-    end
+  @spec to_dynamic_query(DNF.t()) :: {:ok, Ecto.Query.t()} | {:error, term()}
+  def to_dynamic_query(%DNF{disjunctions: disjunctions}) do
+    disjunctions
+    |> Enum.map(&ConditionClauses.to_dynamic_query/1)
+    |> Enum.reduce({:ok, dynamic(false)}, fn
+      {:ok, conditions_query}, {:ok, acc} ->
+        {:ok, dynamic(^acc or ^conditions_query)}
+
+      {:ok, _}, {:error, errors} ->
+        {:error, errors}
+
+      {:error, es}, {:error, errors} ->
+        {:error, es ++ errors}
+
+      {:error, errors}, {:ok, _} ->
+        {:error, errors}
+    end)
   end
 
   @spec join(DNF.t(), DNF.t()) :: DNF.t()

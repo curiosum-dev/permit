@@ -65,14 +65,8 @@ defmodule Permit.Resolver do
   defp check(action, authorization_module, resource_or_module, subject) do
     auth = authorization_module.can(subject)
     actions_module = authorization_module.actions_module()
+    verify_fn = &Permit.verify_record(auth, resource_or_module, &1)
 
-    {:ok, permitted?} =
-      Permit.Actions.traverse_actions(
-        actions_module,
-        action,
-        &Permit.verify_record(auth, resource_or_module, &1)
-      )
-
-    permitted?
+    Permit.Actions.verify_transitively!(actions_module, action, verify_fn)
   end
 end

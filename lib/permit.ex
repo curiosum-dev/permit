@@ -76,7 +76,7 @@ defmodule Permit do
         current_user
         |> can()
         |> Map.get(:permissions)
-        |> Permissions.construct_query(action, resource, prefilter)
+        |> Permissions.construct_query(action, resource, actions_module(), prefilter)
       end
 
       @spec accessible_by!(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
@@ -90,14 +90,7 @@ defmodule Permit do
     end
   end
 
-  @spec complement_permissions(Permit.t(), module()) :: Permit.t()
-  def complement_permissions(auth, actions_module) do
-    actions_module.list_actions()
-    |> Enum.map(fn action ->
-      auth.permissions
-      |> Permissions.conditions_defied_for?(action)
-    end)
-  end
+
 
   @spec has_subject(Permit.t()) :: boolean()
   def has_subject(%Permit{subject: nil}), do: false
