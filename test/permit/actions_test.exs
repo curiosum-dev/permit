@@ -56,45 +56,60 @@ defmodule Permit.Actions.ActionsTest do
   describe "traverse_actions/5" do
     setup do
       orut = &(&1 in [:read, :update])
-      %{const_false: fn _ -> false end, only_read_update_true: orut}
+      const_false = fn _ -> false end
+      functions1 = [
+        condition: const_false,
+        value: const_false,
+        empty: const_false,
+        join: & Enum.all?/1
+      ]
+
+      functions2 = [
+        condition: orut,
+        value: orut,
+        empty: const_false,
+        join: & Enum.all?/1
+      ]
+
+      %{const_false: functions1, orut: functions2}
     end
 
     test "should detect cycle", %{const_false: const_false} do
-      assert {:error, :cycle_in_grouping_schema_definition,
+      assert {:error, :cycle,
               [:edit, :change_unless, :change_if_field, :change_unless]} =
                Actions.traverse_actions(CyclicActions, :edit, const_false)
 
-      assert {:error, :cycle_in_grouping_schema_definition,
+      assert {:error, :cycle,
               [:change_unless, :change_if_field, :change_unless]} =
                Actions.traverse_actions(CyclicActions, :change_unless, const_false)
 
-      assert {:error, :cycle_in_grouping_schema_definition,
+      assert {:error, :cycle,
               [:change_if_field, :change_unless, :change_if_field]} =
                Actions.traverse_actions(CyclicActions, :change_if_field, const_false)
     end
 
     test "should detect non existent groups", %{const_false: const_false} do
-      assert {:error, :action_not_defined, :non_existent_action} =
+      assert {:error, :not_defined, :non_existent_action} =
                Actions.traverse_actions(NotPresentActions, :edit, const_false)
 
-      assert {:error, :action_not_defined, :non_existent_action} =
+      assert {:error, :not_defined, :non_existent_action} =
                Actions.traverse_actions(NotPresentActions, :change_unless, const_false)
 
-      assert {:error, :action_not_defined, :non_existent_action} =
+      assert {:error, :not_defined, :non_existent_action} =
                Actions.traverse_actions(NotPresentActions, :change_if_field, const_false)
 
-      assert {:error, :action_not_defined, :another_non_existent} =
+      assert {:error, :not_defined, :another_non_existent} =
                Actions.traverse_actions(NotPresentActions, :show, const_false)
     end
 
     test "should detect non existent starting point/actions", %{const_false: const_false} do
       for action <- [:edit, :show, :index, :new, :abc] do
-        assert {:error, :action_not_defined, ^action} =
+        assert {:error, :not_defined, ^action} =
                  Actions.traverse_actions(CrudActions, action, const_false)
       end
     end
 
-    test "action access granting should be transitive", %{only_read_update_true: orut} do
+    test "action access granting should be transitive", %{orut: orut} do
       assert {:ok, true} = Actions.traverse_actions(TransitiveActions, :edit, orut)
       assert {:ok, true} = Actions.traverse_actions(TransitiveActions, :show, orut)
       assert {:ok, true} = Actions.traverse_actions(TransitiveActions, :read, orut)

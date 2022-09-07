@@ -27,6 +27,7 @@ defmodule Permit.ControllerAuthorization do
 
   """
   alias Permit.Types
+  alias Permit.FakeApp.Item.Context
 
   @callback authorization_module() :: module()
   @callback resource_module() :: module()
@@ -114,7 +115,7 @@ defmodule Permit.ControllerAuthorization do
       @impl true
       def loader_fn(_action, resource_module, %{unquote(opts_id_param_name) => id}) do
         resource_module
-        # |> where([user], field(user, ^unquote(opts_id_struct_field_name)) == ^id)
+        |> Context.filter_by_field(String.to_atom(unquote(opts_id_param_name)), id)
       end
 
       def loader_fn(_action, resource_module, _params), do: resource_module

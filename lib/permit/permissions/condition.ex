@@ -142,13 +142,13 @@ defmodule Permit.Permissions.Condition do
       }) do
     case operator.dynamic_query(key, ops) do
       nil ->
-        {:error, {:condition_unconvertible, condition}}
+        {:error, {:condition_unconvertible, %{condition: condition, type: {:operator, operator}}}}
 
       query ->
         {:ok, query.(val)}
     end
   end
 
-  def to_dynamic_query(%Condition{condition_type: other}),
-    do: {:error, {:condition_unconvertible, other}}
+  def to_dynamic_query(%Condition{condition_type: other, condition: function}) when is_function(function),
+    do: {:error, {:condition_unconvertible, %{condition: function, type: other}}}
 end

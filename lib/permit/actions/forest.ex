@@ -36,15 +36,17 @@ defmodule Permit.Actions.Forest do
   @spec traverse_forest(
     Permit.Actions.Forest.t(),
     any(),
-    (any() -> boolean()),
-    (any() -> term()),
-    (any() -> term()),
-    ([term()] -> term()),
-    (any() -> vertex())) ::
+    [ condition: (any() -> boolean()),
+      value: (any() -> term()),
+      empty: (any() -> term()),
+      join: ([term()] -> term()),
+      node_for_value: (any() -> vertex()),
+      value_for_node: (vertex() -> any())
+    ]) ::
           {:ok, term()} | {:error, :cycle | :not_defined, term()}
-  def traverse_forest(%Forest{forest: forest}, value, condition, value_action, empty_action, join_action, node_for_value \\ & &1) do
+  def traverse_forest(%Forest{forest: forest}, value, actions) do
     try do
-      traverse_aux(forest, value, condition, value_action, empty_action, join_action, node_for_value, [])
+      traverse_aux(forest, value, actions, [])
       |> then(&{:ok, &1})
     catch
       {:not_defined, val} ->
@@ -55,25 +57,40 @@ defmodule Permit.Actions.Forest do
     end
   end
 
-  defp traverse_aux(forest, value, condition, value_action, empty_action, join_action, node_for_value, trace) do
+  defp traverse_aux(forest, value, actions, trace) do
+    condition_fn = Keyword.fetch!(actions, :condition)
+    value_fn = Keyword.fetch!(actions, :value)
+    empty_fn = Keyword.fetch!(actions, :empty)
+    join_fn = Keyword.fetch!(actions, :join)
+    node_for_value = Keyword.get(actions, :node_for_value, & &1)
+    value_for_node = Keyword.get(actions, :value_for_node, & &1)
+    # IO.inspect(value, label: "traversing in value")
     cond do
       value in trace ->
-        throw({:cycle, Enum.reverse([value | trace])})
+        throw({:cycle, Enum.reverse([node_for_value.(value) | trace])})
 
-      condition.(value) ->
-        value_action.(value)
+      condition_fn.(value) ->
+        # IO.inspect("condition sucesful")
+        value_fn.(value)
 
-      [] = forest[node_for_value.(value)] ->
-        empty_action.(value)
+      [] == forest[node_for_value.(value)] ->
+        # IO.inspect("empty sucesful")
+        empty_fn.(value)
 
-      nil = forest[node_for_value.(value)] ->
+      nil == forest[node_for_value.(value)] ->
+        # IO.inspect("nil sucesful")
         throw({:not_defined, value})
 
-      true -> forest[node_for_value.(value)]
-        |> Enum.map(
-          &traverse_aux(forest, &1, condition, value_action, empty_action, join_action, node_for_value, [value | trace])
-        )
-        |> join_action.()
+      true ->
+        # IO.inspect("true sucesful")
+        forest[node_for_value.(value)]
+        |> Enum.map(fn node ->
+          val = value_for_node.(node)
+          trace = [node_for_value.(value) | trace]
+
+          traverse_aux(forest, val, actions, trace)
+        end)
+        |> join_fn.()
     end
   end
 end

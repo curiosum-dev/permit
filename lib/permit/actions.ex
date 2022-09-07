@@ -74,52 +74,52 @@ defmodule Permit.Actions do
           | {:error, :cycle, [Types.action_group()]}
           | {:error, :not_defined, Types.action_group()}
   def verify_transitively(actions_module, action, verify_fn) do
-    actions_module.to_forest()
-    |> Forest.traverse_forest(
+    functions = [
+      condition: verify_fn,
+      value: fn _ -> true end,
+      empty: fn _ -> false end,
+      join: & Enum.all?/1
+    ]
+
+    traverse_actions(
+      actions_module,
       action,
-      verify_fn,
-      fn _ -> true end,
-      fn _ -> false end,
-      & Enum.all?/1
+      functions
     )
   end
 
-  @spec verify_transitively(
+  @spec verify_transitively!(
           module(),
           Types.controller_action(),
           (Types.controller_action() -> boolean())
         ) :: boolean()
   def verify_transitively!(actions_module, action, verify_fn) do
-    case verify_transitively(actions_module, action, verify_fn) do
-      {:ok, verified?} ->
-        verified?
+    fn -> verify_transitively(actions_module, action, verify_fn) end
+    |> raise_traversal_errors!(actions_module)
+  end
+
+  def traverse_actions(actions_module, key, functions) do
+    # IO.inspect(key, label: "key")
+    actions_module.to_forest()
+    # |> IO.inspect(label: :forest)
+    |> Forest.traverse_forest(key, functions)
+  end
+
+  def traverse_actions!(actions_module, key, functions) do
+    fn -> traverse_actions(actions_module, key, functions) end
+    |> raise_traversal_errors!(actions_module)
+  end
+
+  defp raise_traversal_errors!(function, actions_module) do
+    case function.() do
+      {:ok, result} ->
+        result
+
       {:error, :not_defined, action} ->
         raise UndefinedActionError, {action, actions_module}
+
       {:error, :cycle, trace} ->
         raise CycledDefinitionError, {trace, actions_module}
     end
-  end
-
-  def construct_query_transitively!(actions_module, key, condition_fn,  constructor_fn, join_fn) do
-    with {:error, error, payload} <- construct_query_transitively(actions_module, key, condition_fn,  constructor_fn, join_fn) do
-      case error do
-        :not_defined ->
-          raise UndefinedActionError, {payload, actions_module}
-        :cycle ->
-          raise CycledDefinitionError, {payload, actions_module}
-      end
-    end
-  end
-
-  def construct_query_transitively(actions_module, key, condition_fn,  constructor_fn, join_fn) do
-    actions_module.to_forest()
-    |> Forest.traverse_forest(
-      key,
-      condition_fn,
-      constructor_fn,
-      &(raise UndefinedConditionError, &1),
-      join_fn,
-      & elem(&1, 0)
-    )|> IO.inspect(label: :QUERY)
   end
 end

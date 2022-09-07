@@ -48,22 +48,33 @@ defmodule Permit.Permissions do
   def construct_query(permissions, action, resource, actions_module, prefilter \\ & &1) do
     resource = resource_module_from_resource(resource)
 
-    IO.inspect(actions_module, label: "module in #{__MODULE__}")
+    with {:ok, filter} <- transitive_query(permissions, actions_module, action, resource) do
+      resource
+      |> prefilter.()
+      |> where(^filter)
+      |> then(&{:ok, &1})
+    end
+  end
 
-    with {:ok, {:ok, filter}} <- Actions.construct_query_transitively!(
-      actions_module,
-      {action, resource},
-      & conditions_defied_for?(permissions, &1),
-      fn key ->
-        permissions.conditions_map
-        |> Map.get(key)
-        |> DNF.to_dynamic_query()
-      end,
-      & join_queries(&1)) do
-    resource
-    |> prefilter.()
-    |> where(^filter)
-    |> then(&{:ok, &1})
+  defp transitive_query(permissions, actions_module, action, resource) do
+    functions = [
+      condition: & conditions_defined_for?(permissions, &1),
+      value: & permissions.conditions_map |> Map.get(&1) |> DNF.to_dynamic_query(),
+      empty: & throw({:undefined_condition, &1}),
+      join: & join_queries(&1),
+      node_for_value: & elem(&1, 0),
+      value_for_node: & {&1, resource}
+    ]
+    
+    try do
+      Actions.traverse_actions!(
+        actions_module,
+        {action, resource},
+        functions
+      )
+    catch
+      {:undefined_condition, _} = error ->
+        {:error, error}
     end
   end
 
@@ -79,8 +90,8 @@ defmodule Permit.Permissions do
     end)
   end
 
-  @spec conditions_defied_for?(Permissions.t(), {Types.controller_action(), Types.resource()}) :: boolean()
-  def conditions_defied_for?(permissions, {_, _} = key) do
+  @spec conditions_defined_for?(Permissions.t(), {Types.controller_action(), Types.resource()}) :: boolean()
+  def conditions_defined_for?(permissions, {_, _} = key) do
     permissions.conditions_map[key]
     |> case do
       nil -> false

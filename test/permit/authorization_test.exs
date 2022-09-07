@@ -307,7 +307,7 @@ defmodule Permit.AuthorizationTest do
       assert {:error, condition_unconvertible: _, condition_unconvertible: _} =
                TestAuthorization.accessible_by(@another_one_role, :delete, @like_object)
 
-      assert {:error, condition_unconvertible: :function_2} =
+      assert {:error, condition_unconvertible: %{type: :function_2}} =
                TestAuthorization.accessible_by(@manager_role, :delete, @like_object)
     end
   end

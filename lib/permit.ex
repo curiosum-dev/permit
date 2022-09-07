@@ -8,6 +8,7 @@ defmodule Permit do
   alias Permit.Permissions
   alias Permit.HasRoles
   alias Permit.Permissions.UndefinedConditionError
+  alias Permit.Permissions.UnconvertibleConditionError
 
   @type t :: %Permit{
           roles: [Types.role()],
@@ -83,8 +84,14 @@ defmodule Permit do
               Ecto.Query.t()
       def accessible_by!(current_user, action, resource, prefilter \\ & &1) do
         case accessible_by(current_user, action, resource, prefilter) do
-          {:ok, query} -> query
-          {:error, {:undefined_conditions_for, key}} -> raise UndefinedConditionError, {key, can(current_user).permissions.conditions_by_action_resource}
+          {:ok, query} ->
+            query
+
+          {:error, {:undefined_condition, key}} ->
+            raise UndefinedConditionError, key
+
+          {:error, errors} ->
+            raise UnconvertibleConditionError, errors
         end
       end
     end

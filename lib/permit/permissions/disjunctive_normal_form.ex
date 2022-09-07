@@ -57,22 +57,4 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
   def join(%DNF{disjunctions: d1}, %DNF{disjunctions: d2}) do
     %DNF{disjunctions: d1 ++ d2}
   end
-
-  defp maybe_convert(disjunctions) do
-    disjunctions
-    |> Enum.map(&ConditionClauses.to_dynamic_query/1)
-    |> Enum.reduce({:ok, dynamic(false)}, fn
-      {:ok, conditions_query}, {:ok, acc} ->
-        {:ok, dynamic(^acc or ^conditions_query)}
-
-      {:ok, _}, {:error, errors} ->
-        {:error, errors}
-
-      {:error, es}, {:error, errors} ->
-        {:error, es ++ errors}
-
-      {:error, errors}, {:ok, _} ->
-        {:error, errors}
-    end)
-  end
 end

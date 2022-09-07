@@ -6,6 +6,8 @@ defmodule Permit.LiveViewTest do
 
   alias Permit.LiveViewTest.{Endpoint, HooksLive}
   alias Permit.FakeApp.{Item, User}
+  alias Permit.Permissions.UnconvertibleConditionError
+  alias Permit.Permissions.UndefinedConditionError
 
   @endpoint Endpoint
 
@@ -77,39 +79,43 @@ defmodule Permit.LiveViewTest do
     end
 
     test "can do :show on owned item", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, "/items/1")
+      # {:ok, lv, _html} = live(conn, "/items/1")
 
-      assigns = get_assigns(lv)
+      # assigns = get_assigns(lv)
 
-      assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      # assert :unauthorized not in Map.keys(assigns)
+      # assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert_raise_UnconvertibleConditionError(conn, "/items/1")
     end
 
     test "cannot do :show on non-owned item", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, "/items/1")
+      # {:ok, lv, _html} = live(conn, "/items/1")
 
-      assigns = get_assigns(lv)
+      # assigns = get_assigns(lv)
 
-      assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      # assert :unauthorized not in Map.keys(assigns)
+      # assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert_raise_UnconvertibleConditionError(conn, "/items/1")
     end
 
     test "can do :edit on owned item", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, "/items/1/edit")
+      # {:ok, lv, _html} = live(conn, "/items/1/edit")
 
-      assigns = get_assigns(lv)
+      # assigns = get_assigns(lv)
 
-      assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      # assert :unauthorized not in Map.keys(assigns)
+      # assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert_raise_UnconvertibleConditionError(conn, "/items/1/edit")
     end
 
     test "cannot do :edit on non-owned item", %{conn: conn} do
-      {:ok, lv, _html} = live(conn, "/items/2/edit")
+      # {:ok, lv, _html} = live(conn, "/items/2/edit")
 
-      assigns = get_assigns(lv)
+      # assigns = get_assigns(lv)
 
-      assert :unauthorized in Map.keys(assigns)
-      assert :loaded_resources not in Map.keys(assigns)
+      # assert :unauthorized in Map.keys(assigns)
+      # assert :loaded_resources not in Map.keys(assigns)
+      assert_raise_UnconvertibleConditionError(conn, "/items/2/edit")
     end
 
     test "can do :new on items", %{conn: conn} do
@@ -458,5 +464,10 @@ defmodule Permit.LiveViewTest do
 
   defp get_assigns(lv) do
     HooksLive.run(lv, fn socket -> {:reply, socket.assigns, socket} end)
+  end
+
+  defp assert_raise_UnconvertibleConditionError(conn, url) do
+    assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/,
+        fn -> live(conn, url) end
   end
 end
