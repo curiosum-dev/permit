@@ -71,9 +71,6 @@ defmodule Permit do
       @spec accessible_by(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
               {:ok, Ecto.Query.t()} | {:error, term()}
       def accessible_by(current_user, action, resource, prefilter \\ & &1) do
-        # unquote(permissions_module)
-        # __MODULE__
-        # |> apply(:can, [current_user])
         current_user
         |> can()
         |> Map.get(:permissions)
