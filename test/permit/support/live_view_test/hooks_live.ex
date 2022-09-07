@@ -8,7 +8,7 @@ defmodule Permit.LiveViewTest.HooksLive do
     resource_module: Item
 
   @impl true
-  def loader_fn(_action, Item, %{"id" => id}) do
+  def prefilter(_action, Item, %{"id" => id}) do
     id =
       if is_bitstring(id) do
         String.to_integer(id)

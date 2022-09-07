@@ -30,14 +30,14 @@ defmodule Permit.Resolver do
         authorization_module,
         resource_module,
         action,
-        loader_fn
+        prefilter
       )
       when not is_nil(subject) do
     with true <-
            check(action, authorization_module, resource_module, subject),
          records <-
-           fetch_resource(authorization_module, resource_module, action, subject, loader_fn),
-          [_|_] <- records do
+           fetch_resource(authorization_module, resource_module, action, subject, prefilter),
+         [_ | _] <- records do
       {:authorized, records}
     else
       _ -> :unauthorized
@@ -51,9 +51,9 @@ defmodule Permit.Resolver do
           Permit.HasRole.t(),
           function()
         ) :: [struct()]
-  defp fetch_resource(authorization_module, resource_module, action, subject, loader_fn) do
+  defp fetch_resource(authorization_module, resource_module, action, subject, prefilter) do
     subject
-    |> authorization_module.accessible_by!(action, resource_module, loader_fn)
+    |> authorization_module.accessible_by!(action, resource_module, prefilter)
     |> authorization_module.repo.all()
   end
 

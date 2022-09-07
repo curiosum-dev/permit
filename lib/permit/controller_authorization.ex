@@ -31,7 +31,7 @@ defmodule Permit.ControllerAuthorization do
 
   @callback authorization_module() :: module()
   @callback resource_module() :: module()
-  @callback loader_fn(Types.controller_action(), module(), map()) :: Ecto.Query.t()
+  @callback prefilter(Types.controller_action(), module(), map()) :: Ecto.Query.t()
   @callback handle_unauthorized(Types.conn()) :: Types.conn()
   @callback user_from_conn(Types.conn()) :: struct()
   @callback preload_resource_in() :: list(atom())
@@ -43,7 +43,7 @@ defmodule Permit.ControllerAuthorization do
                       fallback_path: 0,
                       resource_module: 0,
                       except: 0,
-                      loader_fn: 3,
+                      prefilter: 3,
                       user_from_conn: 1
 
   defmacro __using__(opts) do
@@ -55,8 +55,25 @@ defmodule Permit.ControllerAuthorization do
     opts_preload_resource_in = opts[:preload_resource_in]
     opts_fallback_path = opts[:fallback_path]
     opts_except = opts[:except]
-    opts_id_param_name = Keyword.get(opts, :id_param_name, quote do "id" end)
-    opts_id_struct_field_name = Keyword.get(opts, :id_struct_name, quote do :id end)
+
+    opts_id_param_name =
+      Keyword.get(
+        opts,
+        :id_param_name,
+        quote do
+          "id"
+        end
+      )
+
+    opts_id_struct_field_name =
+      Keyword.get(
+        opts,
+        :id_struct_name,
+        quote do
+          :id
+        end
+      )
+
     opts_user_from_conn_fn = opts[:user_from_conn]
 
     quote generated: true do
@@ -113,12 +130,12 @@ defmodule Permit.ControllerAuthorization do
       end
 
       @impl true
-      def loader_fn(_action, resource_module, %{unquote(opts_id_param_name) => id}) do
+      def prefilter(_action, resource_module, %{unquote(opts_id_param_name) => id}) do
         resource_module
-        |> Context.filter_by_field(String.to_atom(unquote(opts_id_param_name)), id)
+        |> Context.filter_by_field(unquote(opts_id_struct_field_name), id)
       end
 
-      def loader_fn(_action, resource_module, _params), do: resource_module
+      def prefilter(_action, resource_module, _params), do: resource_module
 
       @impl true
       def user_from_conn(conn) do
@@ -146,7 +163,7 @@ defmodule Permit.ControllerAuthorization do
         preload_resource_in: &__MODULE__.preload_resource_in/0,
         fallback_path: &__MODULE__.fallback_path/0,
         except: &__MODULE__.except/0,
-        loader_fn: &__MODULE__.loader_fn/3,
+        prefilter: &__MODULE__.prefilter/3,
         user_from_conn: &__MODULE__.user_from_conn/1,
         handle_unauthorized: &__MODULE__.handle_unauthorized/1
       )

@@ -148,7 +148,8 @@ defmodule Permit.Plug do
       authorization_module,
       resource_module,
       controller_action
-    ) |> case do
+    )
+    |> case do
       true -> conn
       false -> opts[:handle_unauthorized].(conn)
     end
@@ -165,15 +166,14 @@ defmodule Permit.Plug do
   defp authorize_and_preload_resource(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
 
-    loader_fn = Keyword.fetch!(opts, :loader_fn)
-
+    prefilter = Keyword.fetch!(opts, :prefilter)
 
     Resolver.authorize_with_preloading!(
       subject,
       authorization_module,
       resource_module,
       controller_action,
-      fn resource -> loader_fn.(controller_action, resource, conn.params) end
+      fn resource -> prefilter.(controller_action, resource, conn.params) end
     )
     |> case do
       {:authorized, record} ->

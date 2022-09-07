@@ -140,7 +140,7 @@ defmodule Permit.AuthorizeHook do
   defp preload_and_authorize(socket, params) do
     authorization_module = socket.view.authorization_module()
     resource_module = socket.view.resource_module()
-    loader_fn = &socket.view.loader_fn/3
+    prefilter = &socket.view.prefilter/3
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
 
@@ -149,7 +149,7 @@ defmodule Permit.AuthorizeHook do
       authorization_module,
       resource_module,
       action,
-      fn resource -> loader_fn.(action, resource, params) end
+      fn resource -> prefilter.(action, resource, params) end
     )
     |> case do
       {:authorized, records} ->
