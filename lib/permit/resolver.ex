@@ -54,7 +54,6 @@ defmodule Permit.Resolver do
   defp fetch_resource(authorization_module, resource_module, action, subject, loader_fn) do
     subject
     |> authorization_module.accessible_by!(action, resource_module, loader_fn)
-    # |> IO.inspect(label: "query")
     |> authorization_module.repo.all()
   end
 
@@ -68,10 +67,7 @@ defmodule Permit.Resolver do
     auth = authorization_module.can(subject)
     actions_module = authorization_module.actions_module()
     verify_fn = &Permit.verify_record(auth, resource_or_module, &1)
-    # IO.inspect(resource_or_module, label: :resource_or_module)
-    # IO.inspect(auth.permissions, label: "permissions")
 
     Permit.Actions.verify_transitively!(actions_module, action, verify_fn)
-    # |> IO.inspect(label: "verify")
   end
 end

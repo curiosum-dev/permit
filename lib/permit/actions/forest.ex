@@ -64,25 +64,21 @@ defmodule Permit.Actions.Forest do
     join_fn = Keyword.fetch!(actions, :join)
     node_for_value = Keyword.get(actions, :node_for_value, & &1)
     value_for_node = Keyword.get(actions, :value_for_node, & &1)
-    # IO.inspect(value, label: "traversing in value")
+
     cond do
       value in trace ->
         throw({:cycle, Enum.reverse([node_for_value.(value) | trace])})
 
       condition_fn.(value) ->
-        # IO.inspect("condition sucesful")
         value_fn.(value)
 
       [] == forest[node_for_value.(value)] ->
-        # IO.inspect("empty sucesful")
         empty_fn.(value)
 
       nil == forest[node_for_value.(value)] ->
-        # IO.inspect("nil sucesful")
         throw({:not_defined, value})
 
       true ->
-        # IO.inspect("true sucesful")
         forest[node_for_value.(value)]
         |> Enum.map(fn node ->
           val = value_for_node.(node)

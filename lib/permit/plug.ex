@@ -174,7 +174,7 @@ defmodule Permit.Plug do
       resource_module,
       controller_action,
       fn resource -> loader_fn.(controller_action, resource, conn.params) end
-    ) #|> IO.inspect(label: :resolver)
+    ) 
     |> case do
       {:authorized, record} ->
         conn

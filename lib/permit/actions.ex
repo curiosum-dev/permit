@@ -99,9 +99,7 @@ defmodule Permit.Actions do
   end
 
   def traverse_actions(actions_module, key, functions) do
-    # IO.inspect(key, label: "key")
     actions_module.to_forest()
-    # |> IO.inspect(label: :forest)
     |> Forest.traverse_forest(key, functions)
   end
 
