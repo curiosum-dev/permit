@@ -143,15 +143,15 @@ defmodule Permit.Plug do
   defp just_authorize(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
 
-    check_result =
-      Resolver.authorized_without_preloading?(
-        subject,
-        authorization_module,
-        resource_module,
-        controller_action
-      )
-
-    if check_result, do: conn, else: opts[:handle_unauthorized].(conn)
+    Resolver.authorized_without_preloading?(
+      subject,
+      authorization_module,
+      resource_module,
+      controller_action
+    ) |> case do
+      true -> conn
+      false -> opts[:handle_unauthorized].(conn)
+    end
   end
 
   @spec authorize_and_preload_resource(
@@ -174,7 +174,7 @@ defmodule Permit.Plug do
       resource_module,
       controller_action,
       fn resource -> loader_fn.(controller_action, resource, conn.params) end
-    ) 
+    )
     |> case do
       {:authorized, record} ->
         conn
