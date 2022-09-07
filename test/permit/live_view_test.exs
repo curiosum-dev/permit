@@ -6,8 +6,6 @@ defmodule Permit.LiveViewTest do
 
   alias Permit.LiveViewTest.{Endpoint, HooksLive}
   alias Permit.FakeApp.{Item, User}
-  alias Permit.Permissions.UnconvertibleConditionError
-  alias Permit.Permissions.UndefinedConditionError
 
   @endpoint Endpoint
 

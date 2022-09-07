@@ -38,18 +38,30 @@ defmodule Permit.Permissions.ConditionClauses do
   def to_dynamic_query(%ConditionClauses{conditions: conditions}) do
     conditions
     |> Enum.map(&Condition.to_dynamic_query/1)
-    |> Enum.reduce({:ok, dynamic(true)}, fn
-      {:ok, condition_query}, {:ok, acc} ->
-        {:ok, dynamic(^acc and ^condition_query)}
+    |> case do
+      [] ->
+        {:ok, dynamic(true)}
 
-      {:ok, _}, {:error, errors} ->
-        {:error, errors}
-
-      {:error, error}, {:error, errors} ->
-        {:error, [error | errors]}
-
-      {:error, error}, {:ok, _} ->
+      [{:error, error}] when not is_list(error) ->
         {:error, [error]}
-    end)
+
+      list ->
+        Enum.reduce(list, & join_queries/2)
+    end
   end
+
+  defp join_queries({:ok, condition_query}, {:ok, acc}),
+    do: {:ok, dynamic(^acc and ^condition_query)}
+
+  defp join_queries({:ok, _}, {:error, errors}),
+    do: {:error, errors}
+
+  defp join_queries({:error, err1}, {:error, err2}) when is_tuple(err2),
+    do: {:error, [err1, err2]}
+
+  defp join_queries({:error, error}, {:error, errors}) when is_list(errors),
+    do: {:error, [error | errors]}
+
+  defp join_queries({:error, error}, {:ok, _}),
+    do: {:error, [error]}
 end

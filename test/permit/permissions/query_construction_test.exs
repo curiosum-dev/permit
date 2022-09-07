@@ -78,9 +78,8 @@ defmodule Permit.Permissions.QueryConstructionTest do
                query,
                from(r in res.__struct__,
                  where:
-                   false or
-                     (true and is_nil(r.name) and not is_nil(r.bar)) or
-                     (true and r.foo >= ^0 and r.bar != ^5)
+                     (is_nil(r.name) and not is_nil(r.bar)) or
+                     (r.foo >= ^0 and r.bar != ^5)
                )
              )
     end
@@ -96,8 +95,7 @@ defmodule Permit.Permissions.QueryConstructionTest do
                query,
                from(r in res.__struct__,
                  where:
-                   false or
-                     (true and ilike(r.name, ^"%NAME"))
+                     ilike(r.name, ^"%NAME")
                )
              )
     end
@@ -112,8 +110,7 @@ defmodule Permit.Permissions.QueryConstructionTest do
                query,
                from(r in res.__struct__,
                  where:
-                   false or
-                     (true and r.foo == ^1 and not is_nil(r.name))
+                     (r.foo == ^1 and not is_nil(r.name))
                )
              )
     end
@@ -125,8 +122,7 @@ defmodule Permit.Permissions.QueryConstructionTest do
                query,
                from(r in res.__struct__,
                  where:
-                   false or
-                     (true and like(r.name, ^"%") and is_nil(r.foo))
+                     (like(r.name, ^"%") and is_nil(r.foo))
                )
              )
     end
