@@ -34,14 +34,12 @@ defmodule Permit.Actions.Forest do
     when is_atom(key), do: {key, []}
 
   @spec traverse_forest(
-    Permit.Actions.Forest.t(),
+    Forest.t(),
     any(),
     [ condition: (any() -> boolean()),
       value: (any() -> term()),
       empty: (any() -> term()),
-      join: ([term()] -> term()),
-      node_for_value: (any() -> vertex()),
-      value_for_node: (vertex() -> any())
+      join: ([term()] -> term())
     ]) ::
           {:ok, term()} | {:error, :cycle | :not_defined, term()}
   def traverse_forest(%Forest{forest: forest}, value, actions) do
@@ -62,30 +60,23 @@ defmodule Permit.Actions.Forest do
     value_fn = Keyword.fetch!(actions, :value)
     empty_fn = Keyword.fetch!(actions, :empty)
     join_fn = Keyword.fetch!(actions, :join)
-    node_for_value = Keyword.get(actions, :node_for_value, & &1)
-    value_for_node = Keyword.get(actions, :value_for_node, & &1)
 
     cond do
       value in trace ->
-        throw({:cycle, Enum.reverse([node_for_value.(value) | trace])})
+        throw({:cycle, Enum.reverse([value | trace])})
 
       condition_fn.(value) ->
         value_fn.(value)
 
-      [] == forest[node_for_value.(value)] ->
+      [] == forest[value] ->
         empty_fn.(value)
 
-      nil == forest[node_for_value.(value)] ->
+      nil == forest[value] ->
         throw({:not_defined, value})
 
       true ->
-        forest[node_for_value.(value)]
-        |> Enum.map(fn node ->
-          val = value_for_node.(node)
-          trace = [node_for_value.(value) | trace]
-
-          traverse_aux(forest, val, actions, trace)
-        end)
+        forest[value]
+        |> Enum.map(& traverse_aux(forest, &1, actions, [value | trace]))
         |> join_fn.()
     end
   end
