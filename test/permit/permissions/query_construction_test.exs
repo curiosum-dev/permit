@@ -45,34 +45,40 @@ defmodule Permit.Permissions.QueryConstructionTest do
       convertible: query_convertible,
       convertible_nil: query_convertible_nil,
       nonconvertible: query_nonconvertible,
-      actions_module: Permit.Actions.CrudActions
+      actions_module: Permit.Actions.CrudActions,
+      subject: nil
     }
   end
 
   describe "Permit.Permissions.construct_query/3" do
-    test "should construct query", %{resource: res, convertible_nil: permissions, actions_module: module} do
-      assert {:ok, _query} = Permissions.construct_query(permissions, :delete, res, module)
-      assert {:ok, _query} = Permissions.construct_query(permissions, :create, res, module)
-      assert {:ok, _query} = Permissions.construct_query(permissions, :read, res, module)
-      assert {:ok, _query} = Permissions.construct_query(permissions, :update, res, module)
+    test "should construct query", %{resource: res, convertible_nil: permissions, actions_module: module, subject: subject} do
+      assert {:ok, _query} = Permissions.construct_query(permissions, :delete, res, subject, module)
+      assert {:ok, _query} = Permissions.construct_query(permissions, :create, res, subject, module)
+      assert {:ok, _query} = Permissions.construct_query(permissions, :read, res, subject, module)
+      assert {:ok, _query} = Permissions.construct_query(permissions, :update, res, subject, module)
     end
 
-    test "should not construct ecto query", %{resource: res, nonconvertible: permissions, actions_module: module} do
+    test "should not construct ecto query", %{resource: res, nonconvertible: permissions, actions_module: module, subject: subject} do
       assert {:error, condition_unconvertible: %{type: :function_2}} =
-               Permissions.construct_query(permissions, :delete, res, module)
+               Permissions.construct_query(permissions, :delete, res, subject, module)
 
       assert {:error, condition_unconvertible: _} =
-               Permissions.construct_query(permissions, :update, res, module)
+               Permissions.construct_query(permissions, :update, res, subject, module)
 
       assert {:error, condition_unconvertible: %{type: :function_1}} =
-               Permissions.construct_query(permissions, :read, res, module)
+               Permissions.construct_query(permissions, :read, res, subject, module)
 
       assert {:error, condition_unconvertible: %{type: :function_1}} =
-               Permissions.construct_query(permissions, :create, res, module)
+               Permissions.construct_query(permissions, :create, res, subject, module)
     end
 
-    test "should construct proper query with or", %{resource: res, convertible: permissions, actions_module: module} do
-      {:ok, query} = Permissions.construct_query(permissions, :delete, res, module)
+    test "should construct proper query with or", %{
+        resource: res,
+        convertible: permissions,
+        actions_module: module,
+        subject: subject
+      } do
+      {:ok, query} = Permissions.construct_query(permissions, :delete, res, subject, module)
 
       assert compare_query(
                query,
@@ -87,9 +93,10 @@ defmodule Permit.Permissions.QueryConstructionTest do
     test "should construct proper query with like operator", %{
       resource: res,
       convertible: permissions,
-      actions_module: module
+      actions_module: module,
+      subject: subject
     } do
-      {:ok, query} = Permissions.construct_query(permissions, :update, res, module)
+      {:ok, query} = Permissions.construct_query(permissions, :update, res, subject, module)
 
       assert compare_query(
                query,
@@ -102,9 +109,11 @@ defmodule Permit.Permissions.QueryConstructionTest do
 
     test "should construct proper query with eq and not nil", %{
       resource: res,
-      convertible: permissions, actions_module: module
+      convertible: permissions,
+      actions_module: module,
+      subject: subject
     } do
-      {:ok, query} = Permissions.construct_query(permissions, :read, res, module)
+      {:ok, query} = Permissions.construct_query(permissions, :read, res, subject, module)
 
       assert compare_query(
                query,
@@ -115,8 +124,13 @@ defmodule Permit.Permissions.QueryConstructionTest do
              )
     end
 
-    test "should construct proper query with nil", %{resource: res, convertible: permissions, actions_module: module} do
-      {:ok, query} = Permissions.construct_query(permissions, :create, res, module)
+    test "should construct proper query with nil", %{
+        resource: res,
+        convertible: permissions,
+        actions_module: module,
+        subject: subject
+      } do
+      {:ok, query} = Permissions.construct_query(permissions, :create, res, subject, module)
 
       assert compare_query(
                query,

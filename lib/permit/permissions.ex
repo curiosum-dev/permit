@@ -43,24 +43,25 @@ defmodule Permit.Permissions do
     |> DNF.any_satisfied?(record, subject)
   end
 
-  @spec construct_query(Permissions.t(), Types.action_group(), Types.resource(), module(), (Types.resource() -> Ecto.Query.t())) ::
+  @spec construct_query(Permissions.t(), Types.action_group(), Types.resource(), Types.subject(), module(), (Types.resource() -> Ecto.Query.t())) ::
           {:ok, Ecto.Query.t()} | {:error, [term()]}
-  def construct_query(permissions, action, resource, actions_module, prefilter \\ & &1) do
-    resource = resource_module_from_resource(resource)
-
-    with {:ok, filter} <- transitive_query(permissions, actions_module, action, resource) do
+  def construct_query(permissions, action, resource, subject, actions_module, prefilter \\ & &1) do
+    with {:ok, filter} <- transitive_query(permissions, actions_module, action, resource, subject) do
       resource
+      |> resource_module_from_resource()
       |> prefilter.()
       |> where(^filter)
       |> then(&{:ok, &1})
     end
   end
 
-  defp transitive_query(permissions, actions_module, action, resource) do
+  defp transitive_query(permissions, actions_module, action, resource, subject) do
+    res_module = resource_module_from_resource(resource)
+
     functions = [
-      condition: & conditions_defined_for?(permissions, &1, resource),
-      value: & permissions.conditions_map |> Map.get({&1, resource}) |> DNF.to_dynamic_query(),
-      empty: & throw({:undefined_condition, {&1, resource}}),
+      condition: & conditions_defined_for?(permissions, &1, res_module),
+      value: & permissions.conditions_map |> Map.get({&1, res_module}) |> DNF.to_dynamic_query(subject, resource),
+      empty: & throw({:undefined_condition, {&1, res_module}}),
       join: fn l -> Enum.reduce(l, &join_queries/2) end
     ]
 

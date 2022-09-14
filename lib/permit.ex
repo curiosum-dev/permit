@@ -43,6 +43,8 @@ defmodule Permit do
       Returns a Permit struct.
       """
 
+      # require unquote(permissions_module)
+
       def actions_module,
         do: unquote(permissions_module).actions_module()
 
@@ -74,7 +76,7 @@ defmodule Permit do
         current_user
         |> can()
         |> Map.get(:permissions)
-        |> Permissions.construct_query(action, resource, actions_module(), prefilter)
+        |> Permissions.construct_query(action, resource, current_user, actions_module(), prefilter)
       end
 
       @spec accessible_by!(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
@@ -110,11 +112,9 @@ defmodule Permit do
         ]) ::
           Permit.t()
   def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
-    updated_permissions =
-      authorization.permissions
-      |> Permissions.add(action, resource, conditions)
-
-    %Permit{authorization | permissions: updated_permissions}
+    authorization.permissions
+    |> Permissions.add(action, resource, conditions)
+    |> then(& %Permit{authorization | permissions: &1})
   end
 
   @spec verify_record(Permit.t(), Types.resource(), Types.action_group()) :: boolean()

@@ -3,7 +3,7 @@ defmodule Permit.Permissions.Condition do
      Condition
   """
   @enforce_keys [:condition, :condition_type]
-  defstruct [:condition, :condition_type, :semantics]
+  defstruct [:condition, :condition_type, :semantics, :explicit_query]
 
   alias __MODULE__
   alias Permit.Types
@@ -15,7 +15,8 @@ defmodule Permit.Permissions.Condition do
   @type t :: %Condition{
           condition: Types.condition(),
           condition_type: condition_type(),
-          semantics: (any() -> boolean())
+          semantics: (any() -> boolean()),
+          explicit_query: nil | Ecto.Query.t()
         }
 
   @eq_operators Operators.eq_operators()
@@ -23,6 +24,14 @@ defmodule Permit.Permissions.Condition do
   @operators Operators.all()
 
   @spec new(Types.condition()) :: Condition.t()
+  def new({semantics_fun, query_fun})
+    when is_function(semantics_fun, 1) and is_function(query_fun, 1) or
+         is_function(semantics_fun, 2) and is_function(query_fun, 2) do
+      semantics_fun
+      |> new()
+      |> put_query_function(query_fun)
+    end
+
   def new({key, {:not, nil}})
       when is_atom(key) do
     %Condition{
@@ -132,14 +141,14 @@ defmodule Permit.Permissions.Condition do
   def satisfied?(%Condition{condition: function, condition_type: :function_2}, record, subject),
     do: !!function.(subject, record)
 
-  @spec to_dynamic_query(Condition.t()) :: {:ok, Ecto.Query.DynamicExpr.t()} | {:error, term()}
-  def to_dynamic_query(%Condition{condition: condition, condition_type: :const}),
+  @spec to_dynamic_query(Condition.t(), Types.resource(), Types.subject()) :: {:ok, Ecto.Query.DynamicExpr.t()} | {:error, term()}
+  def to_dynamic_query(%Condition{condition: condition, condition_type: :const}, _subject, _resource),
     do: {:ok, dynamic(^condition)}
 
   def to_dynamic_query(%Condition{
         condition: {key, {_op, val, ops}} = condition,
         condition_type: {:operator, operator}
-      }) do
+      }, _subject, _resource) do
     case operator.dynamic_query(key, ops) do
       nil ->
         {:error, {:condition_unconvertible, %{condition: condition, type: {:operator, operator}}}}
@@ -149,6 +158,17 @@ defmodule Permit.Permissions.Condition do
     end
   end
 
-  def to_dynamic_query(%Condition{condition_type: other, condition: function}) when is_function(function),
+
+  def to_dynamic_query(%Condition{condition_type: other, condition: function, explicit_query: nil}, _, _) when is_function(function),
     do: {:error, {:condition_unconvertible, %{condition: function, type: other}}}
+
+  def to_dynamic_query(%Condition{condition_type: :function_1, explicit_query: query_fn}, _subject, resource) when is_function(query_fn, 1),
+    do: query_fn.(resource)
+
+  def to_dynamic_query(%Condition{condition_type: :function_2, explicit_query: query_fn}, subject, resource) when is_function(query_fn, 2),
+    do: query_fn.(subject, resource)
+
+  defp put_query_function(%Condition{} = condition, query_fun) do
+    %Condition{condition | explicit_query: query_fun}
+  end
 end
