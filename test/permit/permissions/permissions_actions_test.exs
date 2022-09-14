@@ -25,7 +25,7 @@ defmodule Permit.Permissions.PermissionsActions do
     test "should generate functions" do
       TestActions.list_groups()
       |> Enum.each(fn function ->
-        assert {function, 2} in TestPermissions.__info__(:functions)
+        assert {function, 2} in TestPermissions.__info__(:macros)
       end)
     end
   end

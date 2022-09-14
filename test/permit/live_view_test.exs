@@ -178,9 +178,7 @@ defmodule Permit.LiveViewTest do
     setup [:moderator_1_role, :init_session]
 
     test "can do :index on items", %{conn: conn} do
-      IO.inspect(Permit.FakeApp.Permissions.__info__(:macros), label: :CHUJ)
       {:ok, lv, _html} = live(conn, "/items")
-
 
       assigns = get_assigns(lv)
 

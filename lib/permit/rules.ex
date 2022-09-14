@@ -20,9 +20,12 @@ defmodule Permit.Rules do
       |> apply(:list_groups, [])
       |> Enum.map(fn name ->
         quote do
-          @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
-          def unquote(name)(authorization, resource, conditions \\ true) do
-            permission_to(authorization, unquote(name), resource, conditions)
+          # @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
+          defmacro unquote(name)(authorization, resource, conditions \\ true) do
+            action = unquote(name)
+            quote do
+              permission_to(unquote(authorization), unquote(action), unquote(resource), unquote(conditions))
+            end
           end
         end
       end)
@@ -36,7 +39,7 @@ defmodule Permit.Rules do
         unquote(actions_module)
         |> apply(:list_groups, [])
         |> Enum.reduce(authorization, fn group, auth ->
-          apply(__MODULE__, group, [auth, resource, conditions])
+          permission_to(auth, group, resource, conditions)
         end)
       end
 

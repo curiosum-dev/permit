@@ -43,8 +43,6 @@ defmodule Permit do
       Returns a Permit struct.
       """
 
-      # require unquote(permissions_module)
-
       def actions_module,
         do: unquote(permissions_module).actions_module()
 
