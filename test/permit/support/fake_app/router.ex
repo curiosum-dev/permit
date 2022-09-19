@@ -19,7 +19,7 @@ defmodule Permit.FakeApp.Router do
     post("/sign_in", Permit.FakeApp.SessionController, :create)
     resources("/items", Permit.FakeApp.ItemControllerUsingRepo)
 
-    get("/details/:id", Permit.FakeApp.ItemControllerUsingRepo, :details)
+    get("/details/:id", Permit.FakeApp.ItemControllerUsingRepo, :show)
 
     get(
       "/action_without_authorizing",

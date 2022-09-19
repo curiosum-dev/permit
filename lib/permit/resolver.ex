@@ -11,23 +11,11 @@ defmodule Permit.Resolver do
           Types.subject(),
           module(),
           Types.resource_module(),
-          Types.controller_action(),
-          keyword(Types.crud())
+          Types.controller_action()
         ) :: boolean()
-  def authorized_without_preloading?(
-        subject,
-        authorization_module,
-        resource_module,
-        live_or_controller_action,
-        action_crud_mapping
-      )
+  def authorized_without_preloading?(subject, authorization_module, resource_module, action)
       when not is_nil(subject) do
-    check(
-      authorization_module,
-      crud_action(live_or_controller_action, action_crud_mapping),
-      resource_module,
-      subject
-    )
+    check(action, authorization_module, resource_module, subject)
   end
 
   @spec authorize_with_preloading!(
@@ -35,7 +23,6 @@ defmodule Permit.Resolver do
           module(),
           Types.resource_module(),
           Types.controller_action(),
-          keyword(Types.crud()),
           map(),
           function()
         ) :: {:authorized, Ecto.Schema.t()} | :unauthorized
@@ -43,29 +30,17 @@ defmodule Permit.Resolver do
         subject,
         authorization_module,
         resource_module,
-        live_or_controller_action,
-        action_crud_mapping,
+        action,
         params,
         loader_fn
       )
       when not is_nil(subject) do
     with true <-
-           authorized_without_preloading?(
-             subject,
-             authorization_module,
-             resource_module,
-             live_or_controller_action,
-             action_crud_mapping
-           ),
-         record when not is_nil(record) <-
+           check(action, authorization_module, resource_module, subject),
+         record <-
            fetch_resource(authorization_module.repo, loader_fn, resource_module, params),
          true <-
-           check(
-             authorization_module,
-             crud_action(live_or_controller_action, action_crud_mapping),
-             record,
-             subject
-           ) do
+           check(action, authorization_module, record, subject) do
       {:authorized, record}
     else
       _ -> :unauthorized
@@ -77,44 +52,36 @@ defmodule Permit.Resolver do
           function(),
           Types.resource_module(),
           map()
-        ) :: struct() | nil
+        ) :: struct()
   defp fetch_resource(repo, loader_fn, resource_module, params) do
     id_param_name = "id"
     id_param_value = params[id_param_name]
 
     loader_fn = loader_fn || default_loader_fn(repo, resource_module, id_param_name)
 
-    case loader_fn.(id_param_value) do
-      nil ->
-        raise Ecto.NoResultsError, queryable: resource_module
-
-      record ->
-        record
+    with nil <- loader_fn.(id_param_value) do
+      raise Ecto.NoResultsError, queryable: resource_module
     end
   end
 
   @spec check(
-          module(),
           Types.controller_action(),
+          module(),
           Types.resource_module() | Types.resource(),
           Permit.HasRole.t()
         ) :: boolean()
-  defp check(authorization_module, action, resource_or_module, subject) do
-    authorization_module.can(subject)
-    |> Permit.verify_record(resource_or_module, action)
-  end
+  defp check(action, authorization_module, resource_or_module, subject) do
+    auth = authorization_module.can(subject)
+    actions_module = authorization_module.actions_module()
 
-  @spec crud_action(atom(), keyword(Types.crud())) :: Types.crud()
-  defp crud_action(:index, _opts), do: :read
-  defp crud_action(:show, _opts), do: :read
-  defp crud_action(:new, _opts), do: :create
-  defp crud_action(:create, _opts), do: :create
-  defp crud_action(:edit, _opts), do: :update
-  defp crud_action(:update, _opts), do: :update
-  defp crud_action(:delete, _opts), do: :delete
+    {:ok, permitted?} =
+      Permit.Actions.traverse_actions(
+        actions_module,
+        action,
+        &Permit.verify_record(auth, resource_or_module, &1)
+      )
 
-  defp crud_action(controller_action, action_crud_mapping) do
-    action_crud_mapping[controller_action]
+    permitted?
   end
 
   @spec default_loader_fn(Ecto.Repo.t(), Types.resource_module(), Types.id_param_name()) ::

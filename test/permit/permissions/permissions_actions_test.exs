@@ -5,7 +5,7 @@ defmodule Permit.Permissions.PermissionsActions do
     use Permit.Actions
 
     @impl Permit.Actions
-    def mappings do
+    def grouping_schema do
       Map.merge(super(), %{
         a: [:create],
         b: [:read],
@@ -23,7 +23,7 @@ defmodule Permit.Permissions.PermissionsActions do
 
   describe "__using__/1" do
     test "should generate functions" do
-      TestActions.list_actions()
+      TestActions.list_groups()
       |> Enum.each(fn function ->
         assert {function, 2} in TestPermissions.__info__(:functions)
       end)

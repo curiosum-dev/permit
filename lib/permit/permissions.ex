@@ -10,7 +10,7 @@ defmodule Permit.Permissions do
   alias Permit.Permissions.DNF
 
   @type conditions_by_action_and_resource :: %{
-          {Types.controller_action(), Types.resource_module()} => DNF.t()
+          {Types.action_group(), Types.resource_module()} => DNF.t()
         }
   @type t :: %Permissions{conditions_by_action_resource: conditions_by_action_and_resource()}
 
@@ -20,20 +20,19 @@ defmodule Permit.Permissions do
   @spec new(conditions_by_action_and_resource()) :: Permissions.t()
   defp new(rca), do: %Permissions{conditions_by_action_resource: rca}
 
-  @spec add(Permissions.t(), Types.controller_action(), Types.resource_module(), [
+  @spec add(Permissions.t(), Types.action_group(), Types.resource_module(), [
           Types.condition()
         ]) ::
           Permissions.t()
   def add(permissions, action, resource, conditions) do
     permissions.conditions_by_action_resource
-    |> Map.update({action, resource}, DNF.add_clauses(DNF.new(), conditions), fn
-      nil -> DNF.add_clauses(DNF.new(), conditions)
-      dnf -> DNF.add_clauses(dnf, conditions)
+    |> Map.update({action, resource}, DNF.add_clauses(DNF.new(), conditions), fn dnf ->
+      DNF.add_clauses(dnf, conditions)
     end)
     |> new()
   end
 
-  @spec granted?(Permissions.t(), Types.controller_action(), Types.resource(), Types.subject()) ::
+  @spec granted?(Permissions.t(), Types.action_group(), Types.resource(), Types.subject()) ::
           boolean()
   def granted?(permissions, action, record, subject) do
     permissions
@@ -41,7 +40,7 @@ defmodule Permit.Permissions do
     |> DNF.any_satisfied?(record, subject)
   end
 
-  @spec construct_query(Permissions.t(), Types.controller_action(), Types.resource()) ::
+  @spec construct_query(Permissions.t(), Types.action_group(), Types.resource()) ::
           {:ok, Ecto.Query.t()} | {:error, term()}
   def construct_query(permissions, action, resource) do
     resource = resource_module_from_resource(resource)
@@ -63,7 +62,7 @@ defmodule Permit.Permissions do
     end)
   end
 
-  @spec dnf_for_action_and_record(Permissions.t(), Types.controller_action(), Types.resource()) ::
+  @spec dnf_for_action_and_record(Permissions.t(), Types.action_group(), Types.resource()) ::
           DNF.t()
   defp dnf_for_action_and_record(permissions, action, resource) do
     resource_module = resource_module_from_resource(resource)

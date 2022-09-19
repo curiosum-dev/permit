@@ -1,5 +1,5 @@
 defmodule Permit.FakeApp.Permissions do
-  use Permit.Rules
+  use Permit.Rules, actions_module: Permit.Actions.PhoenixActions
 
   alias Permit.FakeApp.Item
   alias Permit.FakeApp.User

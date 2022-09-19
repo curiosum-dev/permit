@@ -135,7 +135,10 @@ defmodule Permit.PlugTest do
 
   describe "moderator_1" do
     setup do
-      %{conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :moderator, level: 1}]})}
+      %{
+        conn:
+          create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :moderator, level: 1}]})
+      }
     end
 
     test "authorizes :index action", %{conn: conn} do
@@ -181,7 +184,11 @@ defmodule Permit.PlugTest do
   describe "thread_moderator" do
     setup do
       %{
-        conn: create_conn(Router, :post, "/sign_in", %{id: 1, roles: [%{role: :thread_moderator, thread_name: "dmt"}]})
+        conn:
+          create_conn(Router, :post, "/sign_in", %{
+            id: 1,
+            roles: [%{role: :thread_moderator, thread_name: "dmt"}]
+          })
       }
     end
 

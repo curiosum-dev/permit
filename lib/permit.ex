@@ -23,7 +23,7 @@ defmodule Permit do
       permissions_module
       |> Macro.expand(__CALLER__)
       |> apply(:actions_module, [])
-      |> apply(:list_actions, [])
+      |> apply(:list_groups, [])
       |> Enum.map(&add_predicate_name/1)
       |> Enum.map(fn {predicate, name} ->
         quote do
@@ -41,9 +41,13 @@ defmodule Permit do
       Returns a Permit struct.
       """
 
+      def actions_module,
+        do: unquote(permissions_module).actions_module()
+
       @spec can(HasRoles.t()) :: Permit.t()
       def can(nil),
-        do: raise "Unable to create permit authorization for nil role/user"
+        do: raise("Unable to create permit authorization for nil role/user")
+
       def can(who) do
         who
         |> HasRoles.roles()
@@ -51,28 +55,18 @@ defmodule Permit do
           unquote(permissions_module).can(role)
         end)
         |> Enum.reduce(fn auth1, auth2 ->
-          %Permit{auth1 |
-            permissions: Permissions.join(auth1.permissions, auth2.permissions)
-          }
+          %Permit{auth1 | permissions: Permissions.join(auth1.permissions, auth2.permissions)}
         end)
-        |> then(& %Permit{&1 |
-            roles: HasRoles.roles(who),
-            subject: if is_struct(who) do who end
-          })
+        |> Map.put(:roles, HasRoles.roles(who))
+        |> Map.put(:subject, (is_struct(who) && who) || nil)
       end
 
-      # by default delete?, update?, read?, create?
       unquote(predicates)
-
-      @spec do?(Permit.t(), Types.controller_action(), Types.resource()) :: boolean()
-      def do?(authorization, action, resource) do
-        Permit.verify_record(authorization, action, resource)
-      end
 
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
 
-      @spec accessible_by(Types.subject(), Types.controller_action(), Types.resource()) ::
+      @spec accessible_by(Types.subject(), Types.action_group(), Types.resource()) ::
               {:ok, Ecto.Query.t()} | {:error, term()}
       def accessible_by(current_user, action, resource) do
         unquote(permissions_module)
@@ -83,7 +77,16 @@ defmodule Permit do
     end
   end
 
-  @spec add_permission(Permit.t(), Types.controller_action(), Types.resource_module(), [
+  @spec has_subject(Permit.t()) :: boolean()
+  def has_subject(%Permit{subject: nil}), do: false
+  def has_subject(%Permit{subject: _}), do: true
+
+  @spec do?(Permit.t(), Types.action_group(), Types.resource()) :: boolean()
+  def do?(authorization, action, resource) do
+    Permit.verify_record(authorization, action, resource)
+  end
+
+  @spec add_permission(Permit.t(), Types.action_group(), Types.resource_module(), [
           Types.condition()
         ]) ::
           Permit.t()
@@ -95,7 +98,7 @@ defmodule Permit do
     %Permit{authorization | permissions: updated_permissions}
   end
 
-  @spec verify_record(Permit.t(), Types.resource(), Types.controller_action()) :: boolean()
+  @spec verify_record(Permit.t(), Types.resource(), Types.action_group()) :: boolean()
   def verify_record(authorization, record, action) do
     authorization.permissions
     |> Permissions.granted?(action, record, authorization.subject)

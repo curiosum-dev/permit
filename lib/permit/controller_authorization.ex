@@ -35,14 +35,12 @@ defmodule Permit.ControllerAuthorization do
   @callback user_from_conn(Types.conn()) :: struct()
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
-  @callback action_crud_mapping() :: keyword(Types.crud())
   @callback except() :: list(atom())
   @callback id_param_name() :: Types.id_param_name()
 
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
-                      action_crud_mapping: 0,
                       resource_module: 0,
                       except: 0,
                       loader_fn: 0,
@@ -56,7 +54,6 @@ defmodule Permit.ControllerAuthorization do
 
     opts_resource_module = opts[:resource_module]
     opts_preload_resource_in = opts[:preload_resource_in]
-    opts_action_crud_mapping = opts[:action_crud_mapping]
     opts_fallback_path = opts[:fallback_path]
     opts_except = opts[:except]
     opts_id_param_name = opts[:id_param_name]
@@ -116,16 +113,6 @@ defmodule Permit.ControllerAuthorization do
       end
 
       @impl true
-      def action_crud_mapping do
-        action_crud_mapping = unquote(opts_action_crud_mapping)
-
-        case action_crud_mapping do
-          nil -> []
-          _ -> action_crud_mapping
-        end
-      end
-
-      @impl true
       def id_param_name do
         id_param_name = unquote(opts_id_param_name)
 
@@ -156,7 +143,6 @@ defmodule Permit.ControllerAuthorization do
                      fallback_path: 0,
                      resource_module: 0,
                      except: 0,
-                     action_crud_mapping: 0,
                      id_param_name: 0,
                      user_from_conn: 1
 
@@ -164,7 +150,6 @@ defmodule Permit.ControllerAuthorization do
         authorization_module: &__MODULE__.authorization_module/0,
         resource_module: &__MODULE__.resource_module/0,
         preload_resource_in: &__MODULE__.preload_resource_in/0,
-        action_crud_mapping: &__MODULE__.action_crud_mapping/0,
         fallback_path: &__MODULE__.fallback_path/0,
         except: &__MODULE__.except/0,
         loader_fn: &__MODULE__.loader_fn/0,

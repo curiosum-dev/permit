@@ -6,7 +6,7 @@ defmodule Permit.PermitTest do
     use Permit.Actions
 
     @impl Permit.Actions
-    def mappings do
+    def grouping_schema do
       %{
         a: [:create],
         b: [:read],
@@ -30,10 +30,10 @@ defmodule Permit.PermitTest do
 
   describe "__using__/1" do
     test "should generate predicates" do
-      TestActions.list_actions()
-      |> Enum.each(fn action ->
+      TestActions.list_groups()
+      |> Enum.each(fn group ->
         predicate =
-          action
+          group
           |> Atom.to_string()
           |> Kernel.<>("?")
           |> String.to_existing_atom()

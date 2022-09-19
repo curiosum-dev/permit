@@ -44,13 +44,11 @@ defmodule Permit.LiveViewAuthorization do
   @callback authorization_module() :: module()
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
-  @callback action_crud_mapping() :: keyword(Types.crud())
   @callback except() :: list(atom())
   @callback id_param_name() :: Types.id_param_name()
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
-                      action_crud_mapping: 0,
                       resource_module: 0,
                       except: 0,
                       loader_fn: 0,
@@ -63,7 +61,6 @@ defmodule Permit.LiveViewAuthorization do
 
     resource_module = opts[:resource_module]
     preload_resource_in = opts[:preload_resource_in]
-    action_crud_mapping = opts[:action_crud_mapping]
     fallback_path = opts[:fallback_path]
     except = opts[:except]
     id_param_name = opts[:id_param_name]
@@ -94,9 +91,6 @@ defmodule Permit.LiveViewAuthorization do
       def except, do: unquote(except) || []
 
       @impl true
-      def action_crud_mapping, do: unquote(action_crud_mapping) || []
-
-      @impl true
       def id_param_name, do: unquote(id_param_name) || "id"
 
       defoverridable handle_unauthorized: 1,
@@ -104,7 +98,6 @@ defmodule Permit.LiveViewAuthorization do
                      fallback_path: 0,
                      resource_module: 0,
                      except: 0,
-                     action_crud_mapping: 0,
                      id_param_name: 0
     end
   end

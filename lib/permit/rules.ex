@@ -17,19 +17,12 @@ defmodule Permit.Rules do
     action_functions =
       actions_module
       |> Macro.expand(__CALLER__)
-      |> apply(:list_actions, [])
+      |> apply(:list_groups, [])
       |> Enum.map(fn name ->
         quote do
-          @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: boolean()
+          @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
           def unquote(name)(authorization, resource, conditions \\ true) do
-            case unquote(actions_module).include_crud_mapping() do
-              true -> [unquote(name) | unquote(actions_module).mappings()[unquote(name)]]
-              false -> [unquote(name)]
-            end
-            |> Enum.uniq()
-            |> Enum.reduce(authorization, fn action, perm ->
-              permission_to(perm, action, resource, conditions)
-            end)
+            permission_to(authorization, unquote(name), resource, conditions)
           end
         end
       end)
@@ -41,9 +34,9 @@ defmodule Permit.Rules do
 
       def all(authorization, resource, conditions \\ true) do
         unquote(actions_module)
-        |> apply(:list_actions, [])
-        |> Enum.reduce(authorization, fn action, auth ->
-          apply(__MODULE__, action, [auth, resource, conditions])
+        |> apply(:list_groups, [])
+        |> Enum.reduce(authorization, fn group, auth ->
+          apply(__MODULE__, group, [auth, resource, conditions])
         end)
       end
 
@@ -55,17 +48,17 @@ defmodule Permit.Rules do
   @spec grant(Types.role()) :: Permit.t()
   def grant(role), do: %Permit{roles: [role]}
 
-  def permission_to(authorization, action, resource, conditions \\ true),
-    do: put_action(authorization, action, resource, conditions)
+  def permission_to(authorization, action_group, resource, conditions \\ true),
+    do: put_group(authorization, action_group, resource, conditions)
 
-  defp put_action(authorization, action, resource, condition)
+  defp put_group(authorization, action_group, resource, condition)
        when not is_list(condition) do
     authorization
-    |> put_action(action, resource, [condition])
+    |> put_group(action_group, resource, [condition])
   end
 
-  defp put_action(authorization, action, resource, conditions) do
+  defp put_group(authorization, action_group, resource, conditions) do
     authorization
-    |> Permit.add_permission(action, resource, conditions)
+    |> Permit.add_permission(action_group, resource, conditions)
   end
 end
