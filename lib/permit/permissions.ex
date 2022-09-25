@@ -7,8 +7,8 @@ defmodule Permit.Permissions do
 
   alias __MODULE__
   alias Permit.Types
+  alias Permit.Permissions.Condition
   alias Permit.Permissions.DisjunctiveNormalForm, as: DNF
-  alias Permit.Permissions.UndefinedConditionError
   alias Permit.Actions
   import Ecto.Query
 
@@ -23,9 +23,7 @@ defmodule Permit.Permissions do
   @spec new(conditions_by_action_and_resource()) :: Permissions.t()
   defp new(rca), do: %Permissions{conditions_map: rca}
 
-  @spec add(Permissions.t(), Types.action_group(), Types.resource_module(), [
-          Types.condition()
-        ]) ::
+  @spec add(Permissions.t(), Types.action_group(), Types.resource_module(), [Condition.t()]) ::
           Permissions.t()
   def add(permissions, action, resource, conditions) do
     permissions.conditions_map

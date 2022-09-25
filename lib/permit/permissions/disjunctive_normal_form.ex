@@ -8,6 +8,7 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
 
   alias __MODULE__, as: DNF
   alias Permit.Types
+  alias Permit.Permissions.Condition
   alias Permit.Permissions.ConditionClauses
   import Ecto.Query
   @type t :: %DNF{disjunctions: [ConditionClauses.t()]}
@@ -17,7 +18,7 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
     %DNF{disjunctions: disjunctions}
   end
 
-  @spec add_clauses(DNF.t(), [any()]) :: DNF.t()
+  @spec add_clauses(DNF.t(), [Condition.t()]) :: DNF.t()
   def add_clauses(nil, clauses) do
     %DNF{disjunctions: [ConditionClauses.new(clauses)]}
   end

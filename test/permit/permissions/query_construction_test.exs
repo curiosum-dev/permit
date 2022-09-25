@@ -14,31 +14,39 @@ defmodule Permit.Permissions.QueryConstructionTest do
   alias Permit.Permissions.QueryConstructionTest.Resource
   import Ecto.Query
 
+  def sigil_q(conditions, []) do
+    conditions
+    |> Code.eval_string()
+    |> elem(0)
+    |> Enum.map(&Permit.parse_condition(&1, []))
+
+  end
+
   setup do
     resource = %Resource{foo: 1, bar: 2, name: "name"}
 
     query_convertible =
       Permissions.new()
-      |> Permissions.add(:delete, Resource, foo: {:>=, 0}, bar: {{:not, :==}, 5})
-      |> Permissions.add(:delete, Resource, name: nil, bar: {:not, nil})
-      |> Permissions.add(:update, Resource, name: {:ilike, "%NAME"})
-      |> Permissions.add(:read, Resource, foo: {:eq, 1}, name: {:not, nil})
-      |> Permissions.add(:create, Resource, name: {:like, "%"}, foo: nil)
+      |> Permissions.add(:delete, Resource, ~q/[foo: {:>=, 0}, bar: {{:not, :==}, 5}]/)
+      |> Permissions.add(:delete, Resource, ~q/[name: nil, bar: {:not, nil}]/)
+      |> Permissions.add(:update, Resource, ~q/[name: {:ilike, "%NAME"}]/)
+      |> Permissions.add(:read, Resource, ~q/[foo: {:eq, 1}, name: {:not, nil}]/)
+      |> Permissions.add(:create, Resource, ~q/[name: {:like, "%"}, foo: nil]/)
 
     query_convertible_nil =
       Permissions.new()
-      |> Permissions.add(:delete, Resource, foo: {:>, nil}, bar: {{:not, :==}, nil})
-      |> Permissions.add(:delete, Resource, name: nil, bar: {:not, nil})
-      |> Permissions.add(:update, Resource, name: {:eq, nil})
-      |> Permissions.add(:read, Resource, foo: {{:not, :eq}, nil}, name: {:not, nil})
-      |> Permissions.add(:create, Resource, name: {:like, "%"}, foo: nil)
+      |> Permissions.add(:delete, Resource, ~q/[foo: {:>, nil}, bar: {{:not, :==}, nil}]/)
+      |> Permissions.add(:delete, Resource, ~q/[name: nil, bar: {:not, nil}]/)
+      |> Permissions.add(:update, Resource, ~q/[name: {:eq, nil}]/)
+      |> Permissions.add(:read, Resource, ~q/[foo: {{:not, :eq}, nil}, name: {:not, nil}]/)
+      |> Permissions.add(:create, Resource, ~q/[name: {:like, "%"}, foo: nil]/)
 
     query_nonconvertible =
       Permissions.new()
-      |> Permissions.add(:delete, Resource, [fn _subj, res -> res.foo == 1 end])
-      |> Permissions.add(:update, Resource, name: {:=~, ~r/name/i})
-      |> Permissions.add(:read, Resource, [fn res -> res.foo > 0 and res.bar < 100 end])
-      |> Permissions.add(:create, Resource, [fn res -> res.foo * res.bar < 10 or true end])
+      |> Permissions.add(:delete, Resource, ~q/[fn _subj, res -> res.foo == 1 end]/)
+      |> Permissions.add(:update, Resource, ~q'[name: {:=~, ~r/name/i}]')
+      |> Permissions.add(:read, Resource, ~q/[fn res -> res.foo > 0 and res.bar < 100 end]/)
+      |> Permissions.add(:create, Resource, ~q/[fn res -> res.foo * res.bar < 10 or true end]/)
 
     %{
       resource: resource,

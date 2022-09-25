@@ -11,11 +11,9 @@ defmodule Permit.Permissions.ConditionClauses do
   import Ecto.Query
   @type t :: %ConditionClauses{conditions: [Condition.t()]}
 
-  @spec new([Types.condition()]) :: ConditionClauses.t()
+  @spec new([Condition.t()]) :: ConditionClauses.t()
   def new(conditions) do
-    conditions
-    |> Enum.map(&Condition.new/1)
-    |> then(&%ConditionClauses{conditions: &1})
+    %ConditionClauses{conditions: conditions}
   end
 
   # Empty condition set means that an authorization subject is not authorized

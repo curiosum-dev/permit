@@ -4,11 +4,12 @@ defmodule Permit do
   """
   defstruct roles: [], permissions: Permit.Permissions.new(), subject: nil
 
-  alias Permit.Types
-  alias Permit.Permissions
   alias Permit.HasRoles
+  alias Permit.Permissions
+  alias Permit.Permissions.Condition
   alias Permit.Permissions.UndefinedConditionError
   alias Permit.Permissions.UnconvertibleConditionError
+  alias Permit.Types
 
   @type t :: %Permit{
           roles: [Types.role()],
@@ -119,6 +120,21 @@ defmodule Permit do
   def verify_record(authorization, record, action) do
     authorization.permissions
     |> Permissions.granted?(action, record, authorization.subject)
+  end
+
+  def parse_condition(condition, []) do
+    condition
+    |> Condition.new()
+  end
+
+  def parse_condition(condition, bindings)
+  when length(bindings) <= 2 do
+    condition
+    |> Condition.new(bindings: bindings)
+  end
+
+  def parse_condition(_condition, bindings) do
+    raise "Binding list should have at most 2 elements (subject and object), Given #{inspect(bindings)}"
   end
 
   defp add_predicate_name(atom),

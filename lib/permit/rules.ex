@@ -21,12 +21,21 @@ defmodule Permit.Rules do
       |> Enum.map(fn name ->
         quote do
           # @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
-          defmacro unquote(name)(authorization, resource, conditions \\ true) do
+          defmacro unquote(name)(authorization, resource, bindings, conditions) do
             action = unquote(name)
             quote do
               permission_to(unquote(authorization), unquote(action), unquote(resource), unquote(conditions))
             end
           end
+
+          def unquote(name)(authorization, resource, conditions) do
+            unquote(name)(authorization, resource, [], conditions)
+          end
+
+          def unquote(name)(authorization, resource) do
+            unquote(name)(authorization, resource, [], true)
+          end
+
         end
       end)
 
@@ -35,13 +44,21 @@ defmodule Permit.Rules do
 
       unquote(action_functions)
 
-      def all(authorization, resource, conditions \\ true) do
-        unquote(actions_module)
-        |> apply(:list_groups, [])
-        |> Enum.reduce(authorization, fn group, auth ->
-          permission_to(auth, group, resource, conditions)
-        end)
+      defmacro all(authorization, resource, bindings, conditions) do
+        quote do
+          actions_module()
+          |> apply(:list_groups, [])
+          |> Enum.reduce(unquote(authorization), fn group, auth ->
+            permission_to(auth, group, unquote(resource), unquote(bindings), unquote(conditions))
+          end)
+        end
       end
+
+      def all(authorization, resource, conditions),
+       do: all(authorization, resource, [], conditions)
+
+      def all(authorization, resource),
+       do: all(authorization, resource, [], true)
 
       def actions_module,
         do: unquote(actions_module)
@@ -51,17 +68,31 @@ defmodule Permit.Rules do
   @spec grant(Types.role()) :: Permit.t()
   def grant(role), do: %Permit{roles: [role]}
 
-  def permission_to(authorization, action_group, resource, conditions \\ true),
-    do: put_group(authorization, action_group, resource, conditions)
 
-  defp put_group(authorization, action_group, resource, condition)
-       when not is_list(condition) do
-    authorization
-    |> put_group(action_group, resource, [condition])
+  def unify_conditions(bindings, condition) when not is_list(condition) do
+    unify_conditions(bindings, [condition])
   end
 
-  defp put_group(authorization, action_group, resource, conditions) do
-    authorization
-    |> Permit.add_permission(action_group, resource, conditions)
+  def unify_conditions(bindings, conditions) do
+    conditions
+    |> Enum.map(&Permit.parse_condition(&1, bindings))
   end
+
+
+  defmacro permission_to(authorization, action_group, resource, bindings, conditions) do
+   quote do
+      unquote(authorization)
+      |> Permit.add_permission(
+        unquote(action_group),
+        unquote(resource),
+        unify_conditions(unquote(bindings), unquote(conditions))
+      )
+    end
+  end
+
+  def permission_to(authorization, action_group, resource, conditions),
+    do: permission_to(authorization, action_group, resource, [], conditions)
+
+  def permission_to(authorization, action_group, resource),
+    do: permission_to(authorization, action_group, resource, [], true)
 end
