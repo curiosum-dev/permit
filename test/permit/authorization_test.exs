@@ -2,7 +2,7 @@ defmodule Permit.AuthorizationTest.Types do
   defmodule TestUser do
     @moduledoc false
 
-    defstruct [:id, :role, :overseer_id]
+    defstruct [:id, :role, :overseer_id, :some_string]
 
     defimpl Permit.HasRoles, for: Permit.AuthorizationTest.Types.TestUser do
       def roles(user), do: [user.role]
@@ -64,6 +64,12 @@ defmodule Permit.AuthorizationTest do
       |> all(TestUser, fn user, other_user -> other_user.overseer_id == user.id end)
     end
 
+    def can(:manager_bindings = role) do
+      grant(role)
+      |> all(TestObject, [user, object], manager_id: {:==, user.id})
+      |> all(TestUser, [user, other_user], overseer_id: {:==, user.id})
+    end
+
     def can(:another = role) do
       grant(role)
       |> create(TestObject, field_1: {:>, 0}, field_2: {:<=, 3})
@@ -96,6 +102,14 @@ defmodule Permit.AuthorizationTest do
       |> delete(TestObject, field_1: {{:not, :in}, [5]}, field_2: {:in, [3]})
     end
 
+    def can(:binder = role) do
+       grant(role)
+       |> permission_to(:read, TestObject, [s], field_1: s.id, field_2: {:<, s.overseer_id})
+       |> update(TestObject, [subject, obj], field_1: {{:not, :==}, 2}, name: {{:not, :==}, subject.some_string})
+       |> create(TestObject, [_, object], field_1: {{:not, :eq}, object.field_2})
+       |> delete(TestObject, [s, object], field_1: {{:not, :eq}, object.field_2}, field_2: {:<, s.overseer_id})
+    end
+
     def can(%TestUserAsRole{id: id} = role) do
       grant(role)
       |> all(TestObject, owner_id: id)
@@ -122,8 +136,10 @@ defmodule Permit.AuthorizationTest do
   @user_with_admin_role %TestUser{role: :admin, id: 1, overseer_id: 1}
   @user_with_operator_role %TestUser{role: :operator, id: 2, overseer_id: 1}
   @user_with_other_user %TestUser{role: :user, id: 3, overseer_id: 1}
-  @user_owner %TestUserAsRole{role: :satan, id: 666, overseer_id: 1}
+  @user_owner %TestUserAsRole{role: :manager_bindings, id: 666, overseer_id: 1}
+  @user_with_binder_role %TestUser{role: :binder, id: 1, overseer_id: 1100, some_string: "anything"}
 
+  @multi_field_object_with_name %TestObject{name: "putin", field_1: 1, field_2: 3}
   @object_with_owner %TestObject{name: "object", owner_id: 666}
   @special_object %TestObject{name: "special"}
   @exceptional_object %TestObject{name: "exceptional"}
@@ -134,7 +150,6 @@ defmodule Permit.AuthorizationTest do
   @multi_field_object_with_one_field %TestObject{field_2: 5}
   @multi_field_object_with_other_field %TestObject{field_2: 6}
   @other_object %TestObject{}
-  @multi_field_object_with_name %TestObject{name: "putin", field_1: 1, field_2: 3}
 
   @cruds [:create?, :read?, :update?, :delete?]
 
@@ -313,6 +328,20 @@ defmodule Permit.AuthorizationTest do
   end
 
   describe "permission granting to subject with role" do
+    test "should grant permissions to binder subject" do
+      assert TestAuthorization.can(@user_with_binder_role)
+             |> TestAuthorization.read?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@user_with_binder_role)
+             |> TestAuthorization.update?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@user_with_binder_role)
+             |> TestAuthorization.create?(@multi_field_object_with_name)
+
+      assert TestAuthorization.can(@user_with_binder_role)
+             |> TestAuthorization.delete?(@multi_field_object_with_name)
+    end
+
     test "should grant permissions to subject with role" do
       assert TestAuthorization.can(@user_with_operator_role)
              |> TestAuthorization.read?(@exceptional_object)

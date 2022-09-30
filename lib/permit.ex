@@ -122,11 +122,6 @@ defmodule Permit do
     |> Permissions.granted?(action, record, authorization.subject)
   end
 
-  def parse_condition(condition, []) do
-    condition
-    |> Condition.new()
-  end
-
   def parse_condition(condition, bindings)
   when length(bindings) <= 2 do
     condition

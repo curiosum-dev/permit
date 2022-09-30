@@ -3,11 +3,12 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
      Generic Operator
   """
   alias __MODULE__
+  @type field_subject_object_fun :: (any(), any(), any() -> boolean())
 
   @callback symbol() :: atom()
   @callback alternatives() :: [atom()]
-  @callback semantics(any()) :: (any(), any(), any() -> boolean())
-  @callback semantics(any(), keyword()) :: (any(), any(), any() -> boolean())
+  @callback semantics(any()) :: field_subject_object_fun()
+  @callback semantics(any(), keyword()) :: field_subject_object_fun()
   @callback dynamic_query(term(), keyword()) :: (any() -> Ecto.Query.DynamicExpr.t()) | nil
 
   defmacro __using__(opts) do

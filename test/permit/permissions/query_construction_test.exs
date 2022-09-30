@@ -35,7 +35,7 @@ defmodule Permit.Permissions.QueryConstructionTest do
 
     query_convertible_nil =
       Permissions.new()
-      |> Permissions.add(:delete, Resource, ~q/[foo: {:>, nil}, bar: {{:not, :==}, nil}]/)
+      |> Permissions.add(:delete, Resource, ~q/[foo: {:!=, nil}, bar: {{:not, :==}, nil}]/)
       |> Permissions.add(:delete, Resource, ~q/[name: nil, bar: {:not, nil}]/)
       |> Permissions.add(:update, Resource, ~q/[name: {:eq, nil}]/)
       |> Permissions.add(:read, Resource, ~q/[foo: {{:not, :eq}, nil}, name: {:not, nil}]/)

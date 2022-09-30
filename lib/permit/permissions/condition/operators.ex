@@ -19,6 +19,11 @@ defmodule Permit.Permissions.Condition.Operators do
     Operators.In
   ]
 
+  @operators_with_options [
+    Operators.Like,
+    Operators.Ilike
+  ]
+
   @eq_operators [
     Operators.Eq,
     Operators.Neq
@@ -51,6 +56,13 @@ defmodule Permit.Permissions.Condition.Operators do
 
   defmacro all do
     @operators
+    |> Enum.reduce([], fn op, acc ->
+      [op.symbol() | op.alternatives()] ++ acc
+    end)
+  end
+
+  defmacro with_options do
+    @operators_with_options
     |> Enum.reduce([], fn op, acc ->
       [op.symbol() | op.alternatives()] ++ acc
     end)

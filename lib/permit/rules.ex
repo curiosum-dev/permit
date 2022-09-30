@@ -3,6 +3,7 @@ defmodule Permit.Rules do
   Provides functions used for defining the application's permission set.
   """
   alias Permit.Types
+  alias __MODULE__
 
   defmacro __using__(opts) do
     actions_module =
@@ -22,18 +23,21 @@ defmodule Permit.Rules do
         quote do
           # @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
           defmacro unquote(name)(authorization, resource, bindings, conditions) do
+            # permission_to(authorization, unquote(name), resource, bindings, conditions)
             action = unquote(name)
             quote do
-              permission_to(unquote(authorization), unquote(action), unquote(resource), unquote(conditions))
+              permission_to(unquote(authorization), unquote(action), unquote(resource), unquote(bindings), unquote(conditions))
             end
           end
 
           def unquote(name)(authorization, resource, conditions) do
-            unquote(name)(authorization, resource, [], conditions)
+            authorization
+            |> Rules.permission_to(unquote(name), resource, conditions)
           end
 
           def unquote(name)(authorization, resource) do
-            unquote(name)(authorization, resource, [], true)
+            authorization
+            |> Rules.permission_to(unquote(name), resource, true)
           end
 
         end
@@ -54,11 +58,16 @@ defmodule Permit.Rules do
         end
       end
 
-      def all(authorization, resource, conditions),
-       do: all(authorization, resource, [], conditions)
+      def all(authorization, resource, conditions) do
+        unquote(actions_module)
+        |> apply(:list_groups, [])
+        |> Enum.reduce(authorization, fn group, auth ->
+          permission_to(auth, group, resource, conditions)
+        end)
+      end
 
       def all(authorization, resource),
-       do: all(authorization, resource, [], true)
+       do: all(authorization, resource, true)
 
       def actions_module,
         do: unquote(actions_module)
@@ -80,19 +89,35 @@ defmodule Permit.Rules do
 
 
   defmacro permission_to(authorization, action_group, resource, bindings, conditions) do
+  binds =
+    bindings
+    |> Enum.map(& elem(&1, 0))
+    |> Macro.escape()
+
+  conditions =
+    conditions
+    |> Macro.escape()
+
    quote do
       unquote(authorization)
       |> Permit.add_permission(
         unquote(action_group),
         unquote(resource),
-        unify_conditions(unquote(bindings), unquote(conditions))
+        unify_conditions(unquote(binds), unquote(conditions))
       )
     end
   end
 
-  def permission_to(authorization, action_group, resource, conditions),
-    do: permission_to(authorization, action_group, resource, [], conditions)
+  def permission_to(authorization, action_group, resource, conditions)
+    do
+      authorization
+      |> Permit.add_permission(
+        action_group,
+        resource,
+        unify_conditions([], conditions)
+      )
+    end
 
   def permission_to(authorization, action_group, resource),
-    do: permission_to(authorization, action_group, resource, [], true)
+    do: permission_to(authorization, action_group, resource, true)
 end
