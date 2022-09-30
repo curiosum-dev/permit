@@ -11,8 +11,8 @@ defmodule Permit.FakeApp.ItemControllerUsingRepo do
     fallback_path: "/?foo"
 
   def index(conn, _params), do: text(conn, "listing all items")
-  def show(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resources]))
-  def edit(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resources]))
-  # def details(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resources]))
+  def show(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resource]))
+  def edit(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resource]))
+  def details(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resource]))
   def action_without_authorizing(conn, _params), do: text(conn, "okay")
 end

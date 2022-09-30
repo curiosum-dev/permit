@@ -141,6 +141,7 @@ defmodule Permit.AuthorizeHook do
     actions_module = authorization_module.actions_module()
     resource_module = socket.view.resource_module()
     prefilter = &socket.view.prefilter/3
+    # postfilter = &socket.view.postfilter/3
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
     singular? = action in actions_module.singular_groups()

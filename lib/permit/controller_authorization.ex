@@ -32,6 +32,7 @@ defmodule Permit.ControllerAuthorization do
   @callback authorization_module() :: module()
   @callback resource_module() :: module()
   @callback prefilter(Types.controller_action(), module(), map()) :: Ecto.Query.t()
+  @callback postfilter(Ecto.Query.t()) :: Ecto.Query.t()
   @callback handle_unauthorized(Types.conn()) :: Types.conn()
   @callback user_from_conn(Types.conn()) :: struct()
   @callback preload_resource_in() :: list(atom())
@@ -44,6 +45,7 @@ defmodule Permit.ControllerAuthorization do
                       resource_module: 0,
                       except: 0,
                       prefilter: 3,
+                      postfilter: 1,
                       user_from_conn: 1
 
   defmacro __using__(opts) do
@@ -138,6 +140,9 @@ defmodule Permit.ControllerAuthorization do
       def prefilter(_action, resource_module, _params), do: resource_module
 
       @impl true
+      def postfilter(query), do: query
+
+      @impl true
       def user_from_conn(conn) do
         user_from_conn_fn = unquote(opts_user_from_conn_fn)
 
@@ -164,6 +169,7 @@ defmodule Permit.ControllerAuthorization do
         fallback_path: &__MODULE__.fallback_path/0,
         except: &__MODULE__.except/0,
         prefilter: &__MODULE__.prefilter/3,
+        postfilter: &__MODULE__.postfilter/1,
         user_from_conn: &__MODULE__.user_from_conn/1,
         handle_unauthorized: &__MODULE__.handle_unauthorized/1
       )

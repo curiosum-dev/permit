@@ -9,7 +9,7 @@ defmodule Permit.FakeApp.ItemControllerUsingLoader do
     resource_module: Item
 
   def index(conn, _params), do: text(conn, "listing all items")
-  def show(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resources]))
+  def show(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resource]))
 
   @item1 %Item{id: 1, owner_id: 1, permission_level: 1}
   @item2 %Item{id: 2, owner_id: 2, permission_level: 2}

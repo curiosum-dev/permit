@@ -40,6 +40,7 @@ defmodule Permit.LiveViewAuthorization do
 
   @callback resource_module() :: module()
   @callback prefilter(Types.controller_action(), module(), map()) :: Ecto.Query.t()
+  @callback postfilter(Ecto.Query.t()) :: Ecto.Query.t()
   @callback handle_unauthorized(Types.socket()) :: Types.hook_outcome()
   @callback user_from_session(map()) :: struct()
   @callback authorization_module() :: module()
@@ -51,7 +52,8 @@ defmodule Permit.LiveViewAuthorization do
                       fallback_path: 0,
                       resource_module: 0,
                       except: 0,
-                      prefilter: 3
+                      prefilter: 3,
+                      postfilter: 1
 
   defmacro __using__(opts) do
     authorization_module =
@@ -114,11 +116,15 @@ defmodule Permit.LiveViewAuthorization do
 
       def prefilter(_action, resource_module, _params), do: resource_module
 
+      @impl true
+      def postfilter(query), do: query
+
       defoverridable handle_unauthorized: 1,
                      preload_resource_in: 0,
                      fallback_path: 0,
                      resource_module: 0,
                      prefilter: 3,
+                     postfilter: 1,
                      except: 0
     end
   end
