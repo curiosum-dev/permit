@@ -123,15 +123,14 @@ defmodule Permit.AuthorizeHook do
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
 
-    if Permit.Resolver.authorized_without_preloading?(
+    case Permit.Resolver.authorized_without_preloading?(
          subject,
          authorization_module,
          resource_module,
          action
        ) do
-      {:authorized, socket}
-    else
-      {:unauthorized, socket}
+      true -> {:authorized, socket}
+      false-> {:unauthorized, socket}
     end
   end
 
@@ -165,6 +164,10 @@ defmodule Permit.AuthorizeHook do
 
       :unauthorized ->
         {:unauthorized, socket}
+
+      :not_found ->
+        # TODO figure out what to do here
+        raise "Not Found"
     end
   end
 
