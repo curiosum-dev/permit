@@ -44,7 +44,7 @@ defmodule Permit.Permissions.ConditionClauses do
         {:error, [error]}
 
       list ->
-        Enum.reduce(list, & join_queries/2)
+        Enum.reduce(list, &join_queries/2)
     end
   end
 

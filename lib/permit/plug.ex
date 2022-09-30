@@ -166,22 +166,30 @@ defmodule Permit.Plug do
   defp authorize_and_preload_resource(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
 
-    prefilter = Keyword.fetch!(opts, :prefilter)
+    prefilter = Keyword.get(opts, :prefilter, & &1)
+    postfilter = Keyword.get(opts, :postfilter, & &1)
     actions_module = authorization_module.actions_module()
     singular? = controller_action in actions_module.singular_groups()
-    load_key = if singular? do :loaded_resource else :loaded_resources end
+
+    load_key =
+      if singular? do
+        :loaded_resource
+      else
+        :loaded_resources
+      end
 
     if singular? do
-      & Resolver.authorize_with_singular_preloading!/5
+      &Resolver.authorize_with_singular_preloading!/6
     else
-      & Resolver.authorize_with_preloading!/5
+      &Resolver.authorize_with_preloading!/6
     end
     |> apply([
       subject,
       authorization_module,
       resource_module,
       controller_action,
-      fn resource -> prefilter.(controller_action, resource, conn.params) end
+      fn resource -> prefilter.(controller_action, resource, conn.params) end,
+      postfilter
     ])
     |> case do
       {:authorized, record} ->

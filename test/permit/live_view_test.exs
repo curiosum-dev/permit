@@ -465,7 +465,8 @@ defmodule Permit.LiveViewTest do
   end
 
   defp assert_raise_UnconvertibleConditionError(conn, url) do
-    assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/,
-        fn -> live(conn, url) end
+    assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/, fn ->
+      live(conn, url)
+    end
   end
 end

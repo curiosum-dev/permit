@@ -3,8 +3,6 @@ defmodule Permit.FakeApp.Repo do
     otp_app: :permit,
     adapter: Ecto.Adapters.Postgres
 
-
-
   # def get(Item, "1"), do: @item1
   # def get(Item, 1), do: @item1
   # def get(Item, "2"), do: @item2

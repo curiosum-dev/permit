@@ -4,10 +4,10 @@ defmodule Permit.FakeApp.Item do
   import Ecto.Changeset
 
   schema "items" do
-    field :permission_level, :integer
-    field :thread_name, :string
+    field(:permission_level, :integer)
+    field(:thread_name, :string)
 
-    belongs_to :user, Permit.FakeApp.User, foreign_key: :owner_id
+    belongs_to(:user, Permit.FakeApp.User, foreign_key: :owner_id)
 
     timestamps()
   end

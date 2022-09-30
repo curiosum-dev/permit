@@ -4,10 +4,10 @@ defmodule Permit.FakeApp.User do
   import Ecto.Changeset
 
   schema "users" do
-    field :permission_level, :integer
-    field :roles, {:array, :string}
+    field(:permission_level, :integer)
+    field(:roles, {:array, :string})
 
-    has_many :item, Permit.FakeApp.Item, foreign_key: :owner_id
+    has_many(:item, Permit.FakeApp.Item, foreign_key: :owner_id)
 
     timestamps()
   end

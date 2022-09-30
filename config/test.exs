@@ -18,7 +18,6 @@ config :permit, Permit.FakeApp.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
-
 # Print only warnings and errors during test
 config :logger, level: :warn
 

@@ -25,8 +25,15 @@ defmodule Permit.Rules do
           defmacro unquote(name)(authorization, resource, bindings, conditions) do
             # permission_to(authorization, unquote(name), resource, bindings, conditions)
             action = unquote(name)
+
             quote do
-              permission_to(unquote(authorization), unquote(action), unquote(resource), unquote(bindings), unquote(conditions))
+              permission_to(
+                unquote(authorization),
+                unquote(action),
+                unquote(resource),
+                unquote(bindings),
+                unquote(conditions)
+              )
             end
           end
 
@@ -39,7 +46,6 @@ defmodule Permit.Rules do
             authorization
             |> Rules.permission_to(unquote(name), resource, true)
           end
-
         end
       end)
 
@@ -67,7 +73,7 @@ defmodule Permit.Rules do
       end
 
       def all(authorization, resource),
-       do: all(authorization, resource, true)
+        do: all(authorization, resource, true)
 
       def actions_module,
         do: unquote(actions_module)
@@ -76,7 +82,6 @@ defmodule Permit.Rules do
 
   @spec grant(Types.role()) :: Permit.t()
   def grant(role), do: %Permit{roles: [role]}
-
 
   def unify_conditions(bindings, condition) when not is_list(condition) do
     unify_conditions(bindings, [condition])
@@ -87,18 +92,17 @@ defmodule Permit.Rules do
     |> Enum.map(&Permit.parse_condition(&1, bindings))
   end
 
-
   defmacro permission_to(authorization, action_group, resource, bindings, conditions) do
-  binds =
-    bindings
-    |> Enum.map(& elem(&1, 0))
-    |> Macro.escape()
+    binds =
+      bindings
+      |> Enum.map(&elem(&1, 0))
+      |> Macro.escape()
 
-  conditions =
-    conditions
-    |> Macro.escape()
+    conditions =
+      conditions
+      |> Macro.escape()
 
-   quote do
+    quote do
       unquote(authorization)
       |> Permit.add_permission(
         unquote(action_group),
@@ -108,15 +112,14 @@ defmodule Permit.Rules do
     end
   end
 
-  def permission_to(authorization, action_group, resource, conditions)
-    do
-      authorization
-      |> Permit.add_permission(
-        action_group,
-        resource,
-        unify_conditions([], conditions)
-      )
-    end
+  def permission_to(authorization, action_group, resource, conditions) do
+    authorization
+    |> Permit.add_permission(
+      action_group,
+      resource,
+      unify_conditions([], conditions)
+    )
+  end
 
   def permission_to(authorization, action_group, resource),
     do: permission_to(authorization, action_group, resource, true)

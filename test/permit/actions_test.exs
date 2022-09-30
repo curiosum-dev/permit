@@ -57,34 +57,32 @@ defmodule Permit.Actions.ActionsTest do
     setup do
       orut = &(&1 in [:read, :update])
       const_false = fn _ -> false end
+
       functions1 = [
         condition: const_false,
         value: const_false,
         empty: const_false,
-        join: & Enum.all?/1
+        join: &Enum.all?/1
       ]
 
       functions2 = [
         condition: orut,
         value: orut,
         empty: const_false,
-        join: & Enum.all?/1
+        join: &Enum.all?/1
       ]
 
       %{const_false: functions1, orut: functions2}
     end
 
     test "should detect cycle", %{const_false: const_false} do
-      assert {:error, :cycle,
-              [:edit, :change_unless, :change_if_field, :change_unless]} =
+      assert {:error, :cycle, [:edit, :change_unless, :change_if_field, :change_unless]} =
                Actions.traverse_actions(CyclicActions, :edit, const_false)
 
-      assert {:error, :cycle,
-              [:change_unless, :change_if_field, :change_unless]} =
+      assert {:error, :cycle, [:change_unless, :change_if_field, :change_unless]} =
                Actions.traverse_actions(CyclicActions, :change_unless, const_false)
 
-      assert {:error, :cycle,
-              [:change_if_field, :change_unless, :change_if_field]} =
+      assert {:error, :cycle, [:change_if_field, :change_unless, :change_if_field]} =
                Actions.traverse_actions(CyclicActions, :change_if_field, const_false)
     end
 

@@ -65,7 +65,6 @@ defmodule Permit.Actions do
         end
       end
 
-
       defoverridable grouping_schema: 0,
                      singular_groups: 0
     end
@@ -84,7 +83,7 @@ defmodule Permit.Actions do
       condition: verify_fn,
       value: fn _ -> true end,
       empty: fn _ -> false end,
-      join: & Enum.all?/1
+      join: &Enum.all?/1
     ]
 
     traverse_actions(

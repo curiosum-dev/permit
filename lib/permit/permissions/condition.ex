@@ -13,7 +13,8 @@ defmodule Permit.Permissions.Condition do
 
   @type condition_type :: :const | :function_1 | :function_2 | {:operator, module()}
   @type t :: %Condition{
-          condition: boolean()
+          condition:
+            boolean()
             | {atom(), (struct(), struct() -> any())}
             | (struct(), struct() -> boolean())
             | (struct() -> boolean()),
@@ -27,58 +28,59 @@ defmodule Permit.Permissions.Condition do
   @eq Operators.eq()
   @operators Operators.all()
 
-
   @spec new(Types.condition(), list()) :: Condition.t()
   def new(condition, opts \\ [bindings: []])
 
   def new({semantics_fun, query_fun}, ops)
-    when is_function(semantics_fun, 1) and is_function(query_fun, 1) or
-         is_function(semantics_fun, 2) and is_function(query_fun, 2) do
-      semantics_fun
-      |> new(ops)
-      |> put_query_function(query_fun)
-    end
+      when (is_function(semantics_fun, 1) and is_function(query_fun, 1)) or
+             (is_function(semantics_fun, 2) and is_function(query_fun, 2)) do
+    semantics_fun
+    |> new(ops)
+    |> put_query_function(query_fun)
+  end
 
   def new({key, {:not, nil}}, ops)
-  when is_atom(key),
-    do: new({key, nil}, [{:not, true} | ops])
+      when is_atom(key),
+      do: new({key, nil}, [{:not, true} | ops])
 
   def new({key, nil}, ops)
       when is_atom(key) do
     not? = Keyword.get(ops, :not, false)
+
     %Condition{
       condition: {key, const_fn2(nil)},
       condition_type: {:operator, Operators.IsNil},
       semantics: Operators.IsNil.semantics({}, not: not?),
-      dynamic_query: & {:ok, Operators.IsNil.dynamic_query(key, not: not?).(&1)}
+      dynamic_query: &{:ok, Operators.IsNil.dynamic_query(key, not: not?).(&1)}
     }
   end
 
   def new({key, {{:not, operator}, nil}}, ops)
-    when is_atom(key),
-    do: new({key, {operator, nil}}, [{:not, true} | ops])
+      when is_atom(key),
+      do: new({key, {operator, nil}}, [{:not, true} | ops])
 
   def new({key, {operator, nil}}, ops)
-    when operator in @eq_operators and is_atom(key),
+      when operator in @eq_operators and is_atom(key),
       do: new({key, nil}, ops)
 
   def new({key, {{:not, operator}, value}}, ops)
       when is_atom(key) and not is_nil(value),
-      do: new({key, {operator, value}}, [{:not, true} | ops]) # TODO negate ops instead of adding one. double nagation
+      # TODO negate ops instead of adding one. double nagation
+      do: new({key, {operator, value}}, [{:not, true} | ops])
 
   def new({key, {:not, value}}, ops)
-    when is_atom(key) and not is_nil(value),
-    do: new({key, {@eq, value}}, [{:not, true} | ops])
+      when is_atom(key) and not is_nil(value),
+      do: new({key, {@eq, value}}, [{:not, true} | ops])
 
   def new({key, {{:not, operator_with_ops}, value, operators_opts}}, ops)
-    when is_atom(key)
-    and not is_nil(value),
+      when is_atom(key) and
+             not is_nil(value),
       do: new({key, {operator_with_ops, value}}, [{:not, true} | operators_opts ++ ops])
 
   def new({key, {operator_with_ops, value, operators_opts}}, ops)
-    when operator_with_ops in @operators_with_options
-    and is_atom(key)
-    and not is_nil(value),
+      when operator_with_ops in @operators_with_options and
+             is_atom(key) and
+             not is_nil(value),
       do: new({key, {operator_with_ops, value}}, operators_opts ++ ops)
 
   def new({key, {operator, value} = condition}, ops)
@@ -86,12 +88,17 @@ defmodule Permit.Permissions.Condition do
     case Operators.get(operator) do
       {:ok, module} ->
         val_fn = binding_fn(value, Keyword.get(ops, :bindings))
+
         query_fn =
           case module.dynamic_query(key, ops) do
-           nil -> {:error, {:condition_unconvertible, %{condition: condition, type: {:operator, module}}}} |> const_fn1()
-           query -> & {:ok, query.(&1)}
-          end
+            nil ->
+              {:error,
+               {:condition_unconvertible, %{condition: condition, type: {:operator, module}}}}
+              |> const_fn1()
 
+            query ->
+              &{:ok, query.(&1)}
+          end
 
         %Condition{
           condition: {key, val_fn},
@@ -107,15 +114,14 @@ defmodule Permit.Permissions.Condition do
 
   # only value with binding e.g `field: subject.foo`
   def new({key, {{:., _, _}, _, _} = value}, ops)
-    when is_atom(key),
+      when is_atom(key),
       do: new({key, {@eq, value}}, ops)
 
   def new({key, value}, ops)
-    when is_atom(key)
-    and not is_nil(value)
-    and not is_tuple(value) ,
+      when is_atom(key) and
+             not is_nil(value) and
+             not is_tuple(value),
       do: new({key, {@eq, value}}, ops)
-
 
   def new(true, _ops),
     do: %Condition{
@@ -133,14 +139,18 @@ defmodule Permit.Permissions.Condition do
     do: %Condition{
       condition: function,
       condition_type: :function_1,
-      dynamic_query: {:error, {:condition_unconvertible, %{condition: function, type: :function_1}}} |> const_fn1()
+      dynamic_query:
+        {:error, {:condition_unconvertible, %{condition: function, type: :function_1}}}
+        |> const_fn1()
     }
 
   def new(function, _ops) when is_function(function, 2),
     do: %Condition{
       condition: function,
       condition_type: :function_2,
-      dynamic_query: {:error, {:condition_unconvertible, %{condition: function, type: :function_2}}} |> const_fn2()
+      dynamic_query:
+        {:error, {:condition_unconvertible, %{condition: function, type: :function_2}}}
+        |> const_fn2()
     }
 
   @spec satisfied?(Condition.t(), Types.resource(), Types.subject()) :: boolean()
@@ -175,18 +185,31 @@ defmodule Permit.Permissions.Condition do
   def satisfied?(%Condition{condition: function, condition_type: :function_2}, record, subject),
     do: !!function.(subject, record)
 
-  @spec to_dynamic_query(Condition.t(), Types.resource(), Types.subject()) :: {:ok, Ecto.Query.DynamicExpr.t()} | {:error, term()}
-  def to_dynamic_query(%Condition{condition: {_key, val_fn}, dynamic_query: query_fn}, subject, resource),
-    do: val_fn.(subject, resource) |> query_fn.()
+  @spec to_dynamic_query(Condition.t(), Types.resource(), Types.subject()) ::
+          {:ok, Ecto.Query.DynamicExpr.t()} | {:error, term()}
+  def to_dynamic_query(
+        %Condition{condition: {_key, val_fn}, dynamic_query: query_fn},
+        subject,
+        resource
+      ),
+      do: val_fn.(subject, resource) |> query_fn.()
 
   def to_dynamic_query(%Condition{condition: condition, condition_type: :const}, _, _),
     do: {:ok, dynamic(^condition)}
 
-  def to_dynamic_query(%Condition{condition_type: :function_2, dynamic_query: query_fn}, subject, resource),
-    do: query_fn.(subject, resource)
+  def to_dynamic_query(
+        %Condition{condition_type: :function_2, dynamic_query: query_fn},
+        subject,
+        resource
+      ),
+      do: query_fn.(subject, resource)
 
-  def to_dynamic_query(%Condition{condition_type: :function_1, dynamic_query: query_fn}, _subject, resource),
-    do: query_fn.(resource)
+  def to_dynamic_query(
+        %Condition{condition_type: :function_1, dynamic_query: query_fn},
+        _subject,
+        resource
+      ),
+      do: query_fn.(resource)
 
   defp put_query_function(%Condition{} = condition, query_fun) do
     %Condition{condition | dynamic_query: query_fun}
@@ -208,27 +231,28 @@ defmodule Permit.Permissions.Condition do
     val
     |> Macro.prewalk(fn
       {{:., _, [{^subject, _, _}, field]}, [{:no_parens, true} | _], []} ->
-          {{:., [], [var_ast(subject), field]}, [no_parens: true], []}
+        {{:., [], [var_ast(subject), field]}, [no_parens: true], []}
 
       {{:., _, [{^object, _, _}, field]}, [{:no_parens, true} | _], []} ->
-          {{:., [], [var_ast(object), field]}, [no_parens: true], []}
+        {{:., [], [var_ast(object), field]}, [no_parens: true], []}
 
       otherwise ->
         otherwise
-      end)
-    |> then(&
-      {:fn, [],
-      [
-        {:->, [],
+    end)
+    |> then(
+      &{:fn, [],
+       [
+         {:->, [],
           [
             [var_ast(subject), var_ast(object)],
             &1
           ]}
-      ]})
-      |> Code.eval_quoted()
-      |> elem(0)
+       ]}
+    )
+    |> Code.eval_quoted()
+    |> elem(0)
   end
 
   defp var_ast(variable),
-   do: {variable, [if_undefined: :apply], Elixir}
+    do: {variable, [if_undefined: :apply], Elixir}
 end

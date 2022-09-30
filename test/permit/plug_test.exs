@@ -56,7 +56,6 @@ defmodule Permit.PlugTest do
       # Currently we get items by Repo.all() so empty list of results is returned
       # Empty list can also mean that user was not authorized
 
-
       # assert_raise Plug.Conn.WrapperError, ~r/Ecto\.NoResultsError/, fn ->
       #   call(conn, :get, "/items/0")
       # end
@@ -103,15 +102,17 @@ defmodule Permit.PlugTest do
       # conn = call(conn, :get, "/items/1")
       # assert conn.resp_body =~ ~r[Item]
       # assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
-      assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/,
-        fn -> call(conn, :get, "/items/1") end
+      assert_raise Plug.Conn.WrapperError,
+                   ~r/Permit.Permissions.UnconvertibleConditionError/,
+                   fn -> call(conn, :get, "/items/1") end
     end
 
     test "does not authorize :show action for object without matching :owner_id", %{conn: conn} do
       # conn = call(conn, :get, "/items/2")
       # assert_unauthorized(conn, "/?foo")
-       assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/,
-        fn -> call(conn, :get, "/items/2") end
+      assert_raise Plug.Conn.WrapperError,
+                   ~r/Permit.Permissions.UnconvertibleConditionError/,
+                   fn -> call(conn, :get, "/items/2") end
     end
   end
 

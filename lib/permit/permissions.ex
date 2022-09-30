@@ -41,7 +41,14 @@ defmodule Permit.Permissions do
     |> DNF.any_satisfied?(record, subject)
   end
 
-  @spec construct_query(Permissions.t(), Types.action_group(), Types.resource(), Types.subject(), module(), (Types.resource() -> Ecto.Query.t())) ::
+  @spec construct_query(
+          Permissions.t(),
+          Types.action_group(),
+          Types.resource(),
+          Types.subject(),
+          module(),
+          (Types.resource() -> Ecto.Query.t())
+        ) ::
           {:ok, Ecto.Query.t()} | {:error, [term()]}
   def construct_query(permissions, action, resource, subject, actions_module, prefilter \\ & &1) do
     with {:ok, filter} <- transitive_query(permissions, actions_module, action, resource, subject) do
@@ -57,9 +64,12 @@ defmodule Permit.Permissions do
     res_module = resource_module_from_resource(resource)
 
     functions = [
-      condition: & conditions_defined_for?(permissions, &1, res_module),
-      value: & permissions.conditions_map |> Map.get({&1, res_module}) |> DNF.to_dynamic_query(subject, resource),
-      empty: & throw({:undefined_condition, {&1, res_module}}),
+      condition: &conditions_defined_for?(permissions, &1, res_module),
+      value:
+        &(permissions.conditions_map
+          |> Map.get({&1, res_module})
+          |> DNF.to_dynamic_query(subject, resource)),
+      empty: &throw({:undefined_condition, {&1, res_module}}),
       join: fn l -> Enum.reduce(l, &join_queries/2) end
     ]
 
@@ -75,7 +85,8 @@ defmodule Permit.Permissions do
     end
   end
 
-  @spec conditions_defined_for?(Permissions.t(), Types.controller_action(), Types.resource()) :: boolean()
+  @spec conditions_defined_for?(Permissions.t(), Types.controller_action(), Types.resource()) ::
+          boolean()
   def conditions_defined_for?(permissions, action, resource) do
     permissions.conditions_map[{action, resource}]
     |> case do
@@ -109,10 +120,13 @@ defmodule Permit.Permissions do
 
   defp join_queries({:ok, query1}, {:ok, query2}),
     do: {:ok, query1 and query2}
+
   defp join_queries({:error, errors}, {:ok, _}),
     do: {:error, errors}
+
   defp join_queries({:ok, _}, {:error, errors}),
     do: {:error, errors}
+
   defp join_queries({:error, err1}, {:error, err2}),
     do: {:error, err1 ++ err2}
 end

@@ -1,6 +1,7 @@
 defmodule Permit.Actions.Forest do
   @enforce_keys [:forest]
   defstruct [:forest]
+
   @moduledoc """
 
   """
@@ -12,7 +13,7 @@ defmodule Permit.Actions.Forest do
     list_or_map
     |> Enum.map(&translate/1)
     |> Enum.into(%{})
-    |> then(& %Forest{forest: &1})
+    |> then(&%Forest{forest: &1})
   end
 
   def uniq_nodes_list(%Forest{forest: forest}) do
@@ -27,20 +28,25 @@ defmodule Permit.Actions.Forest do
     do: map
 
   defp translate({key, values} = pair)
-    when is_atom(key) and is_list(values), do: pair
+       when is_atom(key) and is_list(values),
+       do: pair
+
   defp translate({key, value})
-    when is_atom(key) and is_atom(value), do: {key, [value]}
+       when is_atom(key) and is_atom(value),
+       do: {key, [value]}
+
   defp translate(key)
-    when is_atom(key), do: {key, []}
+       when is_atom(key),
+       do: {key, []}
 
   @spec traverse_forest(
-    Forest.t(),
-    any(),
-    [ condition: (any() -> boolean()),
-      value: (any() -> term()),
-      empty: (any() -> term()),
-      join: ([term()] -> term())
-    ]) ::
+          Forest.t(),
+          any(),
+          condition: (any() -> boolean()),
+          value: (any() -> term()),
+          empty: (any() -> term()),
+          join: ([term()] -> term())
+        ) ::
           {:ok, term()} | {:error, :cycle | :not_defined, term()}
   def traverse_forest(%Forest{forest: forest}, value, actions) do
     try do
@@ -76,7 +82,7 @@ defmodule Permit.Actions.Forest do
 
       true ->
         forest[value]
-        |> Enum.map(& traverse_aux(forest, &1, actions, [value | trace]))
+        |> Enum.map(&traverse_aux(forest, &1, actions, [value | trace]))
         |> join_fn.()
     end
   end

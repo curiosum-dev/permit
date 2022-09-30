@@ -35,13 +35,14 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
     |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, subject))
   end
 
-  @spec to_dynamic_query(DNF.t(), Types.resource(), Types.subject()) :: {:ok, Ecto.Query.t()} | {:error, term()}
+  @spec to_dynamic_query(DNF.t(), Types.resource(), Types.subject()) ::
+          {:ok, Ecto.Query.t()} | {:error, term()}
   def to_dynamic_query(%DNF{disjunctions: disjunctions}, subject, resource) do
     disjunctions
     |> Enum.map(&ConditionClauses.to_dynamic_query(&1, subject, resource))
     |> case do
       [] -> {:ok, dynamic(false)}
-      li -> Enum.reduce(li, & join_queries/2)
+      li -> Enum.reduce(li, &join_queries/2)
     end
   end
 

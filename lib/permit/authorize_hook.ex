@@ -124,13 +124,13 @@ defmodule Permit.AuthorizeHook do
     action = socket.assigns.live_action
 
     case Permit.Resolver.authorized_without_preloading?(
-         subject,
-         authorization_module,
-         resource_module,
-         action
-       ) do
+           subject,
+           authorization_module,
+           resource_module,
+           action
+         ) do
       true -> {:authorized, socket}
-      false-> {:unauthorized, socket}
+      false -> {:unauthorized, socket}
     end
   end
 
@@ -140,24 +140,31 @@ defmodule Permit.AuthorizeHook do
     authorization_module = socket.view.authorization_module()
     actions_module = authorization_module.actions_module()
     resource_module = socket.view.resource_module()
-    prefilter = &socket.view.prefilter/3
-    # postfilter = &socket.view.postfilter/3
+    prefilter = &socket.view.prefilter/3 # TODO prefilter is optional callback
+    postfilter = &socket.view.postfilter/1 # TODO postfilter is optional callback
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
     singular? = action in actions_module.singular_groups()
-    load_key = if singular? do :loaded_resource else :loaded_resources end
+
+    load_key =
+      if singular? do
+        :loaded_resource
+      else
+        :loaded_resources
+      end
 
     if singular? do
-      & Permit.Resolver.authorize_with_singular_preloading!/5
+      &Permit.Resolver.authorize_with_singular_preloading!/6
     else
-      & Permit.Resolver.authorize_with_preloading!/5
+      &Permit.Resolver.authorize_with_preloading!/6
     end
     |> apply([
       subject,
       authorization_module,
       resource_module,
       action,
-      fn resource -> prefilter.(action, resource, params) end
+      fn resource -> prefilter.(action, resource, params) end,
+      postfilter
     ])
     |> case do
       {:authorized, records} ->

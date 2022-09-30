@@ -18,10 +18,9 @@ defmodule Permit.Types do
           | {atom(), any()}
           | (struct() -> boolean())
           | (Types.subject(), struct() -> boolean())
-          | {(struct() -> boolean()),
-             (struct() -> Ecto.Query.t())}
+          | {(struct() -> boolean()), (struct() -> Ecto.Query.t())}
           | {(Types.subject(), struct() -> boolean()),
-             (Types.subject(), struct()  -> Ecto.Query.t())}
+             (Types.subject(), struct() -> Ecto.Query.t())}
 
   @typedoc """
   - `:authorization_module` -- (Required) The app's authorization module that uses `use Permit`.

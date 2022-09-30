@@ -70,27 +70,34 @@ defmodule Permit do
       def repo, do: unquote(opts[:repo])
 
       @spec accessible_by(
-        Types.subject(),
-        Types.action_group(),
-        Types.resource(),
-        (Types.resource() -> Ecto.Query.t()),
-        (Ecto.Query.t() -> Ecto.Query.t())) ::
+              Types.subject(),
+              Types.action_group(),
+              Types.resource(),
+              (Types.resource() -> Ecto.Query.t())
+            ) ::
               {:ok, Ecto.Query.t()} | {:error, term()}
-      def accessible_by(current_user, action, resource, prefilter \\ & &1, postfilter \\ & &1) do
+      def accessible_by(current_user, action, resource, prefilter \\ & &1) do
         current_user
         |> can()
         |> Map.get(:permissions)
-        |> Permissions.construct_query(action, resource, current_user, actions_module(), prefilter)
-        |> case do
-          {:ok, query} -> {:ok, postfilter.(query)}
-          otherwise -> otherwise
-        end
+        |> Permissions.construct_query(
+          action,
+          resource,
+          current_user,
+          actions_module(),
+          prefilter
+        )
       end
 
-      @spec accessible_by!(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
+      @spec accessible_by!(
+              Types.subject(),
+              Types.action_group(),
+              Types.resource(),
+              (Types.resource() -> Ecto.Query.t())
+            ) ::
               Ecto.Query.t()
-      def accessible_by!(current_user, action, resource, prefilter \\ & &1, postfilter \\ & &1) do
-        case accessible_by(current_user, action, resource, prefilter, postfilter) do
+      def accessible_by!(current_user, action, resource, prefilter \\ & &1) do
+        case accessible_by(current_user, action, resource, prefilter) do
           {:ok, query} ->
             query
 
@@ -103,8 +110,6 @@ defmodule Permit do
       end
     end
   end
-
-
 
   @spec has_subject(Permit.t()) :: boolean()
   def has_subject(%Permit{subject: nil}), do: false
@@ -122,7 +127,7 @@ defmodule Permit do
   def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
     authorization.permissions
     |> Permissions.add(action, resource, conditions)
-    |> then(& %Permit{authorization | permissions: &1})
+    |> then(&%Permit{authorization | permissions: &1})
   end
 
   @spec verify_record(Permit.t(), Types.resource(), Types.action_group()) :: boolean()
@@ -132,7 +137,7 @@ defmodule Permit do
   end
 
   def parse_condition(condition, bindings)
-  when length(bindings) <= 2 do
+      when length(bindings) <= 2 do
     condition
     |> Condition.new(bindings: bindings)
   end
