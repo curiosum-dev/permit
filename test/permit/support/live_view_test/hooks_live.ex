@@ -50,12 +50,13 @@ defmodule Permit.LiveViewTest.HooksLive do
   end
 
   @impl true
-  def handle_params(_params, _url, socket) do
+  def handle_params(params, _url, socket) do
     {:noreply,
      assign(
        socket,
        :loaded_resource_was_visible_in_handle_params,
-       Map.has_key?(socket.assigns, :loaded_resources)
+       Map.has_key?(socket.assigns, :loaded_resources) or
+       Map.has_key?(socket.assigns, :loaded_resource)
      )}
   end
 

@@ -10,6 +10,7 @@ defmodule Permit.Actions do
   alias Permit.Types
 
   @callback grouping_schema() :: %{Types.controller_action() => [Types.action_group()]}
+  @callback singular_groups() :: [Types.action_group()]
 
   defmacro __using__(_opts) do
     quote do
@@ -26,6 +27,10 @@ defmodule Permit.Actions do
       @impl Actions
       def grouping_schema,
         do: crud_grouping()
+
+      @impl Actions
+      def singular_groups,
+        do: []
 
       def to_forest() do
         grouping_schema()
@@ -61,7 +66,8 @@ defmodule Permit.Actions do
       end
 
 
-      defoverridable grouping_schema: 0
+      defoverridable grouping_schema: 0,
+                     singular_groups: 0
     end
   end
 

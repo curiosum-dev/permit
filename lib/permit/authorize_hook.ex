@@ -139,21 +139,29 @@ defmodule Permit.AuthorizeHook do
           Types.authorization_outcome()
   defp preload_and_authorize(socket, params) do
     authorization_module = socket.view.authorization_module()
+    actions_module = authorization_module.actions_module()
     resource_module = socket.view.resource_module()
     prefilter = &socket.view.prefilter/3
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
+    singular? = action in actions_module.singular_groups()
+    load_key = if singular? do :loaded_resource else :loaded_resources end
 
-    Permit.Resolver.authorize_with_preloading!(
+    if singular? do
+      & Permit.Resolver.authorize_with_singular_preloading!/5
+    else
+      & Permit.Resolver.authorize_with_preloading!/5
+    end
+    |> apply([
       subject,
       authorization_module,
       resource_module,
       action,
       fn resource -> prefilter.(action, resource, params) end
-    )
+    ])
     |> case do
       {:authorized, records} ->
-        {:authorized, assign(socket, :loaded_resources, records)}
+        {:authorized, assign(socket, load_key, records)}
 
       :unauthorized ->
         {:unauthorized, socket}
