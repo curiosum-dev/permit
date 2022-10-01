@@ -212,7 +212,7 @@ defmodule Permit.Permissions.Condition do
       do: query_fn.(resource)
 
   defp put_query_function(%Condition{} = condition, query_fun) do
-    %Condition{condition | dynamic_query: query_fun}
+    %Condition{condition | dynamic_query: &{:ok, query_fun.(&1)}}
   end
 
   defp const_fn1(val),
