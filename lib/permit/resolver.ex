@@ -55,7 +55,7 @@ defmodule Permit.Resolver do
           Types.controller_action(),
           function(),
           function()
-        ) :: {:authorized, [struct()]} | :unauthorized | :not_found
+        ) :: {:authorized, [struct()]} | :unauthorized | {:not_found, Ecto.Queryable.t()}
   def authorize_with_preloading!(
         subject,
         authorization_module,
@@ -93,13 +93,6 @@ defmodule Permit.Resolver do
     end
   end
 
-  defp check_existence(authorization_module, resource, prefilter) do
-    resource
-    |> resource_module_from_resource()
-    |> prefilter.()
-    |> authorization_module.repo.exists?()
-  end
-
   @spec resource_fetcher(
           module(),
           Types.resource_module(),
@@ -132,9 +125,16 @@ defmodule Permit.Resolver do
     fn ->
       case check_existence(authorization_module, resource_module, prefilter) do
         true -> :unauthorized
-        false -> :not_found
+        false -> raise Ecto.NoResultsError, queryable: prefilter.(resource_module)
       end
     end
+  end
+
+  defp check_existence(authorization_module, resource, prefilter) do
+    resource
+    |> resource_module_from_resource()
+    |> prefilter.()
+    |> authorization_module.repo.exists?()
   end
 
   @spec check(

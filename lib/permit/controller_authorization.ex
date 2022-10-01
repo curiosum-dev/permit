@@ -38,7 +38,8 @@ defmodule Permit.ControllerAuthorization do
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback except() :: list(atom())
-
+  @callback preload(Types.controller_action(), Types.resource_module(), Types.subject(), map()) :: any()
+  # TODO maybe filter those values and leave only preload
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
@@ -46,7 +47,9 @@ defmodule Permit.ControllerAuthorization do
                       except: 0,
                       prefilter: 3,
                       postfilter: 1,
-                      user_from_conn: 1
+                      user_from_conn: 1,
+                      preload: 4
+
 
   defmacro __using__(opts) do
     opts_authorization_module =
@@ -57,6 +60,7 @@ defmodule Permit.ControllerAuthorization do
     opts_preload_resource_in = opts[:preload_resource_in]
     opts_fallback_path = opts[:fallback_path]
     opts_except = opts[:except]
+    preload = opts[:preload_fn]
 
     opts_id_param_name =
       Keyword.get(
@@ -171,7 +175,8 @@ defmodule Permit.ControllerAuthorization do
         prefilter: &__MODULE__.prefilter/3,
         postfilter: &__MODULE__.postfilter/1,
         user_from_conn: &__MODULE__.user_from_conn/1,
-        handle_unauthorized: &__MODULE__.handle_unauthorized/1
+        handle_unauthorized: &__MODULE__.handle_unauthorized/1,
+        preload_fn: unquote(preload)
       )
     end
   end

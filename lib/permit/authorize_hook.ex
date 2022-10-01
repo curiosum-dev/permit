@@ -172,10 +172,6 @@ defmodule Permit.AuthorizeHook do
 
       :unauthorized ->
         {:unauthorized, socket}
-
-      :not_found ->
-        # TODO figure out what to do here
-        raise "Not Found"
     end
   end
 

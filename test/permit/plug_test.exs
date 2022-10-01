@@ -25,12 +25,9 @@ defmodule Permit.PlugTest do
     end
 
     test "raises when record does not exist", %{conn: conn} do
-      # Currently we get items by Repo.all() so empty list of results is returned
-      # Empty list can also mean that user was not authorized
-
-      # assert_raise Plug.Conn.WrapperError, ~r/Ecto\.NoResultsError/, fn ->
-      #   call(conn, :get, "/items/0")
-      # end
+      assert_raise Plug.Conn.WrapperError, ~r/Ecto\.NoResultsError/, fn ->
+        call(conn, :get, "/items/0")
+      end
     end
   end
 
@@ -53,12 +50,9 @@ defmodule Permit.PlugTest do
     end
 
     test "raises when record does not exist", %{conn: conn} do
-      # Currently we get items by Repo.all() so empty list of results is returned
-      # Empty list can also mean that user was not authorized
-
-      # assert_raise Plug.Conn.WrapperError, ~r/Ecto\.NoResultsError/, fn ->
-      #   call(conn, :get, "/items/0")
-      # end
+      assert_raise Plug.Conn.WrapperError, ~r/NoResultsError/, fn ->
+        call(conn, :get, "/items/0")
+      end
     end
   end
 

@@ -96,8 +96,8 @@ defmodule Permit.Plug do
         {opt_name, opt_function} when is_function(opt_function, 0) ->
           {opt_name, opt_function.()}
 
-        {opt_name, opt_value} ->
-          {opt_name, opt_value}
+        otherwise ->
+          otherwise
       end)
 
     controller_action = action_name(conn)
@@ -164,8 +164,61 @@ defmodule Permit.Plug do
         ) ::
           Plug.Conn.t()
   defp authorize_and_preload_resource(conn, opts, controller_action, subject, resource_module) do
+    if opts[:preload_fn] do
+      &authorize_and_preload_by_function/5
+    else
+      &authorize_and_preload_by_ecto_query/5
+    end
+    |> apply([
+      conn,
+      opts,
+      controller_action,
+      subject,
+      resource_module
+    ])
+  end
+
+  defp authorize_and_preload_by_function(
+    conn,
+    opts,
+    controller_action,
+    subject,
+    resource_module
+  ) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
 
+    Resolver.authorized_without_preloading?(
+      subject,
+      authorization_module,
+      resource_module,
+      controller_action
+    )
+    |> case do
+      true ->
+        resource = opts[:preload_fn].(
+          controller_action,
+          resource_module,
+          subject,
+          conn.params
+        )
+
+        conn
+        |> assign(:loaded_resource, resource)
+
+      false ->
+        conn
+        |> opts[:handle_unauthorized].()
+    end
+  end
+
+  defp authorize_and_preload_by_ecto_query(
+    conn,
+    opts,
+    controller_action,
+    subject,
+    resource_module
+  ) do
+    authorization_module = Keyword.fetch!(opts, :authorization_module)
     prefilter = Keyword.get(opts, :prefilter, & &1)
     postfilter = Keyword.get(opts, :postfilter, & &1)
     actions_module = authorization_module.actions_module()

@@ -47,13 +47,16 @@ defmodule Permit.LiveViewAuthorization do
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback except() :: list(atom())
+  @callback preload_fn(Types.controller_action(), Types.resource_module(), Types.subject(), map()) :: any()
+  # TODO maybe filter those values and leave only load_fn
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
                       resource_module: 0,
                       except: 0,
                       prefilter: 3,
-                      postfilter: 1
+                      postfilter: 1,
+                      preload_fn: 4
 
   defmacro __using__(opts) do
     authorization_module =
