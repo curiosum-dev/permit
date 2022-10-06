@@ -237,7 +237,7 @@ defmodule Permit.Permissions.Condition do
 
   defp map_struct_selector_to_ast({{:., _, [{param, _, _}, field]}, [{:no_parens, true} | _], []} = expr, selectors) do
     if param in selectors do
-      {{:., [], [var_ast(param), field]}, [no_parens: true], []}
+      {{:., [], [make_var_ast(param), field]}, [no_parens: true], []}
     else
       expr
     end
@@ -245,7 +245,7 @@ defmodule Permit.Permissions.Condition do
   defp map_struct_selector_to_ast(expression, _selectors),
     do: expression
 
-  defp var_ast(variable),
+  defp make_var_ast(variable),
     do: {variable, [if_undefined: :apply], Elixir}
 
   defp make_function2_ast(body, arg1, arg2) do
@@ -253,7 +253,7 @@ defmodule Permit.Permissions.Condition do
        [
          {:->, [],
           [
-            [var_ast(arg1), var_ast(arg2)],
+            [make_var_ast(arg1), make_var_ast(arg2)],
             body
           ]}
        ]}
