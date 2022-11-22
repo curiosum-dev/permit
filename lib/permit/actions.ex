@@ -95,7 +95,7 @@ defmodule Permit.Actions do
         ) :: boolean()
   def verify_transitively!(actions_module, action, verify_fn) do
     fn -> verify_transitively(actions_module, action, verify_fn) end
-    |> raise_traversal_errors!(actions_module)
+    |> maybe_raise_traversal_errors!(actions_module)
   end
 
   def traverse_actions(actions_module, key, functions) do
@@ -105,10 +105,10 @@ defmodule Permit.Actions do
 
   def traverse_actions!(actions_module, key, functions) do
     fn -> traverse_actions(actions_module, key, functions) end
-    |> raise_traversal_errors!(actions_module)
+    |> maybe_raise_traversal_errors!(actions_module)
   end
 
-  defp raise_traversal_errors!(function, actions_module) do
+  defp maybe_raise_traversal_errors!(function, actions_module) do
     case function.() do
       {:ok, result} ->
         result

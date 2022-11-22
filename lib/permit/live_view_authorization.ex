@@ -67,18 +67,14 @@ defmodule Permit.LiveViewAuthorization do
       Keyword.get(
         opts,
         :id_param_name,
-        quote do
-          "id"
-        end
+        "id"
       )
 
     opts_id_struct_field_name =
       Keyword.get(
         opts,
         :id_struct_name,
-        quote do
-          :id
-        end
+        :id
       )
 
     quote do

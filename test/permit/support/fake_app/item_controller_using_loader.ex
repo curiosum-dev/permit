@@ -5,7 +5,6 @@ defmodule Permit.FakeApp.ItemControllerUsingLoader do
 
   use Permit.ControllerAuthorization,
     authorization_module: Authorization,
-    # loader_fn: &__MODULE__.load/1,
     resource_module: Item
 
   def index(conn, _params), do: text(conn, "listing all items")
