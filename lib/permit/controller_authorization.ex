@@ -39,7 +39,6 @@ defmodule Permit.ControllerAuthorization do
   @callback fallback_path() :: binary()
   @callback except() :: list(atom())
   @callback preload(Types.controller_action(), Types.resource_module(), Types.subject(), map()) :: any()
-  # TODO maybe filter those values and leave only preload
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
@@ -85,6 +84,7 @@ defmodule Permit.ControllerAuthorization do
     quote generated: true do
       require Logger
       require Ecto.Query
+      import Ecto.Query
 
       @behaviour unquote(__MODULE__)
 
@@ -141,7 +141,7 @@ defmodule Permit.ControllerAuthorization do
         |> Context.filter_by_field(unquote(opts_id_struct_field_name), id)
       end
 
-      def prefilter(_action, resource_module, _params), do: resource_module
+      def prefilter(_action, resource_module, _params), do: from r in resource_module
 
       @impl true
       def postfilter(query), do: query

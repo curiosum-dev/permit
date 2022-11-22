@@ -79,17 +79,19 @@ defmodule Permit.Actions do
           | {:error, :cycle, [Types.action_group()]}
           | {:error, :not_defined, Types.action_group()}
   def verify_transitively(actions_module, action, verify_fn) do
-    functions = [
-      condition: verify_fn,
-      value: fn _ -> true end,
-      empty: fn _ -> false end,
-      join: &Enum.all?/1
-    ]
+    condition = verify_fn
+    value = fn _ -> true end
+    empty = fn _ -> false end
+    join = &Enum.all?/1
+
 
     traverse_actions(
       actions_module,
       action,
-      functions
+      condition,
+      value,
+      empty,
+      join
     )
   end
 
@@ -103,13 +105,13 @@ defmodule Permit.Actions do
     |> raise_traversal_errors!(actions_module)
   end
 
-  def traverse_actions(actions_module, key, functions) do
+  def traverse_actions(actions_module, key, condition, value, empty, join) do
     actions_module.to_forest()
-    |> Forest.traverse_forest(key, functions)
+    |> Forest.traverse_forest(key, condition: condition, value: value, empty: empty, join: join)
   end
 
-  def traverse_actions!(actions_module, key, functions) do
-    fn -> traverse_actions(actions_module, key, functions) end
+  def traverse_actions!(actions_module, key, condition, value, empty, join) do
+    fn -> traverse_actions(actions_module, key, condition, value, empty, join) end
     |> raise_traversal_errors!(actions_module)
   end
 

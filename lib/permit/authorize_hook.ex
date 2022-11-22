@@ -146,27 +146,21 @@ defmodule Permit.AuthorizeHook do
     action = socket.assigns.live_action
     singular? = action in actions_module.singular_groups()
 
-    load_key =
+    {load_key, auth_function} =
       if singular? do
-        :loaded_resource
+        {:loaded_resource, &Permit.Resolver.authorize_with_singular_preloading!/6}
       else
-        :loaded_resources
+        {:loaded_resources, &Permit.Resolver.authorize_with_preloading!/6}
       end
 
-    if singular? do
-      &Permit.Resolver.authorize_with_singular_preloading!/6
-    else
-      &Permit.Resolver.authorize_with_preloading!/6
-    end
-    |> apply([
+    case auth_function.(
       subject,
       authorization_module,
       resource_module,
       action,
       fn resource -> prefilter.(action, resource, params) end,
       postfilter
-    ])
-    |> case do
+    ) do
       {:authorized, records} ->
         {:authorized, assign(socket, load_key, records)}
 

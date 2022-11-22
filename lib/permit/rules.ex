@@ -23,7 +23,6 @@ defmodule Permit.Rules do
         quote do
           # @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
           defmacro unquote(name)(authorization, resource, bindings, conditions) do
-            # permission_to(authorization, unquote(name), resource, bindings, conditions)
             action = unquote(name)
 
             quote do
@@ -37,11 +36,13 @@ defmodule Permit.Rules do
             end
           end
 
+          @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
           def unquote(name)(authorization, resource, conditions) do
             authorization
             |> Rules.permission_to(unquote(name), resource, conditions)
           end
 
+          @spec unquote(name)(Permit.t(), Types.resource()) :: Permit.t()
           def unquote(name)(authorization, resource) do
             authorization
             |> Rules.permission_to(unquote(name), resource, true)

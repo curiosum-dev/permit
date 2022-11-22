@@ -5,6 +5,7 @@ defmodule Permit.Types do
   @type action_group :: atom()
   @type role :: term()
   @type subject :: struct()
+  @type object :: struct()
   @type resource :: struct() | resource_module()
   @type id :: integer() | binary()
   @type id_param_name :: binary()
@@ -13,15 +14,15 @@ defmodule Permit.Types do
   @type conn :: Plug.Conn.t()
   @type authorization_outcome :: {:authorized | :unauthorized, socket()}
   @type hook_outcome :: {:halt, socket()} | {:cont, socket()}
+  @type object_struct_filed :: atom()
   @type condition ::
           boolean()
-          | {atom(), any()}
-          | (struct() -> boolean())
-          | (Types.subject(), struct() -> boolean())
-          | {(struct() -> boolean()), (struct() -> Ecto.Query.t())}
-          | {(Types.subject(), struct() -> boolean()),
-             (Types.subject(), struct() -> Ecto.Query.t())}
-
+          | {object_struct_filed(), any()}
+          | (object() -> boolean())
+          | (subject(), object() -> boolean())
+          | {(object() -> boolean()), (object() -> Ecto.Query.t())}
+          | {(subject(), object() -> boolean()),
+             (subject(), object() -> Ecto.Query.t())}
   @typedoc """
   - `:authorization_module` -- (Required) The app's authorization module that uses `use Permit`.
   - `preload_resource_in` -- (Optional) The list of actions that resources will be preloaded and authorized in, in addition to :show, :delete, :edit and :update.

@@ -88,6 +88,7 @@ defmodule Permit.LiveViewAuthorization do
 
     quote do
       import unquote(__MODULE__)
+      import Ecto.Query
 
       @behaviour unquote(__MODULE__)
 
@@ -117,7 +118,7 @@ defmodule Permit.LiveViewAuthorization do
         |> Context.filter_by_field(unquote(opts_id_struct_field_name), id)
       end
 
-      def prefilter(_action, resource_module, _params), do: resource_module
+      def prefilter(_action, resource_module, _params), do: from r in resource_module
 
       @impl true
       def postfilter(query), do: query

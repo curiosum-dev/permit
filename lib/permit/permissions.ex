@@ -63,21 +63,24 @@ defmodule Permit.Permissions do
   defp transitive_query(permissions, actions_module, action, resource, subject) do
     res_module = resource_module_from_resource(resource)
 
-    functions = [
-      condition: &conditions_defined_for?(permissions, &1, res_module),
-      value:
-        &(permissions.conditions_map
-          |> Map.get({&1, res_module})
-          |> DNF.to_dynamic_query(subject, resource)),
-      empty: &throw({:undefined_condition, {&1, res_module}}),
-      join: fn l -> Enum.reduce(l, &join_queries/2) end
-    ]
+    condition = &conditions_defined_for?(permissions, &1, res_module)
+    value = fn action ->
+      permissions.conditions_map
+      |> Map.get({action, res_module})
+      |> DNF.to_dynamic_query(subject, resource)
+    end
+    empty = &throw({:undefined_condition, {&1, res_module}})
+    join = fn l -> Enum.reduce(l, &join_queries/2) end
+
 
     try do
       Actions.traverse_actions!(
         actions_module,
         action,
-        functions
+        condition,
+        value,
+        empty,
+        join
       )
     catch
       {:undefined_condition, _} = error ->
