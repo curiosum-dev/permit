@@ -36,23 +36,22 @@ defmodule Permit.LiveViewAuthorization do
       {:halt, socket(socket, to: socket.view.fallback_path())}
   """
   alias Permit.Types
+  alias Permit.FakeApp.Item.Context
 
   @callback resource_module() :: module()
-  @callback loader_fn() :: fun()
+  @callback prefilter(Types.controller_action(), module(), map()) :: Ecto.Query.t()
   @callback handle_unauthorized(Types.socket()) :: Types.hook_outcome()
   @callback user_from_session(map()) :: struct()
   @callback authorization_module() :: module()
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback except() :: list(atom())
-  @callback id_param_name() :: Types.id_param_name()
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
                       resource_module: 0,
                       except: 0,
-                      loader_fn: 0,
-                      id_param_name: 0
+                      prefilter: 3
 
   defmacro __using__(opts) do
     authorization_module =
@@ -63,7 +62,20 @@ defmodule Permit.LiveViewAuthorization do
     preload_resource_in = opts[:preload_resource_in]
     fallback_path = opts[:fallback_path]
     except = opts[:except]
-    id_param_name = opts[:id_param_name]
+
+    opts_id_param_name =
+      Keyword.get(
+        opts,
+        :id_param_name,
+        "id"
+      )
+
+    opts_id_struct_field_name =
+      Keyword.get(
+        opts,
+        :id_struct_name,
+        :id
+      )
 
     quote do
       import unquote(__MODULE__)
@@ -91,14 +103,19 @@ defmodule Permit.LiveViewAuthorization do
       def except, do: unquote(except) || []
 
       @impl true
-      def id_param_name, do: unquote(id_param_name) || "id"
+      def prefilter(_action, resource_module, %{unquote(opts_id_param_name) => id}) do
+        resource_module
+        |> Context.filter_by_field(unquote(opts_id_struct_field_name), id)
+      end
+
+      def prefilter(_action, resource_module, _params), do: resource_module
 
       defoverridable handle_unauthorized: 1,
                      preload_resource_in: 0,
                      fallback_path: 0,
                      resource_module: 0,
-                     except: 0,
-                     id_param_name: 0
+                     prefilter: 3,
+                     except: 0
     end
   end
 

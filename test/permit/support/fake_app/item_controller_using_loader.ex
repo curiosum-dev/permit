@@ -5,11 +5,10 @@ defmodule Permit.FakeApp.ItemControllerUsingLoader do
 
   use Permit.ControllerAuthorization,
     authorization_module: Authorization,
-    loader_fn: &__MODULE__.load/1,
     resource_module: Item
 
   def index(conn, _params), do: text(conn, "listing all items")
-  def show(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resource]))
+  def show(conn, _params), do: text(conn, inspect(conn.assigns[:loaded_resources]))
 
   @item1 %Item{id: 1, owner_id: 1, permission_level: 1}
   @item2 %Item{id: 2, owner_id: 2, permission_level: 2}

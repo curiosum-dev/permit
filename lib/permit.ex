@@ -7,6 +7,8 @@ defmodule Permit do
   alias Permit.Types
   alias Permit.Permissions
   alias Permit.HasRoles
+  alias Permit.Permissions.UndefinedConditionError
+  alias Permit.Permissions.UnconvertibleConditionError
 
   @type t :: %Permit{
           roles: [Types.role()],
@@ -66,16 +68,33 @@ defmodule Permit do
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
 
-      @spec accessible_by(Types.subject(), Types.action_group(), Types.resource()) ::
+      @spec accessible_by(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
               {:ok, Ecto.Query.t()} | {:error, term()}
-      def accessible_by(current_user, action, resource) do
-        unquote(permissions_module)
-        |> apply(:can, [current_user])
+      def accessible_by(current_user, action, resource, prefilter \\ & &1) do
+        current_user
+        |> can()
         |> Map.get(:permissions)
-        |> Permissions.construct_query(action, resource)
+        |> Permissions.construct_query(action, resource, actions_module(), prefilter)
+      end
+
+      @spec accessible_by!(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
+              Ecto.Query.t()
+      def accessible_by!(current_user, action, resource, prefilter \\ & &1) do
+        case accessible_by(current_user, action, resource, prefilter) do
+          {:ok, query} ->
+            query
+
+          {:error, {:undefined_condition, key}} ->
+            raise UndefinedConditionError, key
+
+          {:error, errors} ->
+            raise UnconvertibleConditionError, errors
+        end
       end
     end
   end
+
+
 
   @spec has_subject(Permit.t()) :: boolean()
   def has_subject(%Permit{subject: nil}), do: false

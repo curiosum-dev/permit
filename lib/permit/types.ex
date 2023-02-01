@@ -33,7 +33,7 @@ defmodule Permit.Types do
   """
   @type plug_opts :: [
           authorization_module: module() | function(),
-          loader_fn: loader() | function(),
+          prefilter: loader() | function(),
           resource_module: resource_module() | function(),
           preload_resource_in: list(atom()) | function(),
           id_param_name: id_param_name() | function(),

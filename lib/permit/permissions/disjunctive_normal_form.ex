@@ -1,4 +1,4 @@
-defmodule Permit.Permissions.DNF do
+defmodule Permit.Permissions.DisjunctiveNormalForm do
   @moduledoc """
     Conditions written as logical formula in disjunctive normal form
     Disjunction of dual clauses
@@ -6,7 +6,7 @@ defmodule Permit.Permissions.DNF do
 
   defstruct disjunctions: []
 
-  alias __MODULE__
+  alias __MODULE__, as: DNF
   alias Permit.Types
   alias Permit.Permissions.ConditionClauses
   import Ecto.Query
@@ -34,12 +34,13 @@ defmodule Permit.Permissions.DNF do
     |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, subject))
   end
 
-  @spec to_query(DNF.t(), Types.resource_module()) :: {:ok, Ecto.Query.t()} | {:error, term()}
-  def to_query(%DNF{disjunctions: disjunctions}, record) do
-    with {:ok, filter} <- maybe_convert(disjunctions) do
-      record
-      |> where(^filter)
-      |> then(&{:ok, &1})
+  @spec to_dynamic_query(DNF.t()) :: {:ok, Ecto.Query.t()} | {:error, term()}
+  def to_dynamic_query(%DNF{disjunctions: disjunctions}) do
+    disjunctions
+    |> Enum.map(&ConditionClauses.to_dynamic_query/1)
+    |> case do
+      [] -> {:ok, dynamic(false)}
+      li -> Enum.reduce(li, & join_queries/2)
     end
   end
 
@@ -48,21 +49,15 @@ defmodule Permit.Permissions.DNF do
     %DNF{disjunctions: d1 ++ d2}
   end
 
-  defp maybe_convert(disjunctions) do
-    disjunctions
-    |> Enum.map(&ConditionClauses.to_dynamic_query/1)
-    |> Enum.reduce({:ok, dynamic(false)}, fn
-      {:ok, conditions_query}, {:ok, acc} ->
-        {:ok, dynamic(^acc or ^conditions_query)}
+  defp join_queries({:ok, conditions_query}, {:ok, acc}),
+    do: {:ok, dynamic(^acc or ^conditions_query)}
 
-      {:ok, _}, {:error, errors} ->
-        {:error, errors}
+  defp join_queries({:ok, _}, {:error, errors}),
+    do: {:error, errors}
 
-      {:error, es}, {:error, errors} ->
-        {:error, es ++ errors}
+  defp join_queries({:error, errors}, {:ok, _}),
+    do: {:error, errors}
 
-      {:error, errors}, {:ok, _} ->
-        {:error, errors}
-    end)
-  end
+  defp join_queries({:error, es}, {:error, errors}),
+    do: {:error, es ++ errors}
 end

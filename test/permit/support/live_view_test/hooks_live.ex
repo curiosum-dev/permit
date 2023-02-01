@@ -1,14 +1,23 @@
 defmodule Permit.LiveViewTest.HooksLive do
   use Phoenix.LiveView, namespace: Permit
 
-  alias Permit.FakeApp.{Authorization, Item, User, Repo}
+  alias Permit.FakeApp.{Authorization, Item, User}
 
   use Permit.LiveViewAuthorization,
     authorization_module: Authorization,
     resource_module: Item
 
   @impl true
-  def loader_fn, do: &Repo.get(Item, &1)
+  def prefilter(_action, Item, %{"id" => id}) do
+    id =
+      if is_bitstring(id) do
+        String.to_integer(id)
+      else
+        id
+      end
+
+    Permit.FakeApp.Item.Context.filter_by_id(Item, id)
+  end
 
   @impl true
   def handle_unauthorized(socket), do: {:cont, assign(socket, :unauthorized, true)}
@@ -46,7 +55,7 @@ defmodule Permit.LiveViewTest.HooksLive do
      assign(
        socket,
        :loaded_resource_was_visible_in_handle_params,
-       Map.has_key?(socket.assigns, :loaded_resource)
+       Map.has_key?(socket.assigns, :loaded_resources)
      )}
   end
 

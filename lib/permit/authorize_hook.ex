@@ -64,7 +64,7 @@ defmodule Permit.AuthorizeHook do
       end
 
   In actions like :show, where a singular resource is to be authorized and preloaded, it is preloaded into
-  the :loaded_resource assign. This way, you can implement your :handle_params event without caring
+  the :loaded_resources assign. This way, you can implement your :handle_params event without caring
   about loading the record:
 
       @impl true
@@ -72,7 +72,7 @@ defmodule Permit.AuthorizeHook do
         {:noreply,
         socket
         |> assign(:page_title, page_title(socket.assigns.live_action))
-        |> assign(:organization, socket.assigns.loaded_resource)}
+        |> assign(:organization, socket.assigns.loaded_resources)}
       end
 
   Optionally, a handle_unauthorized/2 optional callback can be implemented, returning {:cont, socket}
@@ -140,20 +140,20 @@ defmodule Permit.AuthorizeHook do
   defp preload_and_authorize(socket, params) do
     authorization_module = socket.view.authorization_module()
     resource_module = socket.view.resource_module()
-    loader_fn = socket.view.loader_fn()
+    prefilter = &socket.view.prefilter/3
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
 
-    case Permit.Resolver.authorize_with_preloading!(
-           subject,
-           authorization_module,
-           resource_module,
-           action,
-           params,
-           loader_fn
-         ) do
-      {:authorized, record} ->
-        {:authorized, assign(socket, :loaded_resource, record)}
+    Permit.Resolver.authorize_with_preloading!(
+      subject,
+      authorization_module,
+      resource_module,
+      action,
+      fn resource -> prefilter.(action, resource, params) end
+    )
+    |> case do
+      {:authorized, records} ->
+        {:authorized, assign(socket, :loaded_resources, records)}
 
       :unauthorized ->
         {:unauthorized, socket}
