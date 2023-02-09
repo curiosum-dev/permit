@@ -35,6 +35,7 @@ jobs:
       run: |
        sudo apt-get install -y postgresql-12
        sudo service postgresql start
+       sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
     - name: Install dependencies
       run: mix deps.get
     - name: Run tests
