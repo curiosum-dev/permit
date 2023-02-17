@@ -34,6 +34,7 @@ end
 
 ### Set up your controller
 
+```elixir
 defmodule MyAppWeb.Blog.ArticleController do
   use MyAppWeb, :controller
   
@@ -60,6 +61,7 @@ defmodule MyAppWeb.Blog.ArticleController do
   
   # Optionally, implement the handle_unauthorized/1 callback to deal with authorization denial.
 end
+```
 
 ### Set up your LiveView
 ```elixir
