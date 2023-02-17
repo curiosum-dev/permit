@@ -1,13 +1,19 @@
 defmodule Permit.LiveViewTest do
-  use ExUnit.Case
+  use Permit.RepoCase
 
   import Phoenix.ConnTest
   import Phoenix.LiveViewTest
 
   alias Permit.LiveViewTest.{Endpoint, HooksLive}
-  alias Permit.FakeApp.{Item, User}
+  alias Permit.FakeApp.{Item, User, Repo}
 
   @endpoint Endpoint
+
+  setup do
+    %{users: users, items: items} = Repo.seed_data!()
+
+    {:ok, %{users: users, items: items}}
+  end
 
   describe "admin" do
     setup [:admin_role, :init_session]
@@ -34,7 +40,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert %{loaded_resource: %Item{id: 1}} = assigns
     end
 
     test "can do :show", %{conn: conn} do
@@ -43,7 +49,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert %{loaded_resource: %Item{id: 1}} = assigns
     end
 
     test "can do :new on items", %{conn: conn} do
@@ -161,7 +167,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert %{loaded_resource: %Item{id: 1}} = assigns
     end
 
     test "cannot do :new on items", %{conn: conn} do
@@ -191,7 +197,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert %{loaded_resource: %Item{id: 1}} = assigns
     end
 
     test "can do :show on item 1", %{conn: conn} do
@@ -200,7 +206,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert %{loaded_resource: %Item{id: 1}} = assigns
     end
 
     test "cant do :edit on item 2", %{conn: conn} do
@@ -267,7 +273,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert %{loaded_resource: %Item{id: 1}} = assigns
     end
 
     test "can do :show on item 1", %{conn: conn} do
@@ -276,7 +282,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 1}]} = assigns
+      assert %{loaded_resource: %Item{id: 1}} = assigns
     end
 
     test "can do :edit on item 2", %{conn: conn} do
@@ -285,7 +291,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 2}]} = assigns
+      assert %{loaded_resource: %Item{id: 2}} = assigns
     end
 
     test "cant do :show on item 2 ", %{conn: conn} do
@@ -294,7 +300,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 2}]} = assigns
+      assert %{loaded_resource: %Item{id: 2}} = assigns
     end
 
     test "cant do :edit on item 3", %{conn: conn} do
@@ -361,7 +367,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 2}]} = assigns
+      assert %{loaded_resource: %Item{id: 2}} = assigns
     end
 
     test "cant do :show on item 2 ", %{conn: conn} do
@@ -370,7 +376,7 @@ defmodule Permit.LiveViewTest do
       assigns = get_assigns(lv)
 
       assert :unauthorized not in Map.keys(assigns)
-      assert %{loaded_resources: [%Item{id: 2}]} = assigns
+      assert %{loaded_resource: %Item{id: 2}} = assigns
     end
 
     test "cant do :edit on item 3", %{conn: conn} do
@@ -412,7 +418,7 @@ defmodule Permit.LiveViewTest do
 
       lv |> element("#navigate_show") |> render_click()
 
-      assert %{loaded_resources: [%Item{id: 1}], loaded_resource_was_visible_in_handle_params: true} =
+      assert %{loaded_resource: %Item{id: 1}, loaded_resource_was_visible_in_handle_params: true} =
                get_assigns(lv)
     end
 
@@ -465,7 +471,8 @@ defmodule Permit.LiveViewTest do
   end
 
   defp assert_raise_UnconvertibleConditionError(conn, url) do
-    assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/,
-        fn -> live(conn, url) end
+    assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/, fn ->
+      live(conn, url)
+    end
   end
 end

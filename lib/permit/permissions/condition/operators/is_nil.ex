@@ -11,11 +11,11 @@ defmodule Permit.Permissions.Condition.Operators.IsNil do
     do: :is_nil
 
   @impl GenOperator
-  def semantics(ops) do
+  def semantics(_, ops) do
     not? = maybe_negate(ops)
 
-    fn _ ->
-      &not?.(is_nil(&1))
+    fn field, _, _ ->
+      not?.(is_nil(field))
     end
   end
 

@@ -1,12 +1,19 @@
 defmodule Permit.PlugTest do
-  use ExUnit.Case, async: true
+  use Permit.RepoCase, async: true
   use Permit.PlugTest.RouterHelper
 
   alias Permit.FakeApp.{
     Item,
     Router,
-    RouterUsingLoader
+    RouterUsingLoader,
+    Repo
   }
+
+  setup do
+    %{users: users, items: items} = Repo.seed_data!()
+
+    {:ok, %{users: users, items: items}}
+  end
 
   describe "admin" do
     setup do
@@ -21,16 +28,13 @@ defmodule Permit.PlugTest do
     test "authorizes :show action", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
     end
 
     test "raises when record does not exist", %{conn: conn} do
-      # Currently we get items by Repo.all() so empty list of results is returned
-      # Empty list can also mean that user was not authorized
-
-      # assert_raise Plug.Conn.WrapperError, ~r/Ecto\.NoResultsError/, fn ->
-      #   call(conn, :get, "/items/0")
-      # end
+      assert_raise Plug.Conn.WrapperError, ~r/Ecto\.NoResultsError/, fn ->
+        call(conn, :get, "/items/0")
+      end
     end
   end
 
@@ -49,17 +53,13 @@ defmodule Permit.PlugTest do
     test "authorizes :show action", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
     end
 
     test "raises when record does not exist", %{conn: conn} do
-      # Currently we get items by Repo.all() so empty list of results is returned
-      # Empty list can also mean that user was not authorized
-
-
-      # assert_raise Plug.Conn.WrapperError, ~r/Ecto\.NoResultsError/, fn ->
-      #   call(conn, :get, "/items/0")
-      # end
+      assert_raise Plug.Conn.WrapperError, ~r/NoResultsError/, fn ->
+        call(conn, :get, "/items/0")
+      end
     end
   end
 
@@ -103,15 +103,17 @@ defmodule Permit.PlugTest do
       # conn = call(conn, :get, "/items/1")
       # assert conn.resp_body =~ ~r[Item]
       # assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
-      assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/,
-        fn -> call(conn, :get, "/items/1") end
+      assert_raise Plug.Conn.WrapperError,
+                   ~r/Permit.Permissions.UnconvertibleConditionError/,
+                   fn -> call(conn, :get, "/items/1") end
     end
 
     test "does not authorize :show action for object without matching :owner_id", %{conn: conn} do
       # conn = call(conn, :get, "/items/2")
       # assert_unauthorized(conn, "/?foo")
-       assert_raise Plug.Conn.WrapperError, ~r/Permit.Permissions.UnconvertibleConditionError/,
-        fn -> call(conn, :get, "/items/2") end
+      assert_raise Plug.Conn.WrapperError,
+                   ~r/Permit.Permissions.UnconvertibleConditionError/,
+                   fn -> call(conn, :get, "/items/2") end
     end
   end
 
@@ -128,14 +130,14 @@ defmodule Permit.PlugTest do
     test "authorizes :show action", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert [ %Item{id: 1}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
     end
 
     test "authorizes :details action and preloads resource via :action_crud_mapping and :preload_resource_in options",
          %{conn: conn} do
       conn = call(conn, :get, "/details/1")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
     end
 
     test "does not authorize :edit action", %{conn: conn} do
@@ -160,20 +162,20 @@ defmodule Permit.PlugTest do
     test "authorizes :show action on item 1", %{conn: conn} do
       conn = call(conn, :get, "/items/1")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
     end
 
     test "authorizes :edit action on item 1", %{conn: conn} do
       conn = call(conn, :get, "/items/1/edit")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
     end
 
     test "authorizes :details action on item 1 and preloads resource via :action_crud_mapping and :preload_resource_in options",
          %{conn: conn} do
       conn = call(conn, :get, "/details/1")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 1}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 1} = conn.assigns[:loaded_resource]
     end
 
     test "does not authorize :details on item 2", %{conn: conn} do
@@ -211,20 +213,20 @@ defmodule Permit.PlugTest do
     test "authorizes :show action on item 2", %{conn: conn} do
       conn = call(conn, :get, "/items/2")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 2}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 2} = conn.assigns[:loaded_resource]
     end
 
     test "authorizes :edit action on item 2", %{conn: conn} do
       conn = call(conn, :get, "/items/2/edit")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 2}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 2} = conn.assigns[:loaded_resource]
     end
 
     test "authorizes :details action on item 2 and preloads resource via :action_crud_mapping and :preload_resource_in options",
          %{conn: conn} do
       conn = call(conn, :get, "/details/2")
       assert conn.resp_body =~ ~r[Item]
-      assert [%Item{id: 2}] = conn.assigns[:loaded_resources]
+      assert %Item{id: 2} = conn.assigns[:loaded_resource]
     end
 
     test "does not authorize :details on item 1", %{conn: conn} do

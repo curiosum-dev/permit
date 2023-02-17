@@ -8,10 +8,10 @@ defmodule Permit.FakeApp.Item.Context do
     |> where([it], it.id == ^id)
   end
 
-   def filter_by_field(query, field_name, value) do
-      query
-      |> where([it], field(it, ^field_name) == ^value)
-    end
+  def filter_by_field(query, field_name, value) do
+    query
+    |> where([it], field(it, ^field_name) == ^value)
+  end
 
   def create_item(attrs \\ %{}) do
     %Item{}

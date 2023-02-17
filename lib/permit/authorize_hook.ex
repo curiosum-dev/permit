@@ -123,15 +123,14 @@ defmodule Permit.AuthorizeHook do
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
 
-    if Permit.Resolver.authorized_without_preloading?(
-         subject,
-         authorization_module,
-         resource_module,
-         action
-       ) do
-      {:authorized, socket}
-    else
-      {:unauthorized, socket}
+    case Permit.Resolver.authorized_without_preloading?(
+           subject,
+           authorization_module,
+           resource_module,
+           action
+         ) do
+      true -> {:authorized, socket}
+      false -> {:unauthorized, socket}
     end
   end
 
@@ -139,21 +138,31 @@ defmodule Permit.AuthorizeHook do
           Types.authorization_outcome()
   defp preload_and_authorize(socket, params) do
     authorization_module = socket.view.authorization_module()
+    actions_module = authorization_module.actions_module()
     resource_module = socket.view.resource_module()
-    prefilter = &socket.view.prefilter/3
+    prefilter = &socket.view.prefilter/3 # TODO prefilter is optional callback
+    postfilter = &socket.view.postfilter/1 # TODO postfilter is optional callback
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
+    singular? = action in actions_module.singular_groups()
 
-    Permit.Resolver.authorize_with_preloading!(
+    {load_key, auth_function} =
+      if singular? do
+        {:loaded_resource, &Permit.Resolver.authorize_with_singular_preloading!/6}
+      else
+        {:loaded_resources, &Permit.Resolver.authorize_with_preloading!/6}
+      end
+
+    case auth_function.(
       subject,
       authorization_module,
       resource_module,
       action,
-      fn resource -> prefilter.(action, resource, params) end
-    )
-    |> case do
+      fn resource -> prefilter.(action, resource, params) end,
+      postfilter
+    ) do
       {:authorized, records} ->
-        {:authorized, assign(socket, :loaded_resources, records)}
+        {:authorized, assign(socket, load_key, records)}
 
       :unauthorized ->
         {:unauthorized, socket}

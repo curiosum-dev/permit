@@ -40,18 +40,23 @@ defmodule Permit.LiveViewAuthorization do
 
   @callback resource_module() :: module()
   @callback prefilter(Types.controller_action(), module(), map()) :: Ecto.Query.t()
+  @callback postfilter(Ecto.Query.t()) :: Ecto.Query.t()
   @callback handle_unauthorized(Types.socket()) :: Types.hook_outcome()
   @callback user_from_session(map()) :: struct()
   @callback authorization_module() :: module()
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback except() :: list(atom())
+  @callback preload_fn(Types.controller_action(), Types.resource_module(), Types.subject(), map()) :: any()
+  # TODO maybe filter those values and leave only load_fn
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
                       resource_module: 0,
                       except: 0,
-                      prefilter: 3
+                      prefilter: 3,
+                      postfilter: 1,
+                      preload_fn: 4
 
   defmacro __using__(opts) do
     authorization_module =
@@ -79,6 +84,7 @@ defmodule Permit.LiveViewAuthorization do
 
     quote do
       import unquote(__MODULE__)
+      import Ecto.Query
 
       @behaviour unquote(__MODULE__)
 
@@ -108,13 +114,17 @@ defmodule Permit.LiveViewAuthorization do
         |> Context.filter_by_field(unquote(opts_id_struct_field_name), id)
       end
 
-      def prefilter(_action, resource_module, _params), do: resource_module
+      def prefilter(_action, resource_module, _params), do: from r in resource_module
+
+      @impl true
+      def postfilter(query), do: query
 
       defoverridable handle_unauthorized: 1,
                      preload_resource_in: 0,
                      fallback_path: 0,
                      resource_module: 0,
                      prefilter: 3,
+                     postfilter: 1,
                      except: 0
     end
   end

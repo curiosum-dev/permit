@@ -11,11 +11,12 @@ defmodule Permit.Permissions.UnconvertibleConditionError do
     |> Enum.map(fn
       {{:condition_unconvertible, %{condition: condition, type: {:operator, operator}}}, i} ->
         "#{i}) Operator #{inspect(operator.symbol)} used in condition #{inspect(condition)} is not supported by Ecto.Query. Try different condition or construct your own query for it."
-      {{:condition_unconvertible, %{condition: function, type: other}}, i} when other in [:function_1, :function_2] ->
+
+      {{:condition_unconvertible, %{condition: function, type: other}}, i}
+      when other in [:function_1, :function_2] ->
         "#{i}) Functions like cannot be translated to Ecto.Query. Construct condition with operators or deliver yours query translation for the function #{Function.info(function, :name) |> elem(1)}."
-      end
-      )
+    end)
     |> Enum.join("\n")
-    |> then(& %UnconvertibleConditionError{message: msg <> &1})
+    |> then(&%UnconvertibleConditionError{message: msg <> &1})
   end
 end

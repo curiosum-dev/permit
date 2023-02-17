@@ -55,7 +55,8 @@ defmodule Permit.LiveViewTest.HooksLive do
      assign(
        socket,
        :loaded_resource_was_visible_in_handle_params,
-       Map.has_key?(socket.assigns, :loaded_resources)
+       Map.has_key?(socket.assigns, :loaded_resources) or
+         Map.has_key?(socket.assigns, :loaded_resource)
      )}
   end
 

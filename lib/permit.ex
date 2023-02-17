@@ -4,11 +4,12 @@ defmodule Permit do
   """
   defstruct roles: [], permissions: Permit.Permissions.new(), subject: nil
 
-  alias Permit.Types
-  alias Permit.Permissions
   alias Permit.HasRoles
+  alias Permit.Permissions
+  alias Permit.Permissions.Condition
   alias Permit.Permissions.UndefinedConditionError
   alias Permit.Permissions.UnconvertibleConditionError
+  alias Permit.Types
 
   @type t :: %Permit{
           roles: [Types.role()],
@@ -68,16 +69,32 @@ defmodule Permit do
       @spec repo() :: Ecto.Repo.t()
       def repo, do: unquote(opts[:repo])
 
-      @spec accessible_by(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
+      @spec accessible_by(
+              Types.subject(),
+              Types.action_group(),
+              Types.resource(),
+              (Types.resource() -> Ecto.Query.t())
+            ) ::
               {:ok, Ecto.Query.t()} | {:error, term()}
       def accessible_by(current_user, action, resource, prefilter \\ & &1) do
         current_user
         |> can()
         |> Map.get(:permissions)
-        |> Permissions.construct_query(action, resource, actions_module(), prefilter)
+        |> Permissions.construct_query(
+          action,
+          resource,
+          current_user,
+          actions_module(),
+          prefilter
+        )
       end
 
-      @spec accessible_by!(Types.subject(), Types.action_group(), Types.resource(), (Types.resource() -> Ecto.Query.t())) ::
+      @spec accessible_by!(
+              Types.subject(),
+              Types.action_group(),
+              Types.resource(),
+              (Types.resource() -> Ecto.Query.t())
+            ) ::
               Ecto.Query.t()
       def accessible_by!(current_user, action, resource, prefilter \\ & &1) do
         case accessible_by(current_user, action, resource, prefilter) do
@@ -94,8 +111,6 @@ defmodule Permit do
     end
   end
 
-
-
   @spec has_subject(Permit.t()) :: boolean()
   def has_subject(%Permit{subject: nil}), do: false
   def has_subject(%Permit{subject: _}), do: true
@@ -110,17 +125,25 @@ defmodule Permit do
         ]) ::
           Permit.t()
   def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
-    updated_permissions =
-      authorization.permissions
-      |> Permissions.add(action, resource, conditions)
-
-    %Permit{authorization | permissions: updated_permissions}
+    authorization.permissions
+    |> Permissions.add(action, resource, conditions)
+    |> then(&%Permit{authorization | permissions: &1})
   end
 
   @spec verify_record(Permit.t(), Types.resource(), Types.action_group()) :: boolean()
   def verify_record(authorization, record, action) do
     authorization.permissions
     |> Permissions.granted?(action, record, authorization.subject)
+  end
+
+  def parse_condition(condition, bindings)
+      when length(bindings) <= 2 do
+    condition
+    |> Condition.new(bindings: bindings)
+  end
+
+  def parse_condition(_condition, bindings) do
+    raise "Binding list should have at most 2 elements (subject and object), Given #{inspect(bindings)}"
   end
 
   defp add_predicate_name(atom),

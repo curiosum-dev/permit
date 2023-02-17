@@ -14,4 +14,7 @@ defmodule Permit.Actions.PhoenixActions do
     }
     |> Map.merge(crud_grouping())
   end
+
+  def singular_groups,
+    do: [:show, :edit, :new]
 end

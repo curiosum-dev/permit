@@ -14,18 +14,18 @@ defmodule Permit.Permissions.Condition.Operators.In do
   def alternatives,
     do: []
 
-  @impl GenOperator
-  def semantics(ops) do
-    case Keyword.get(ops, :not, false) do
-      true ->
-        fn x ->
-          &(&1 not in x)
-        end
+  defp maybe_not(x, false),
+    do: x
 
-      false ->
-        fn x ->
-          &(&1 in x)
-        end
+  defp maybe_not(x, true),
+    do: not x
+
+  @impl GenOperator
+  def semantics(val_fn, ops) do
+    fn field, subject, object ->
+      field
+      |> Kernel.in(val_fn.(subject, object))
+      |> maybe_not(Keyword.get(ops, :not, false))
     end
   end
 

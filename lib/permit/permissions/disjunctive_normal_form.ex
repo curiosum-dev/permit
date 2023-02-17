@@ -8,6 +8,7 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
 
   alias __MODULE__, as: DNF
   alias Permit.Types
+  alias Permit.Permissions.Condition
   alias Permit.Permissions.ConditionClauses
   import Ecto.Query
   @type t :: %DNF{disjunctions: [ConditionClauses.t()]}
@@ -17,7 +18,7 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
     %DNF{disjunctions: disjunctions}
   end
 
-  @spec add_clauses(DNF.t(), [any()]) :: DNF.t()
+  @spec add_clauses(DNF.t(), [Condition.t()]) :: DNF.t()
   def add_clauses(nil, clauses) do
     %DNF{disjunctions: [ConditionClauses.new(clauses)]}
   end
@@ -34,13 +35,14 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
     |> Enum.any?(&ConditionClauses.conditions_satisfied?(&1, record, subject))
   end
 
-  @spec to_dynamic_query(DNF.t()) :: {:ok, Ecto.Query.t()} | {:error, term()}
-  def to_dynamic_query(%DNF{disjunctions: disjunctions}) do
+  @spec to_dynamic_query(DNF.t(), Types.resource(), Types.subject()) ::
+          {:ok, Ecto.Query.t()} | {:error, term()}
+  def to_dynamic_query(%DNF{disjunctions: disjunctions}, subject, resource) do
     disjunctions
-    |> Enum.map(&ConditionClauses.to_dynamic_query/1)
+    |> Enum.map(&ConditionClauses.to_dynamic_query(&1, subject, resource))
     |> case do
       [] -> {:ok, dynamic(false)}
-      li -> Enum.reduce(li, & join_queries/2)
+      li -> Enum.reduce(li, &join_queries/2)
     end
   end
 

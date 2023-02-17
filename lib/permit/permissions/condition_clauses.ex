@@ -11,11 +11,9 @@ defmodule Permit.Permissions.ConditionClauses do
   import Ecto.Query
   @type t :: %ConditionClauses{conditions: [Condition.t()]}
 
-  @spec new([Types.condition()]) :: ConditionClauses.t()
+  @spec new([Condition.t()]) :: ConditionClauses.t()
   def new(conditions) do
-    conditions
-    |> Enum.map(&Condition.new/1)
-    |> then(&%ConditionClauses{conditions: &1})
+    %ConditionClauses{conditions: conditions}
   end
 
   # Empty condition set means that an authorization subject is not authorized
@@ -30,14 +28,14 @@ defmodule Permit.Permissions.ConditionClauses do
     |> Enum.all?(&Condition.satisfied?(&1, record, subject))
   end
 
-  @spec to_dynamic_query(ConditionClauses.t()) ::
+  @spec to_dynamic_query(ConditionClauses.t(), Types.resource(), Types.subject()) ::
           {:ok, Ecto.Query.DynamicExpr.t()} | {:error, keyword()}
-  def to_dynamic_query(%ConditionClauses{conditions: []}),
+  def to_dynamic_query(%ConditionClauses{conditions: []}, _, _),
     do: {:ok, dynamic(false)}
 
-  def to_dynamic_query(%ConditionClauses{conditions: conditions}) do
+  def to_dynamic_query(%ConditionClauses{conditions: conditions}, subject, resource) do
     conditions
-    |> Enum.map(&Condition.to_dynamic_query/1)
+    |> Enum.map(&Condition.to_dynamic_query(&1, subject, resource))
     |> case do
       [] ->
         {:ok, dynamic(true)}
@@ -46,7 +44,7 @@ defmodule Permit.Permissions.ConditionClauses do
         {:error, [error]}
 
       list ->
-        Enum.reduce(list, & join_queries/2)
+        Enum.reduce(list, &join_queries/2)
     end
   end
 

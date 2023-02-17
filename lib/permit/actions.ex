@@ -10,6 +10,7 @@ defmodule Permit.Actions do
   alias Permit.Types
 
   @callback grouping_schema() :: %{Types.controller_action() => [Types.action_group()]}
+  @callback singular_groups() :: [Types.action_group()]
 
   defmacro __using__(_opts) do
     quote do
@@ -26,6 +27,10 @@ defmodule Permit.Actions do
       @impl Actions
       def grouping_schema,
         do: crud_grouping()
+
+      @impl Actions
+      def singular_groups,
+        do: []
 
       def to_forest() do
         grouping_schema()
@@ -60,8 +65,8 @@ defmodule Permit.Actions do
         end
       end
 
-
-      defoverridable grouping_schema: 0
+      defoverridable grouping_schema: 0,
+                     singular_groups: 0
     end
   end
 
@@ -74,17 +79,18 @@ defmodule Permit.Actions do
           | {:error, :cycle, [Types.action_group()]}
           | {:error, :not_defined, Types.action_group()}
   def verify_transitively(actions_module, action, verify_fn) do
-    functions = [
-      condition: verify_fn,
-      value: fn _ -> true end,
-      empty: fn _ -> false end,
-      join: & Enum.all?/1
-    ]
+    condition = verify_fn
+    value = fn _ -> true end
+    empty = fn _ -> false end
+    join = &Enum.all?/1
 
     traverse_actions(
       actions_module,
       action,
-      functions
+      condition,
+      value,
+      empty,
+      join
     )
   end
 
@@ -98,13 +104,13 @@ defmodule Permit.Actions do
     |> maybe_raise_traversal_errors!(actions_module)
   end
 
-  def traverse_actions(actions_module, key, functions) do
+  def traverse_actions(actions_module, key, condition, value, empty, join) do
     actions_module.to_forest()
-    |> Forest.traverse_forest(key, functions)
+    |> Forest.traverse_forest(key, condition: condition, value: value, empty: empty, join: join)
   end
 
-  def traverse_actions!(actions_module, key, functions) do
-    fn -> traverse_actions(actions_module, key, functions) end
+  def traverse_actions!(actions_module, key, condition, value, empty, join) do
+    fn -> traverse_actions(actions_module, key, condition, value, empty, join) end
     |> maybe_raise_traversal_errors!(actions_module)
   end
 
