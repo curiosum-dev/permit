@@ -38,7 +38,8 @@ defmodule Permit.ControllerAuthorization do
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback except() :: list(atom())
-  @callback preload(Types.controller_action(), Types.resource_module(), Types.subject(), map()) :: any()
+  @callback preload(Types.controller_action(), Types.resource_module(), Types.subject(), map()) ::
+              any()
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
                       fallback_path: 0,
@@ -48,7 +49,6 @@ defmodule Permit.ControllerAuthorization do
                       postfilter: 1,
                       user_from_conn: 1,
                       preload: 4
-
 
   defmacro __using__(opts) do
     opts_authorization_module =
@@ -60,6 +60,9 @@ defmodule Permit.ControllerAuthorization do
     opts_fallback_path = opts[:fallback_path]
     opts_except = opts[:except]
     preload = opts[:preload_fn]
+
+    # TODO: if prefilter or postfilter is defined alongside preload_fn, it should
+    #       throw an error
 
     opts_id_param_name =
       Keyword.get(
@@ -137,7 +140,7 @@ defmodule Permit.ControllerAuthorization do
         |> Context.filter_by_field(unquote(opts_id_struct_field_name), id)
       end
 
-      def prefilter(_action, resource_module, _params), do: from r in resource_module
+      def prefilter(_action, resource_module, _params), do: from(r in resource_module)
 
       @impl true
       def postfilter(query), do: query
