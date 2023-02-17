@@ -84,7 +84,6 @@ defmodule Permit.Actions do
     empty = fn _ -> false end
     join = &Enum.all?/1
 
-
     traverse_actions(
       actions_module,
       action,
@@ -102,7 +101,7 @@ defmodule Permit.Actions do
         ) :: boolean()
   def verify_transitively!(actions_module, action, verify_fn) do
     fn -> verify_transitively(actions_module, action, verify_fn) end
-    |> raise_traversal_errors!(actions_module)
+    |> maybe_raise_traversal_errors!(actions_module)
   end
 
   def traverse_actions(actions_module, key, condition, value, empty, join) do
@@ -112,10 +111,10 @@ defmodule Permit.Actions do
 
   def traverse_actions!(actions_module, key, condition, value, empty, join) do
     fn -> traverse_actions(actions_module, key, condition, value, empty, join) end
-    |> raise_traversal_errors!(actions_module)
+    |> maybe_raise_traversal_errors!(actions_module)
   end
 
-  defp raise_traversal_errors!(function, actions_module) do
+  defp maybe_raise_traversal_errors!(function, actions_module) do
     case function.() do
       {:ok, result} ->
         result

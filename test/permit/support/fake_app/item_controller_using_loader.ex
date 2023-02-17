@@ -18,5 +18,5 @@ defmodule Permit.FakeApp.ItemControllerUsingLoader do
   def preload(_action, Item, _user, %{"id" => "1"}), do: @item1
   def preload(_action, Item, _user, %{"id" => "2"}), do: @item2
   def preload(_action, Item, _user, %{"id" => "3"}), do: @item3
-  def preload(_action, _object, _user, _params), do: raise NoResultsError
+  def preload(_action, _object, _user, _params), do: raise(NoResultsError)
 end

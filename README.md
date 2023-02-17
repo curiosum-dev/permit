@@ -8,13 +8,13 @@ Originally briefed and announced in Michal Buszkiewicz's [Curiosum](https://curi
 
 * Rule definition syntax
   - [x] Defining rules for **C**reate, **R**ead, **U**pdate and **D**elete actions
-  - [ ] Defining rules for arbitrarily named actions
+  - [x] Defining rules for arbitrarily named actions
 - [x] Authorization resolution
   - [x] Authorizing a subject to perform a specific action on a resource type (i.e. struct module, Ecto schema)
   - [x] Authorizing a subject to perform a specific action on a specific resource (i.e. struct, loaded Ecto record)
   - [x] Loading and authorizing a record based on a set of params (e.g. ID) and subject
-  - [ ] Building Ecto queries scoping accessible records based on subject and resource type
-- [x] Phoenix Framework integration
+  - [x] Building Ecto queries scoping accessible records based on subject and resource type
+* [x] Phoenix Framework integration
   - Authorizing singular resource actions (e.g. `show`, `update`)
     - [x] Plug / Controller
     - [x] LiveView
@@ -25,13 +25,13 @@ Originally briefed and announced in Michal Buszkiewicz's [Curiosum](https://curi
     - [x] Plug/Controller
     - [x] LiveView
   - Preloading accessible records in non-singular resource actions (e.g. `index`)
-    - [ ] Plug/Controller
-    - [ ] LiveView
+    - [x] Plug/Controller
+    - [x] LiveView
 * [ ] Absinthe integration
   - [ ] Figuring out mapping and/or extending the current permission definition paradigm to accomodate GraphQL usage
   - [ ] Implementing a PoC
 * [ ] Framework adapters
-  - [ ] Refactor resolver to provide a clear and straightforward way to develop library adapters
+  - [x] Refactor resolver to provide a clear and straightforward way to develop library adapters
   - [ ] Figure out what other frameworks we could adapt to using this library
 * [ ] Documentation
   - [ ] Examples of usage for each compatible framework and scenario

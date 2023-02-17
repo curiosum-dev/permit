@@ -65,18 +65,14 @@ defmodule Permit.ControllerAuthorization do
       Keyword.get(
         opts,
         :id_param_name,
-        quote do
-          "id"
-        end
+        "id"
       )
 
     opts_id_struct_field_name =
       Keyword.get(
         opts,
         :id_struct_name,
-        quote do
-          :id
-        end
+        :id
       )
 
     opts_user_from_conn_fn = opts[:user_from_conn]
