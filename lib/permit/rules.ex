@@ -21,7 +21,6 @@ defmodule Permit.Rules do
       |> apply(:list_groups, [])
       |> Enum.map(fn name ->
         quote do
-          # @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
           defmacro unquote(name)(authorization, resource, bindings, conditions) do
             action = unquote(name)
 
