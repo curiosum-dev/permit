@@ -11,12 +11,13 @@ permissions:
 
 env:
   MIX_ENV: test
+  ImageOS:
 
 jobs:
   build:
 
     name: Build and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v3
@@ -25,6 +26,8 @@ jobs:
       with:
         elixir-version: '1.12.3' # Define the elixir version [required]
         otp-version: '24.1' # Define the OTP version [required]
+      env:
+        ImageOS: ubuntu20
     - name: Restore dependencies cache
       uses: actions/cache@v3
       with:
