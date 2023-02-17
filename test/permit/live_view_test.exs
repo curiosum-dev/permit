@@ -1,13 +1,19 @@
 defmodule Permit.LiveViewTest do
-  use ExUnit.Case
+  use Permit.RepoCase
 
   import Phoenix.ConnTest
   import Phoenix.LiveViewTest
 
   alias Permit.LiveViewTest.{Endpoint, HooksLive}
-  alias Permit.FakeApp.{Item, User}
+  alias Permit.FakeApp.{Item, User, Repo}
 
   @endpoint Endpoint
+
+  setup do
+    %{users: users, items: items} = Repo.seed_data!()
+
+    {:ok, %{users: users, items: items}}
+  end
 
   describe "admin" do
     setup [:admin_role, :init_session]

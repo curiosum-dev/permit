@@ -19,5 +19,4 @@ Application.put_env(
 # Code.require_file("ecto_migration.exs", __DIR__)
 
 # :ok = Ecto.Migrator.up(Permit.FakeApp.Repo, 0, Ecto.Integration.Migration, log: false)
-Ecto.Adapters.SQL.Sandbox.mode(Permit.FakeApp.Repo, {:shared, self()})
 Process.flag(:trap_exit, true)

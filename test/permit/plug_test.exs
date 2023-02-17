@@ -1,12 +1,19 @@
 defmodule Permit.PlugTest do
-  use ExUnit.Case, async: true
+  use Permit.RepoCase, async: true
   use Permit.PlugTest.RouterHelper
 
   alias Permit.FakeApp.{
     Item,
     Router,
-    RouterUsingLoader
+    RouterUsingLoader,
+    Repo
   }
+
+  setup do
+    %{users: users, items: items} = Repo.seed_data!()
+
+    {:ok, %{users: users, items: items}}
+  end
 
   describe "admin" do
     setup do
