@@ -5,149 +5,106 @@ defmodule Permit.Resolver do
   providing integration with e.g. Plug or LiveView.
   """
   alias Permit.Types
-  require Permit
-  import Permit.Helpers, only: [resource_module_from_resource: 1]
 
-  @spec authorized_without_preloading?(
-          Types.subject(),
-          module(),
-          Types.resource_module(),
-          Types.controller_action()
-        ) :: boolean()
-  def authorized_without_preloading?(subject, authorization_module, resource_module, action)
-      when not is_nil(subject) do
-    check(action, authorization_module, resource_module, subject)
-  end
+  use Permit.ResolverBase
 
-  @spec authorize_with_singular_preloading!(
-          Types.subject(),
-          module(),
-          Types.resource_module(),
-          Types.controller_action(),
-          function(),
-          function()
-        ) :: {:authorized, [struct()]} | :unauthorized
-  def authorize_with_singular_preloading!(
+  @impl Permit.ResolverBase
+  def resolve(
         subject,
         authorization_module,
         resource_module,
         action,
-        prefilter,
-        postfilter
-      )
-      when not is_nil(subject) do
-    authorization_checker = fn ->
-      check(action, authorization_module, resource_module, subject)
-    end
-
-    authorize_and_preload_logic(
-      authorization_checker,
-      resource_fetcher(authorization_module, resource_module, action, subject, prefilter, postfilter, :one),
-      &is_nil/1,
-      construct_existence_checker(authorization_module, resource_module, prefilter)
-    )
-  end
-
-  @spec authorize_with_preloading!(
-          Types.subject(),
-          module(),
-          Types.resource_module(),
-          Types.controller_action(),
-          function(),
-          function()
-        ) :: {:authorized, [struct()]} | :unauthorized | {:not_found, Ecto.Queryable.t()}
-  def authorize_with_preloading!(
-        subject,
-        authorization_module,
-        resource_module,
-        action,
-        prefilter,
-        postfilter
-      )
-      when not is_nil(subject) do
-    authorization_checker = fn ->
-      check(action, authorization_module, resource_module, subject)
-    end
-
-    authorize_and_preload_logic(
-      authorization_checker,
-      resource_fetcher(authorization_module, resource_module, action, subject, prefilter, postfilter, :all),
-      &Enum.empty?/1,
-      construct_existence_checker(authorization_module, resource_module, prefilter)
-    )
-  end
-
-  defp authorize_and_preload_logic(
-         authorization_checker,
-         fetcher,
-         empty?,
-         existence_checker
-       ) do
-    with {_, true} <- {:auth, authorization_checker.()},
-         resource <- fetcher.(),
-         {_, false} <- {:empty, empty?.(resource)} do
-      {:authorized, resource}
+        %{loader_fn: _, params: _} = meta,
+        :one
+      ) do
+    with {_, true} <-
+           {:pre_auth, authorized?(subject, authorization_module, resource_module, action)},
+         resource when not is_nil(resource) <-
+           fetch_resource(
+             authorization_module,
+             resource_module,
+             action,
+             subject,
+             meta,
+             :one
+           ),
+         {_, true} <- {:auth, authorized?(subject, authorization_module, resource, action)} do
     else
-      {:auth, false} -> :unauthorized
-      {:empty, true} -> existence_checker.()
+      {:pre_auth, false} ->
+        :unauthorized
+
+      nil ->
+        :not_found
+
+      {:auth, false} ->
+        :unauthorized
     end
   end
 
-  @spec resource_fetcher(
+  @impl Permit.ResolverBase
+  def resolve(
+        subject,
+        authorization_module,
+        resource_module,
+        action,
+        %{loader_fn: _, params: _} = meta,
+        :all
+      ) do
+    with {_, true} <-
+           {:pre_auth, authorized?(subject, authorization_module, resource_module, action)},
+         list <-
+           fetch_resource(
+             authorization_module,
+             resource_module,
+             action,
+             subject,
+             meta,
+             :all
+           ),
+         filtered_list <-
+           Enum.filter(list, &authorized?(subject, authorization_module, &1, action)) do
+      {:authorized, filtered_list}
+    else
+      {:pre_auth, false} ->
+        :unauthorized
+    end
+  end
+
+  @spec fetch_resource(
           module(),
           Types.resource_module(),
           Types.controller_action(),
           Permit.HasRole.t(),
-          function(),
-          function(),
+          map(),
           :all | :one
-        ) :: (() -> [struct()] | struct() | nil)
-  defp resource_fetcher(
-         authorization_module,
+        ) :: [struct()] | struct() | nil
+  defp fetch_resource(
+         _authorization_module,
          resource_module,
          action,
          subject,
-         prefilter,
-         postfilter,
-         fetching_method
+         %{loader_fn: loader_fn, params: params},
+         :all
        ) do
-    fetching_method = &apply(authorization_module.repo, fetching_method, [&1])
-
-    fn ->
-      subject
-      |> authorization_module.accessible_by!(action, resource_module, prefilter)
-      |> postfilter.()
-      |> fetching_method.()
+    case loader_fn.(action, resource_module, subject, params) do
+      list when is_list(list) -> list
+      nil -> []
+      other_item -> [other_item]
     end
   end
 
-  defp construct_existence_checker(authorization_module, resource_module, prefilter) do
-    fn ->
-      case check_existence(authorization_module, resource_module, prefilter) do
-        true -> :unauthorized
-        false -> raise Ecto.NoResultsError, queryable: prefilter.(resource_module)
-      end
+  defp fetch_resource(
+         _authorization_module,
+         resource_module,
+         action,
+         subject,
+         %{loader_fn: loader_fn, params: params},
+         :one
+       ) do
+    case loader_fn.(action, resource_module, subject, params) do
+      [record | _] -> record
+      [] -> nil
+      record -> record
     end
-  end
-
-  defp check_existence(authorization_module, resource, prefilter) do
-    resource
-    |> resource_module_from_resource()
-    |> prefilter.()
-    |> authorization_module.repo.exists?()
-  end
-
-  @spec check(
-          Types.controller_action(),
-          module(),
-          Types.resource_module() | Types.resource(),
-          Permit.HasRole.t()
-        ) :: boolean()
-  defp check(action, authorization_module, resource_or_module, subject) do
-    auth = authorization_module.can(subject)
-    actions_module = authorization_module.actions_module()
-    verify_fn = &Permit.verify_record(auth, resource_or_module, &1)
-
-    Permit.Actions.verify_transitively!(actions_module, action, verify_fn)
   end
 end

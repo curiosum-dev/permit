@@ -20,7 +20,7 @@ defmodule Permit.Plug do
 
   # Permissions module - just as an example
   defmodule MyApp.Authorization.Permissions do
-    use Permit.Rules
+    use Permit.RuleSyntax
 
     def can(%{role: :manager} = role) do
       # A :manager can do all CRUD actions on RouteTemplate, and can do :read on User
@@ -121,6 +121,7 @@ defmodule Permit.Plug do
         ) ::
           Plug.Conn.t()
   defp authorize(conn, opts, _controller_action, nil, _resource) do
+    # subject is nil - meaning authorization is not granted
     opts[:handle_unauthorized].(conn)
   end
 
@@ -143,7 +144,7 @@ defmodule Permit.Plug do
   defp just_authorize(conn, opts, controller_action, subject, resource_module) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
 
-    Resolver.authorized_without_preloading?(
+    Resolver.authorized?(
       subject,
       authorization_module,
       resource_module,
@@ -164,93 +165,34 @@ defmodule Permit.Plug do
         ) ::
           Plug.Conn.t()
   defp authorize_and_preload_resource(conn, opts, controller_action, subject, resource_module) do
-    if opts[:preload_fn] do
-      &authorize_and_preload_by_function/5
-    else
-      &authorize_and_preload_by_ecto_query/5
-    end
-    |> apply([
-      conn,
-      opts,
-      controller_action,
-      subject,
-      resource_module
-    ])
-  end
-
-  defp authorize_and_preload_by_function(
-    conn,
-    opts,
-    controller_action,
-    subject,
-    resource_module
-  ) do
     authorization_module = Keyword.fetch!(opts, :authorization_module)
-
-    Resolver.authorized_without_preloading?(
-      subject,
-      authorization_module,
-      resource_module,
-      controller_action
-    )
-    |> case do
-      true ->
-        resource = opts[:preload_fn].(
-          controller_action,
-          resource_module,
-          subject,
-          conn.params
-        )
-
-        conn
-        |> assign(:loaded_resource, resource)
-
-      false ->
-        conn
-        |> opts[:handle_unauthorized].()
-    end
-  end
-
-  defp authorize_and_preload_by_ecto_query(
-    conn,
-    opts,
-    controller_action,
-    subject,
-    resource_module
-  ) do
-    authorization_module = Keyword.fetch!(opts, :authorization_module)
-    prefilter = Keyword.get(opts, :prefilter, & &1)
-    postfilter = Keyword.get(opts, :postfilter, & &1)
     actions_module = authorization_module.actions_module()
-    singular? = controller_action in actions_module.singular_groups()
+    number = if controller_action in actions_module.singular_groups(), do: :one, else: :all
 
-    load_key =
-      if singular? do
-        :loaded_resource
-      else
-        :loaded_resources
-      end
+    meta =
+      %{
+        loader_fn: opts[:loader_fn],
+        prefilter_query_fn: opts[:prefilter_query_fn],
+        postfilter_query_fn: opts[:postfilter_query_fn],
+        params: conn.params
+      }
+      |> Map.filter(fn {_, val} -> !!val end)
 
-    if singular? do
-      &Resolver.authorize_with_singular_preloading!/6
-    else
-      &Resolver.authorize_with_preloading!/6
-    end
-    |> apply([
-      subject,
-      authorization_module,
-      resource_module,
-      controller_action,
-      fn resource -> prefilter.(controller_action, resource, conn.params) end,
-      postfilter
-    ])
+    load_key = if number == :one, do: :loaded_resource, else: :loaded_resources
+
+    authorize_and_preload_fn(number, authorization_module)
+    |> apply([subject, authorization_module, resource_module, controller_action, meta])
     |> case do
-      {:authorized, record} ->
-        conn
-        |> assign(load_key, record)
-
-      :unauthorized ->
-        opts[:handle_unauthorized].(conn)
+      {:authorized, record_or_records} -> assign(conn, load_key, record_or_records)
+      :unauthorized -> opts[:handle_unauthorized].(conn)
     end
   end
+
+  defp authorize_and_preload_fn(number, authorization_module)
+
+  defp authorize_and_preload_fn(:one, authorization_module),
+    do: &authorization_module.resolver_module().authorize_and_preload_one!/5
+
+  defp authorize_and_preload_fn(:all, authorization_module),
+    do: &authorization_module.resolver_module().authorize_and_preload_all!/5
 end

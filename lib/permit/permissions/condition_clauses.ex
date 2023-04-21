@@ -7,11 +7,10 @@ defmodule Permit.Permissions.ConditionClauses do
 
   alias __MODULE__
   alias Permit.Types
-  alias Permit.Permissions.Condition
-  import Ecto.Query
-  @type t :: %ConditionClauses{conditions: [Condition.t()]}
+  alias Permit.Permissions.ParsedCondition
+  @type t :: %ConditionClauses{conditions: [ParsedCondition.t()]}
 
-  @spec new([Condition.t()]) :: ConditionClauses.t()
+  @spec new([ParsedCondition.t()]) :: ConditionClauses.t()
   def new(conditions) do
     %ConditionClauses{conditions: conditions}
   end
@@ -25,41 +24,6 @@ defmodule Permit.Permissions.ConditionClauses do
 
   def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject) do
     conditions
-    |> Enum.all?(&Condition.satisfied?(&1, record, subject))
+    |> Enum.all?(&ParsedCondition.satisfied?(&1, record, subject))
   end
-
-  @spec to_dynamic_query(ConditionClauses.t(), Types.resource(), Types.subject()) ::
-          {:ok, Ecto.Query.DynamicExpr.t()} | {:error, keyword()}
-  def to_dynamic_query(%ConditionClauses{conditions: []}, _, _),
-    do: {:ok, dynamic(false)}
-
-  def to_dynamic_query(%ConditionClauses{conditions: conditions}, subject, resource) do
-    conditions
-    |> Enum.map(&Condition.to_dynamic_query(&1, subject, resource))
-    |> case do
-      [] ->
-        {:ok, dynamic(true)}
-
-      [{:error, error}] when not is_list(error) ->
-        {:error, [error]}
-
-      list ->
-        Enum.reduce(list, &join_queries/2)
-    end
-  end
-
-  defp join_queries({:ok, condition_query}, {:ok, acc}),
-    do: {:ok, dynamic(^acc and ^condition_query)}
-
-  defp join_queries({:ok, _}, {:error, errors}),
-    do: {:error, errors}
-
-  defp join_queries({:error, err1}, {:error, err2}) when is_tuple(err2),
-    do: {:error, [err1, err2]}
-
-  defp join_queries({:error, error}, {:error, errors}) when is_list(errors),
-    do: {:error, [error | errors]}
-
-  defp join_queries({:error, error}, {:ok, _}),
-    do: {:error, [error]}
 end

@@ -1,4 +1,4 @@
-defmodule Permit.Permissions.Condition.LikePatternCompiler do
+defmodule Permit.Permissions.ParsedCondition.LikePatternCompiler do
   @moduledoc """
      Like pattern compiler
   """

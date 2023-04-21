@@ -9,14 +9,14 @@ defmodule Permit.Types do
   @type resource :: struct() | resource_module()
   @type id :: integer() | binary()
   @type id_param_name :: binary()
-  @type loader :: (id() -> struct() | nil)
   @type socket :: Phoenix.LiveView.Socket.t()
   @type conn :: Plug.Conn.t()
   @type authorization_outcome :: {:authorized | :unauthorized, socket()}
   @type hook_outcome :: {:halt, socket()} | {:cont, socket()}
   @type object_struct_filed :: atom()
+  @type loader_fn :: (action_group(), resource_module(), subject(), map() -> struct())
 
-  # TODO: This type needs a better name so it is not confused with Condition.t()
+  # TODO: This type needs a better name so it is not confused with ParsedCondition.t()
   @type condition ::
           boolean()
           | {object_struct_filed(), any()}
@@ -38,7 +38,9 @@ defmodule Permit.Types do
   """
   @type plug_opts :: [
           authorization_module: module() | function(),
-          prefilter: loader() | function(),
+          # TODO: specify types of prefilter and postfilter functions
+          prefilter_query_fn: function(),
+          postfilter_query_fn: function(),
           resource_module: resource_module() | function(),
           preload_resource_in: list(atom()) | function(),
           id_param_name: id_param_name() | function(),
@@ -46,6 +48,7 @@ defmodule Permit.Types do
           except: list(atom()) | function(),
           fallback_path: (Plug.Conn.t(), map() | keyword() -> binary()) | binary() | function(),
           error_msg: binary() | function(),
-          handle_unauthorized: function()
+          handle_unauthorized: function(),
+          loader_fn: loader_fn()
         ]
 end

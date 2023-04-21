@@ -30,7 +30,7 @@ defmodule Permit.LiveViewAuthorization do
         end
       end
 
-  Optionally, a handle_unauthorized/2 optional callback can be implemented, returning {:cont, socket}
+  Optionally, p handle_unauthorized/2 optional callback can be implemented, returning {:cont, socket}
   or {:halt, socket}. The default implementation returns:
 
       {:halt, socket(socket, to: socket.view.fallback_path())}
@@ -47,7 +47,8 @@ defmodule Permit.LiveViewAuthorization do
   @callback preload_resource_in() :: list(atom())
   @callback fallback_path() :: binary()
   @callback except() :: list(atom())
-  @callback preload_fn(Types.controller_action(), Types.resource_module(), Types.subject(), map()) :: any()
+  @callback loader_fn(Types.controller_action(), Types.resource_module(), Types.subject(), map()) ::
+              any()
   # TODO maybe filter those values and leave only load_fn
   @optional_callbacks handle_unauthorized: 1,
                       preload_resource_in: 0,
@@ -56,7 +57,7 @@ defmodule Permit.LiveViewAuthorization do
                       except: 0,
                       prefilter: 3,
                       postfilter: 1,
-                      preload_fn: 4
+                      loader_fn: 4
 
   defmacro __using__(opts) do
     authorization_module =
@@ -114,7 +115,7 @@ defmodule Permit.LiveViewAuthorization do
         |> Context.filter_by_field(unquote(opts_id_struct_field_name), id)
       end
 
-      def prefilter(_action, resource_module, _params), do: from r in resource_module
+      def prefilter(_action, resource_module, _params), do: from(r in resource_module)
 
       @impl true
       def postfilter(query), do: query

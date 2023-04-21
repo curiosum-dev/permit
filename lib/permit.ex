@@ -6,9 +6,6 @@ defmodule Permit do
 
   alias Permit.HasRoles
   alias Permit.Permissions
-  alias Permit.Permissions.Condition
-  alias Permit.Permissions.UndefinedConditionError
-  alias Permit.Permissions.UnconvertibleConditionError
   alias Permit.Types
 
   @type t :: %Permit{
@@ -64,50 +61,13 @@ defmodule Permit do
         |> Map.put(:subject, (is_struct(who) && who) || nil)
       end
 
+      def resolver_module, do: Permit.Resolver
+
+      defoverridable resolver_module: 0
+
       unquote(predicates)
 
-      @spec repo() :: Ecto.Repo.t()
-      def repo, do: unquote(opts[:repo])
-
-      @spec accessible_by(
-              Types.subject(),
-              Types.action_group(),
-              Types.resource(),
-              (Types.resource() -> Ecto.Query.t())
-            ) ::
-              {:ok, Ecto.Query.t()} | {:error, term()}
-      def accessible_by(current_user, action, resource, prefilter \\ & &1) do
-        current_user
-        |> can()
-        |> Map.get(:permissions)
-        |> Permissions.construct_query(
-          action,
-          resource,
-          current_user,
-          actions_module(),
-          prefilter
-        )
-      end
-
-      @spec accessible_by!(
-              Types.subject(),
-              Types.action_group(),
-              Types.resource(),
-              (Types.resource() -> Ecto.Query.t())
-            ) ::
-              Ecto.Query.t()
-      def accessible_by!(current_user, action, resource, prefilter \\ & &1) do
-        case accessible_by(current_user, action, resource, prefilter) do
-          {:ok, query} ->
-            query
-
-          {:error, {:undefined_condition, key}} ->
-            raise UndefinedConditionError, key
-
-          {:error, errors} ->
-            raise UnconvertibleConditionError, errors
-        end
-      end
+      # defdelegate authorize_and_preload_one!
     end
   end
 
@@ -120,30 +80,27 @@ defmodule Permit do
     Permit.verify_record(authorization, action, resource)
   end
 
-  @spec add_permission(Permit.t(), Types.action_group(), Types.resource_module(), [
-          Types.condition()
-        ]) ::
-          Permit.t()
-  def add_permission(authorization, action, resource, conditions) when is_list(conditions) do
-    authorization.permissions
-    |> Permissions.add(action, resource, conditions)
-    |> then(&%Permit{authorization | permissions: &1})
-  end
+  # @spec add_permission(
+  #         Permit.t(),
+  #         Types.action_group(),
+  #         Types.resource_module(),
+  #         list(),
+  #         Types.condition()
+  #       ) ::
+  #         Permit.t()
+  # def add_permission(authorization, action, resource, bindings, conditions)
+  #     when is_list(conditions) do
+  #   parsed_conditions = parse_conditions(bindings, conditions)
+
+  #   authorization.permissions
+  #   |> Permissions.add(action, resource, parsed_conditions)
+  #   |> then(&%Permit{authorization | permissions: &1})
+  # end
 
   @spec verify_record(Permit.t(), Types.resource(), Types.action_group()) :: boolean()
   def verify_record(authorization, record, action) do
     authorization.permissions
     |> Permissions.granted?(action, record, authorization.subject)
-  end
-
-  def parse_condition(condition, bindings)
-      when length(bindings) <= 2 do
-    condition
-    |> Condition.new(bindings: bindings)
-  end
-
-  def parse_condition(_condition, bindings) do
-    raise "Binding list should have at most 2 elements (subject and object), Given #{inspect(bindings)}"
   end
 
   defp add_predicate_name(atom),

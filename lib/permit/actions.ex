@@ -6,7 +6,6 @@ defmodule Permit.Actions do
   alias Permit.Actions.CycledDefinitionError
   alias Permit.Actions.Forest
   alias Permit.Actions.UndefinedActionError
-  alias Permit.Permissions.UndefinedConditionError
   alias Permit.Types
 
   @callback grouping_schema() :: %{Types.controller_action() => [Types.action_group()]}

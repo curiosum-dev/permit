@@ -1,9 +1,9 @@
-defmodule Permit.Permissions.Condition.Operators do
+defmodule Permit.Permissions.Operators do
   @moduledoc """
      Operators
   """
 
-  alias Permit.Permissions.Condition.Operators
+  alias Permit.Permissions.Operators
 
   @operators [
     Operators.Eq,

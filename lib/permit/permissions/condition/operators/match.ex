@@ -1,8 +1,8 @@
-defmodule Permit.Permissions.Condition.Operators.Match do
+defmodule Permit.Permissions.Operators.Match do
   @moduledoc """
      Equality Operator
   """
-  alias Permit.Permissions.Condition.Operators.GenOperator
+  alias Permit.Permissions.Operators.GenOperator
 
   use GenOperator
 

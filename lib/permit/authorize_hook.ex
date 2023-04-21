@@ -85,6 +85,34 @@ defmodule Permit.AuthorizeHook do
 
   alias Permit.Types
 
+  # These two modules will be checked for the existence of the assign/3 function.
+  # If neither exists (no LiveView dependency in a project), no failure happens.
+  Code.ensure_loaded(Phoenix.LiveView)
+  Code.ensure_loaded(Phoenix.Component)
+
+  defmacro live_view_assign(socket_or_assigns, key, value) do
+    cond do
+      Kernel.function_exported?(Phoenix.LiveView, :assign, 3) ->
+        quote do
+          Phoenix.LiveView.assign(unquote(socket_or_assigns), unquote(key), unquote(value))
+        end
+
+      Kernel.function_exported?(Phoenix.Component, :assign, 3) ->
+        quote do
+          Phoenix.Component.assign(unquote(socket_or_assigns), unquote(key), unquote(value))
+        end
+
+      true ->
+        quote do
+          raise RuntimeError,
+                """
+                Phoenix LiveView is not available.
+                Please add a dependency {:phoenix_live_view, \"~> 0.16\"} to use LiveView integration.
+                """
+        end
+    end
+  end
+
   @spec on_mount(term(), map(), map(), Types.socket()) :: Types.hook_outcome()
   def on_mount(_opt, params, session, socket) do
     socket
@@ -102,7 +130,7 @@ defmodule Permit.AuthorizeHook do
   @spec authenticate(Types.socket(), map()) :: Types.socket()
   defp authenticate(socket, session) do
     current_user = socket.view.user_from_session(session)
-    assign(socket, :current_user, current_user)
+    live_view_assign(socket, :current_user, current_user)
   end
 
   @spec authorize(Types.socket(), map()) :: Types.authorization_outcome()
@@ -120,10 +148,11 @@ defmodule Permit.AuthorizeHook do
   defp just_authorize(socket) do
     authorization_module = socket.view.authorization_module()
     resource_module = socket.view.resource_module()
+    resolver_module = authorization_module.resolver_module()
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
 
-    case Permit.Resolver.authorized_without_preloading?(
+    case resolver_module.authorized?(
            subject,
            authorization_module,
            resource_module,
@@ -139,30 +168,35 @@ defmodule Permit.AuthorizeHook do
   defp preload_and_authorize(socket, params) do
     authorization_module = socket.view.authorization_module()
     actions_module = authorization_module.actions_module()
+    resolver_module = authorization_module.resolver_module()
     resource_module = socket.view.resource_module()
-    prefilter = &socket.view.prefilter/3 # TODO prefilter is optional callback
-    postfilter = &socket.view.postfilter/1 # TODO postfilter is optional callback
+
+    # TODO prefilter is optional callback
+    prefilter = &socket.view.prefilter/3
+    # TODO postfilter is optional callback
+    postfilter = &socket.view.postfilter/1
     subject = socket.assigns.current_user
     action = socket.assigns.live_action
     singular? = action in actions_module.singular_groups()
 
     {load_key, auth_function} =
       if singular? do
-        {:loaded_resource, &Permit.Resolver.authorize_with_singular_preloading!/6}
+        {:loaded_resource, &resolver_module.authorize_and_preload_one!/5}
       else
-        {:loaded_resources, &Permit.Resolver.authorize_with_preloading!/6}
+        {:loaded_resources, &resolver_module.authorize_and_preload_all!/5}
       end
 
+    # dbg()
+
     case auth_function.(
-      subject,
-      authorization_module,
-      resource_module,
-      action,
-      fn resource -> prefilter.(action, resource, params) end,
-      postfilter
-    ) do
+           subject,
+           authorization_module,
+           resource_module,
+           action,
+           %{params: params, prefilter_query_fn: prefilter, potsfilter_query_fn: postfilter}
+         ) do
       {:authorized, records} ->
-        {:authorized, assign(socket, load_key, records)}
+        {:authorized, live_view_assign(socket, load_key, records)}
 
       :unauthorized ->
         {:unauthorized, socket}

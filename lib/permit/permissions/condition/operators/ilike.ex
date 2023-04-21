@@ -1,9 +1,9 @@
-defmodule Permit.Permissions.Condition.Operators.Ilike do
+defmodule Permit.Permissions.Operators.Ilike do
   @moduledoc """
      Ilike Operator
   """
-  alias Permit.Permissions.Condition.Operators.GenOperator
-  alias Permit.Permissions.Condition.LikePatternCompiler
+  alias Permit.Permissions.Operators.GenOperator
+  alias Permit.Permissions.ParsedCondition.LikePatternCompiler
 
   use GenOperator
 
@@ -21,15 +21,6 @@ defmodule Permit.Permissions.Condition.Operators.Ilike do
         |> LikePatternCompiler.to_regex([{:ignore_case, true} | ops])
 
       not?.(field =~ re)
-    end
-  end
-
-  @impl GenOperator
-  def dynamic_query(key, ops) do
-    if Keyword.get(ops, :not, false) do
-      &dynamic([r], not ilike(field(r, ^key), ^&1))
-    else
-      &dynamic([r], ilike(field(r, ^key), ^&1))
     end
   end
 end
