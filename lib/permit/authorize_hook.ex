@@ -186,8 +186,6 @@ defmodule Permit.AuthorizeHook do
         {:loaded_resources, &resolver_module.authorize_and_preload_all!/5}
       end
 
-    # dbg()
-
     case auth_function.(
            subject,
            authorization_module,

@@ -15,6 +15,30 @@ defmodule Permit.RuleSyntax do
         end
       )
 
+    permission_macro =
+      quote do
+        defmacro permission_to(authorization, action_group, resource, bindings, conditions) do
+          escaped_bindings =
+            bindings
+            |> Enum.map(&elem(&1, 0))
+            |> Macro.escape()
+
+          escaped_conditions =
+            conditions
+            |> Macro.escape()
+
+          quote do
+            unquote(authorization)
+            |> __MODULE__.add_permission(
+              unquote(action_group),
+              unquote(resource),
+              unquote(escaped_bindings),
+              unquote(escaped_conditions)
+            )
+          end
+        end
+      end
+
     # Named action functions
     action_functions =
       actions_module
@@ -37,11 +61,9 @@ defmodule Permit.RuleSyntax do
               conditions
               |> Macro.escape()
 
-            # IO.inspect("Unfurling #{unquote(name)}/4 in Permit.RuleSyntax.__using__")
-
             quote do
-              __MODULE__.permission_to(
-                unquote(authorization),
+              unquote(authorization)
+              |> __MODULE__.add_permission(
                 unquote(action),
                 unquote(resource),
                 # unquote(bindings),
@@ -68,8 +90,6 @@ defmodule Permit.RuleSyntax do
 
     quote do
       import Permit.RuleSyntax
-
-      unquote(action_functions)
 
       alias Permit.Permissions.ParsedCondition
       alias Permit.Types
@@ -100,30 +120,6 @@ defmodule Permit.RuleSyntax do
         |> then(&%Permit{authorization | permissions: &1})
       end
 
-      defmacro permission_to(authorization, action_group, resource, bindings, conditions) do
-        escaped_bindings =
-          bindings
-          |> Enum.map(&elem(&1, 0))
-          |> Macro.escape()
-
-        escaped_conditions =
-          conditions
-          |> Macro.escape()
-
-        # IO.inspect("Unfurling permission_to/5 in Permit.RuleSyntax.__using__")
-        # IO.inspect(escaped_bindings)
-
-        quote do
-          unquote(authorization)
-          |> __MODULE__.add_permission(
-            unquote(action_group),
-            unquote(resource),
-            unquote(escaped_bindings),
-            unquote(escaped_conditions)
-          )
-        end
-      end
-
       def permission_to(authorization, action_group, resource, conditions) do
         authorization
         |> __MODULE__.add_permission(
@@ -137,9 +133,11 @@ defmodule Permit.RuleSyntax do
       def permission_to(authorization, action_group, resource),
         do: permission_to(authorization, action_group, resource, true)
 
-      defmacro all(authorization, resource, bindings, conditions) do
-        # IO.inspect("Unfurling all/4 in Permit.RuleSyntax.__using__")
+      unquote(permission_macro)
 
+      unquote(action_functions)
+
+      defmacro all(authorization, resource, bindings, conditions) do
         escaped_bindings =
           bindings
           |> Enum.map(&elem(&1, 0))
@@ -153,8 +151,8 @@ defmodule Permit.RuleSyntax do
           actions_module()
           |> apply(:list_groups, [])
           |> Enum.reduce(unquote(authorization), fn group, auth ->
-            __MODULE__.permission_to(
-              auth,
+            auth
+            |> __MODULE__.add_permission(
               group,
               unquote(resource),
               unquote(escaped_bindings),
@@ -184,8 +182,6 @@ defmodule Permit.RuleSyntax do
   end
 
   def parse_condition(condition, bindings) when length(bindings) <= 2 do
-    # IO.inspect(Process.info(self(), :current_stacktrace), label: "STACKTRACE")
-
     condition
     |> ParsedCondition.build(bindings: bindings)
   end
