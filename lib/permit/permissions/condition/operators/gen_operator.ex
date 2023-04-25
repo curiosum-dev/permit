@@ -18,7 +18,7 @@ defmodule Permit.Permissions.Operators.GenOperator do
         if Keyword.get(ops, :not, false) do
           &(not &1)
         else
-          & &1
+          &Function.identity/1
         end
       end
 

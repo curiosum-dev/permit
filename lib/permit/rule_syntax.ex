@@ -88,16 +88,13 @@ defmodule Permit.RuleSyntax do
         end
       end)
 
+    decorator = opts[:condition_decorator] || (&Function.identity/1)
+
     quote do
       import Permit.RuleSyntax
 
       alias Permit.Permissions.ParsedCondition
       alias Permit.Types
-
-      # defdelegate parse_conditions(bindings, conditions, decorate_condition),
-      #   to: unquote(__MODULE__)
-
-      # defoverridable parse_conditions: 3
 
       @spec add_permission(
               Permit.t(),
@@ -112,7 +109,7 @@ defmodule Permit.RuleSyntax do
           Permit.RuleSyntax.parse_conditions(
             bindings,
             conditions,
-            unquote(opts[:condition_decorator]) || (& &1)
+            unquote(decorator)
           )
 
         authorization.permissions
@@ -196,6 +193,10 @@ defmodule Permit.RuleSyntax do
 
   def parse_conditions(bindings, raw_conditions, decorate_condition) do
     raw_conditions
-    |> Enum.map(&(&1 |> __MODULE__.parse_condition(bindings) |> decorate_condition.()))
+    |> Enum.map(
+      &(&1
+        |> __MODULE__.parse_condition(bindings)
+        |> decorate_condition.())
+    )
   end
 end
