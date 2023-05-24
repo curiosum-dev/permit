@@ -29,6 +29,7 @@ defmodule Permit.Resolver do
              :one
            ),
          {_, true} <- {:auth, authorized?(subject, authorization_module, resource, action)} do
+      {:authorized, resource}
     else
       {:pre_auth, false} ->
         :unauthorized

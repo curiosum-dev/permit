@@ -44,7 +44,6 @@ defmodule Permit.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto, "~> 3.0"},
       {:phoenix_live_view, "~> 0.16", optional: true},
       # {:phoenix_ecto, "~> 4.4", only: :test},
       # {:ecto_sql, "~> 3.7", only: :test},

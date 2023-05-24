@@ -16,18 +16,18 @@ end
 
 defmodule MyApp.Permissions do
   use Permit.RuleSyntax, actions_module: Permit.Actions.PhoenixActions
-  
+
   def can(%{role: :admin} = user) do
     grant(user)
     |> all(MyApp.Blog.Article)
   end
-  
+
   def can(%{id: user_id} = user) do
     grant(user)
     |> all(MyApp.Blog.Article, id: user_id)
     |> read(MyApp.Blog.Article) # allows :index and :show
   end
-  
+
   def can(user), do: grant(user)
 end
 ```
@@ -37,28 +37,28 @@ end
 ```elixir
 defmodule MyAppWeb.Blog.ArticleController do
   use MyAppWeb, :controller
-  
-  use Permit.ControllerAuthorization,
+
+  use Permit.Phoenix.Controller,
     authorization_module: MyApp.Authorization,
     resource_module: MyApp.Blog.Article
-    
+
   # assumption: current user is in assigns[:current_user] - this is configurable
-    
+
   def show(conn, _params) do
     # At this point, the Article has already been preloaded by Ecto and checked for authorization
     # based on action name (:show).
     # It's available as the @loaded_resource assign.
-    
+
     render(conn, "show.html")
   end
-  
+
   def show(conn, _params) do
     # The list of Articles accessible by current user has been preloaded by Ecto
     # into the @loaded_resources assign.
-  
+
     render(conn, "index.html")
   end
-  
+
   # Optionally, implement the handle_unauthorized/1 callback to deal with authorization denial.
 end
 ```
@@ -69,7 +69,7 @@ defmodule MyAppWeb.Router do
   use Phoenix.Router
   import Phoenix.LiveView.Router
 
-  live_session :authenticated, on_mount: Permit.AuthorizeHook do
+  live_session :authenticated, on_mount: Permit.Phoenix.LiveView.AuthorizeHook do
     live("/articles", MyAppWeb.Blog.ArticlesLive, :index)
     live("/articles/:id", MyAppWeb.Blog.ArticlesLive, :show)
   end
@@ -77,17 +77,17 @@ end
 
 defmodule MyAppWeb.Blog.ArticleLive do
   use Phoenix.LiveView
-  
-  use Permit.LiveViewAuthorization,
+
+  use Permit.Phoenix.LiveView,
     authorization_module: MyAppWeb.Authorization,
     resource_module: MyApp.Blog.Article
 
   @impl true
   def user_from_session(session), do: # load current user
-  
+
   # Both in the mount/3 callback and in a hook attached to the handle_params event,
   # authorization will be performed based on assigns[:live_action].
-  
+
   # Optionally, implement the handle_unauthorized/1 callback to deal with authorization denial.
 end
 ```

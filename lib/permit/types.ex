@@ -38,7 +38,7 @@ defmodule Permit.Types do
   """
   @type plug_opts :: [
           authorization_module: module() | function(),
-          # TODO: specify types of prefilter and postfilter functions
+          # TODO: specify types of prefilter_query_fn and postfilter_query_fn functions
           prefilter_query_fn: function(),
           postfilter_query_fn: function(),
           resource_module: resource_module() | function(),
