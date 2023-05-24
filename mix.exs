@@ -45,8 +45,6 @@ defmodule Permit.MixProject do
   defp deps do
     [
       {:phoenix_live_view, "~> 0.16", optional: true},
-      # {:phoenix_ecto, "~> 4.4", only: :test},
-      # {:ecto_sql, "~> 3.7", only: :test},
       {:postgrex, "~> 0.15.13", only: :test},
       {:jason, "~> 1.3", only: [:dev, :test]},
       {:floki, ">= 0.30.0", only: :test},
