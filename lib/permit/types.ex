@@ -14,7 +14,7 @@ defmodule Permit.Types do
   @type authorization_outcome :: {:authorized | :unauthorized, socket()}
   @type hook_outcome :: {:halt, socket()} | {:cont, socket()}
   @type object_struct_filed :: atom()
-  @type loader_fn :: (action_group(), resource_module(), subject(), map() -> struct())
+  @type loader :: (action_group(), resource_module(), subject(), map() -> struct())
 
   # TODO: This type needs a better name so it is not confused with ParsedCondition.t()
   @type condition ::
@@ -26,9 +26,9 @@ defmodule Permit.Types do
           | {(subject(), object() -> boolean()), (subject(), object() -> Ecto.Query.t())}
   @typedoc """
   - `:authorization_module` -- (Required) The app's authorization module that uses `use Permit`.
-  - `preload_resource_in` -- (Optional) The list of actions that resources will be preloaded and authorized in, in addition to :show, :delete, :edit and :update.
-  - `repo` -- (Required, unless :loader_fn defined) The application's Repo. If a :loader_fn is not given, it's used for fetching records in singular resource functions (:show, :edit, :update, :delete and other defined as :preload_resource_in).
-  - `loader_fn` -- (Required, unless :repo defined) The loader, 1-arity function, used to fetch records in singular resource functions (:show, :edit, :update, :delete and other defined as :preload_resource_in). It is convenient to use context getter functions as loaders.
+  - `preload_actions` -- (Optional) The list of actions that resources will be preloaded and authorized in, in addition to :show, :delete, :edit and :update.
+  - `repo` -- (Required, unless :loader defined) The application's Repo. If a :loader is not given, it's used for fetching records in singular resource functions (:show, :edit, :update, :delete and other defined as :preload_actions).
+  - `loader` -- (Required, unless :repo defined) The loader, 1-arity function, used to fetch records in singular resource functions (:show, :edit, :update, :delete and other defined as :preload_actions). It is convenient to use context getter functions as loaders.
   - `resource` -- (Required) The struct module defining the specific resource the controller is dealing with.
   - `id_param_name` -- (Required, if singular record actions are present) The parameter name used to look for IDs of resources, passed to the loader function or the repo.
   - `action_crud_mapping` -- (Optional) The mapping of controller actions not corresponding to standard Phoenix controller action names to :create, :read, :update or :delete - it directs the authorization framework to look for a specific CRUD rule for that given controller action. For instance: [view: :read, show: :read]
@@ -38,17 +38,17 @@ defmodule Permit.Types do
   """
   @type plug_opts :: [
           authorization_module: module() | function(),
-          # TODO: specify types of prefilter_query_fn and postfilter_query_fn functions
-          prefilter_query_fn: function(),
-          postfilter_query_fn: function(),
+          # TODO: specify types of base_query and finalize_query functions
+          base_query: function(),
+          finalize_query: function(),
           resource_module: resource_module() | function(),
-          preload_resource_in: list(atom()) | function(),
+          preload_actions: list(atom()) | function(),
           id_param_name: id_param_name() | function(),
           action_crud_mapping: keyword(crud()) | function(),
           except: list(atom()) | function(),
           fallback_path: (Plug.Conn.t(), map() | keyword() -> binary()) | binary() | function(),
           error_msg: binary() | function(),
           handle_unauthorized: function(),
-          loader_fn: loader_fn()
+          loader: loader()
         ]
 end

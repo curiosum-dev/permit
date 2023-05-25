@@ -14,7 +14,7 @@ defmodule Permit.Resolver do
         authorization_module,
         resource_module,
         action,
-        %{loader_fn: _, params: _} = meta,
+        %{loader: _, params: _} = meta,
         :one
       ) do
     with {_, true} <-
@@ -48,7 +48,7 @@ defmodule Permit.Resolver do
         authorization_module,
         resource_module,
         action,
-        %{loader_fn: _, params: _} = meta,
+        %{loader: _, params: _} = meta,
         :all
       ) do
     with {_, true} <-
@@ -84,10 +84,10 @@ defmodule Permit.Resolver do
          resource_module,
          action,
          subject,
-         %{loader_fn: loader_fn, params: params},
+         %{loader: loader, params: params},
          :all
        ) do
-    case loader_fn.(action, resource_module, subject, params) do
+    case loader.(action, resource_module, subject, params) do
       list when is_list(list) -> list
       nil -> []
       other_item -> [other_item]
@@ -99,10 +99,10 @@ defmodule Permit.Resolver do
          resource_module,
          action,
          subject,
-         %{loader_fn: loader_fn, params: params},
+         %{loader: loader, params: params},
          :one
        ) do
-    case loader_fn.(action, resource_module, subject, params) do
+    case loader.(action, resource_module, subject, params) do
       [record | _] -> record
       [] -> nil
       record -> record

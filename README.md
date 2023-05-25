@@ -83,7 +83,7 @@ defmodule MyAppWeb.Blog.ArticleLive do
     resource_module: MyApp.Blog.Article
 
   @impl true
-  def user_from_session(session), do: # load current user
+  def fetch_subject(session), do: # load current user
 
   # Both in the mount/3 callback and in a hook attached to the handle_params event,
   # authorization will be performed based on assigns[:live_action].
