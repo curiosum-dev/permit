@@ -1,8 +1,8 @@
-defmodule Permit.Permissions.Condition.Operators.In do
+defmodule Permit.Permissions.Operators.In do
   @moduledoc """
      In Operator
   """
-  alias Permit.Permissions.Condition.Operators.GenOperator
+  alias Permit.Permissions.Operators.GenOperator
 
   use GenOperator
 
@@ -26,15 +26,6 @@ defmodule Permit.Permissions.Condition.Operators.In do
       field
       |> Kernel.in(val_fn.(subject, object))
       |> maybe_not(Keyword.get(ops, :not, false))
-    end
-  end
-
-  @impl GenOperator
-  def dynamic_query(key, ops) do
-    if Keyword.get(ops, :not, false) do
-      &dynamic([r], field(r, ^key) not in ^&1)
-    else
-      &dynamic([r], field(r, ^key) in ^&1)
     end
   end
 end

@@ -44,18 +44,12 @@ defmodule Permit.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto, "~> 3.0"},
       {:phoenix_live_view, "~> 0.16", optional: true},
-      {:phoenix_ecto, "~> 4.4", only: :test},
-      {:ecto_sql, "~> 3.7", only: :test},
       {:postgrex, "~> 0.15.13", only: :test},
-      {:jason, "~> 1.3", only: :test},
+      {:jason, "~> 1.3", only: [:dev, :test]},
       {:floki, ">= 0.30.0", only: :test},
       {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
-
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end

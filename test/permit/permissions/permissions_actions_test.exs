@@ -17,7 +17,7 @@ defmodule Permit.Permissions.PermissionsActions do
 
   defmodule TestPermissions do
     @moduledoc false
-    use Permit.Rules,
+    use Permit.RuleSyntax,
       actions_module: TestActions
   end
 

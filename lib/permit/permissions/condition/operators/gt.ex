@@ -1,8 +1,8 @@
-defmodule Permit.Permissions.Condition.Operators.Gt do
+defmodule Permit.Permissions.Operators.Gt do
   @moduledoc """
      Equality Operator
   """
-  alias Permit.Permissions.Condition.Operators.GenOperator
+  alias Permit.Permissions.Operators.GenOperator
 
   use GenOperator
 
@@ -13,13 +13,4 @@ defmodule Permit.Permissions.Condition.Operators.Gt do
   @impl GenOperator
   def alternatives,
     do: [:gt]
-
-  @impl GenOperator
-  def dynamic_query(key, ops) do
-    if Keyword.get(ops, :not, false) do
-      &dynamic([r], field(r, ^key) <= ^&1)
-    else
-      &dynamic([r], field(r, ^key) > ^&1)
-    end
-  end
 end

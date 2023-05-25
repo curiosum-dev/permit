@@ -18,8 +18,10 @@ defmodule Permit.PermitTest do
 
   defmodule TestPermissions do
     @moduledoc false
-    use Permit.Rules,
+    use Permit.RuleSyntax,
       actions_module: TestActions
+
+    def can(role), do: grant(role)
   end
 
   defmodule TestAuthorization do

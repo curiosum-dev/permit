@@ -1,4 +1,4 @@
-defmodule Permit.Permissions.Condition.Operators.GenOperator do
+defmodule Permit.Permissions.Operators.GenOperator do
   @moduledoc """
      Generic Operator
   """
@@ -9,18 +9,16 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
   @callback alternatives() :: [atom()]
   @callback semantics(any()) :: field_subject_object_fun()
   @callback semantics(any(), keyword()) :: field_subject_object_fun()
-  @callback dynamic_query(term(), keyword()) :: (any() -> Ecto.Query.DynamicExpr.t()) | nil
 
   defmacro __using__(opts) do
     quote do
       @behaviour GenOperator
-      import Ecto.Query
 
       defp maybe_negate(ops) do
         if Keyword.get(ops, :not, false) do
           &(not &1)
         else
-          & &1
+          &Function.identity/1
         end
       end
 
@@ -38,13 +36,11 @@ defmodule Permit.Permissions.Condition.Operators.GenOperator do
         end
       end
 
-      def dynamic_query(_, _),
-        do: nil
-
       defoverridable alternatives: 0,
                      semantics: 1,
-                     semantics: 2,
-                     dynamic_query: 2
+                     semantics: 2
+
+      #  dynamic_query: 2
     end
   end
 end
