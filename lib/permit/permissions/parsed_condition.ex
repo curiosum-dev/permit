@@ -181,7 +181,11 @@ defmodule Permit.Permissions.ParsedCondition do
       ),
       do: !!function.(record)
 
-  def satisfied?(%ParsedCondition{condition: _fun, condition_type: :function_2}, _record, subject)
+  def satisfied?(
+        %ParsedCondition{condition: _fun, condition_type: :function_2},
+        _record,
+        subject
+      )
       when is_nil(subject),
       do:
         raise(

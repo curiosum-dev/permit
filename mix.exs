@@ -9,7 +9,7 @@ defmodule Permit.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      consolidate_protocols: Mix.env() != :test,
+      consolidate_protocols: Mix.env() not in [:dev, :test],
       description:
         "Plain-Elixir, DSL-less, extensible, agent-agnostic authorization library for Elixir.",
       package: package()

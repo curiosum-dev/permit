@@ -39,8 +39,6 @@ defmodule Permit.Permissions.Operators.GenOperator do
       defoverridable alternatives: 0,
                      semantics: 1,
                      semantics: 2
-
-      #  dynamic_query: 2
     end
   end
 end

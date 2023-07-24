@@ -21,7 +21,7 @@ defmodule Permit.PermitTest do
     use Permit.RuleSyntax,
       actions_module: TestActions
 
-    def can(role), do: grant(role)
+    def can(_role), do: permit()
   end
 
   defmodule TestAuthorization do

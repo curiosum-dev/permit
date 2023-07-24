@@ -22,7 +22,11 @@ defmodule Permit.Permissions.ConditionClauses do
   def conditions_satisfied?(%ConditionClauses{conditions: []}, _record, _subject),
     do: false
 
-  def conditions_satisfied?(%ConditionClauses{conditions: conditions}, record, subject) do
+  def conditions_satisfied?(
+        %ConditionClauses{conditions: conditions},
+        record,
+        subject
+      ) do
     conditions
     |> Enum.all?(&ParsedCondition.satisfied?(&1, record, subject))
   end

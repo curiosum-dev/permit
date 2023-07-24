@@ -41,9 +41,10 @@ defmodule Permit.Permissions do
 
   @spec join(Permissions.t(), Permissions.t()) :: Permissions.t()
   def join(p1, p2) do
-    Map.merge(p1, p2, fn _k, dnf1, dnf2 ->
-      DNF.join(dnf1, dnf2)
+    Map.merge(p1.conditions_map, p2.conditions_map, fn
+      _k, dnf1, dnf2 -> DNF.join(dnf1, dnf2)
     end)
+    |> then(&%Permissions{conditions_map: &1})
   end
 
   @spec dnf_for_action_and_record(Permissions.t(), Types.action_group(), Types.resource()) ::

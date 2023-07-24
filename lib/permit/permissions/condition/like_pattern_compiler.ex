@@ -11,7 +11,7 @@ defmodule Permit.Permissions.ParsedCondition.LikePatternCompiler do
     Keyword.get(ops, :escape, "")
     |> stack_of_replacements()
     |> create_replacements_composition()
-    |> apply([pattern])
+    |> then(& &1.(pattern))
     |> anchors()
     |> Regex.compile!(caseless?)
   end

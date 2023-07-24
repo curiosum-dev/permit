@@ -5,7 +5,34 @@ defmodule Permit.RuleSyntax do
   alias Permit.Types
   alias Permit.Permissions.ParsedCondition
 
+  def add_permission(permissions, action, resource, bindings, conditions, decorator) do
+    parsed_conditions =
+      Permit.RuleSyntax.parse_conditions(
+        bindings,
+        conditions,
+        decorator
+      )
+
+    permissions
+    |> Permit.Permissions.add(action, resource, parsed_conditions)
+  end
+
+  def escape_bindings_and_conditions(bindings, conditions) do
+    escaped_bindings =
+      bindings
+      |> Enum.map(&elem(&1, 0))
+      |> Macro.escape()
+
+    escaped_conditions =
+      conditions
+      |> Macro.escape()
+
+    {escaped_bindings, escaped_conditions}
+  end
+
   defmacro __using__(opts) do
+    decorator = opts[:condition_decorator] || (&Function.identity/1)
+
     actions_module =
       Keyword.get(
         opts,
@@ -18,22 +45,19 @@ defmodule Permit.RuleSyntax do
     permission_macro =
       quote do
         defmacro permission_to(authorization, action_group, resource, bindings, conditions) do
-          escaped_bindings =
-            bindings
-            |> Enum.map(&elem(&1, 0))
-            |> Macro.escape()
+          decorator = unquote(decorator)
 
-          escaped_conditions =
-            conditions
-            |> Macro.escape()
+          {escaped_bindings, escaped_conditions} =
+            Permit.RuleSyntax.escape_bindings_and_conditions(bindings, conditions)
 
           quote do
-            unquote(authorization)
-            |> __MODULE__.add_permission(
+            Permit.RuleSyntax.add_permission(
+              unquote(authorization),
               unquote(action_group),
               unquote(resource),
               unquote(escaped_bindings),
-              unquote(escaped_conditions)
+              unquote(escaped_conditions),
+              unquote(decorator)
             )
           end
         end
@@ -41,41 +65,32 @@ defmodule Permit.RuleSyntax do
 
     # Named action functions
     action_functions =
-      actions_module
-      |> Macro.expand(__CALLER__)
-      |> apply(:list_groups, [])
+      Macro.expand(actions_module, __CALLER__).list_groups()
       |> Enum.map(fn name ->
         quote do
           defmacro unquote(name)(authorization, resource, bindings, conditions) do
             action = unquote(name)
 
-            # bindings = Macro.escape(bindings)
-            # conditions = Macro.escape(conditions)
+            decorator = unquote(decorator)
 
-            escaped_bindings =
-              bindings
-              |> Enum.map(&elem(&1, 0))
-              |> Macro.escape()
-
-            escaped_conditions =
-              conditions
-              |> Macro.escape()
+            {escaped_bindings, escaped_conditions} =
+              Permit.RuleSyntax.escape_bindings_and_conditions(bindings, conditions)
 
             quote do
-              unquote(authorization)
-              |> __MODULE__.add_permission(
+              Permit.RuleSyntax.add_permission(
+                unquote(authorization),
                 unquote(action),
                 unquote(resource),
-                # unquote(bindings),
-                # unquote(conditions)
                 unquote(escaped_bindings),
-                unquote(escaped_conditions)
+                unquote(escaped_conditions),
+                unquote(decorator)
               )
             end
           end
 
           @spec unquote(name)(Permit.t(), Types.resource(), Types.condition()) :: Permit.t()
-          def unquote(name)(authorization, resource, conditions) do
+          def unquote(name)(authorization, resource, conditions)
+              when is_list(conditions) do
             authorization
             |> __MODULE__.permission_to(unquote(name), resource, conditions)
           end
@@ -88,80 +103,50 @@ defmodule Permit.RuleSyntax do
         end
       end)
 
-    decorator = opts[:condition_decorator] || (&Function.identity/1)
-
     quote do
       import Permit.RuleSyntax
 
       alias Permit.Permissions.ParsedCondition
       alias Permit.Types
 
-      @spec add_permission(
-              Permit.t(),
-              Types.action_group(),
-              Types.resource_module(),
-              list(),
-              Types.condition()
-            ) ::
-              Permit.t()
-      def add_permission(authorization, action, resource, bindings, conditions) do
-        parsed_conditions =
-          Permit.RuleSyntax.parse_conditions(
-            bindings,
-            conditions,
-            unquote(decorator)
-          )
-
-        authorization.permissions
-        |> Permit.Permissions.add(action, resource, parsed_conditions)
-        |> then(&%Permit{authorization | permissions: &1})
-      end
-
       def permission_to(authorization, action_group, resource, conditions) do
-        authorization
-        |> __MODULE__.add_permission(
+        Permit.RuleSyntax.add_permission(
+          authorization,
           action_group,
           resource,
           [],
-          conditions
+          conditions,
+          unquote(decorator)
         )
       end
-
-      def permission_to(authorization, action_group, resource),
-        do: permission_to(authorization, action_group, resource, true)
 
       unquote(permission_macro)
 
       unquote(action_functions)
 
       defmacro all(authorization, resource, bindings, conditions) do
-        escaped_bindings =
-          bindings
-          |> Enum.map(&elem(&1, 0))
-          |> Macro.escape()
+        decorator = unquote(decorator)
 
-        escaped_conditions =
-          conditions
-          |> Macro.escape()
+        {escaped_bindings, escaped_conditions} =
+          Permit.RuleSyntax.escape_bindings_and_conditions(bindings, conditions)
 
         quote do
-          actions_module()
-          |> apply(:list_groups, [])
+          actions_module().list_groups()
           |> Enum.reduce(unquote(authorization), fn group, auth ->
-            auth
-            |> __MODULE__.add_permission(
+            Permit.RuleSyntax.add_permission(
+              auth,
               group,
               unquote(resource),
               unquote(escaped_bindings),
-              unquote(escaped_conditions)
+              unquote(escaped_conditions),
+              unquote(decorator)
             )
           end)
         end
       end
 
       def all(authorization, resource, conditions) do
-        unquote(actions_module)
-        |> apply(:list_groups, [])
+        unquote(actions_module).list_groups()
         |> Enum.reduce(authorization, fn group, auth ->
           __MODULE__.permission_to(auth, group, resource, conditions)
         end)
@@ -173,8 +158,8 @@ defmodule Permit.RuleSyntax do
       def actions_module,
         do: unquote(actions_module)
 
-      @spec grant(Types.role()) :: Permit.t()
-      def grant(role), do: %Permit{roles: [role]}
+      @spec permit() :: Permit.Permissions.t()
+      def permit(), do: %Permit.Permissions{}
     end
   end
 
