@@ -65,7 +65,7 @@ defmodule Permit do
   ### Configure & define your permissions
   ```elixir
   defmodule MyApp.Authorization do
-    use Permit, permissions_module: MyApp.Permissions, repo: MyApp.Repo
+    use Permit, permissions_module: MyApp.Permissions
   end
 
   defmodule MyApp.Permissions do
