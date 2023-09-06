@@ -18,10 +18,10 @@ defmodule Permit.PermitTest do
 
   defmodule TestPermissions do
     @moduledoc false
-    use Permit.RuleSyntax,
+    use Permit.Permissions,
       actions_module: TestActions
 
-    def can(role), do: grant(role)
+    def can(_role), do: permit()
   end
 
   defmodule TestAuthorization do
@@ -32,7 +32,8 @@ defmodule Permit.PermitTest do
 
   describe "__using__/1" do
     test "should generate predicates" do
-      TestActions.list_groups()
+      TestActions
+      |> Permit.Actions.list_groups()
       |> Enum.each(fn group ->
         predicate =
           group

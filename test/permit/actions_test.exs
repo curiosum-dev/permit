@@ -49,6 +49,7 @@ end
 defmodule Permit.ActionsTest do
   use ExUnit.Case, async: true
 
+  alias Permit.Actions.Forest
   alias Permit.Actions
   alias Permit.Actions.CrudActions
   alias Permit.ActionsTest.Actions.{NotPresentActions, CyclicActions, TransitiveActions}
@@ -192,23 +193,39 @@ defmodule Permit.ActionsTest do
     test "every action should be in list_actions", %{modules: mods} do
       for module <- mods do
         for action <- [:create, :read, :update, :delete] do
-          assert action in module.list_actions()
+          assert action in list_actions(module)
         end
       end
     end
 
     test "every action should have a group with the same name", %{modules: mods} do
       for module <- mods do
-        for action <- module.list_actions() do
-          assert action in module.list_groups()
+        for action <- list_actions(module) do
+          assert action in Permit.Actions.list_groups(module)
         end
       end
     end
 
     test "crud actions should have empty groups" do
-      for action <- CrudActions.list_actions() do
-        assert CrudActions.groups_for(action) == []
+      for action <- list_actions(CrudActions) do
+        assert groups_for(CrudActions, action) == []
       end
     end
+  end
+
+  @doc false
+  def list_actions(module) do
+    module.grouping_schema()
+    |> Forest.new()
+    |> Forest.to_map()
+    |> Map.keys()
+  end
+
+  @doc false
+  def groups_for(module, action) do
+    module.grouping_schema()
+    |> Forest.new()
+    |> Forest.to_map()
+    |> Map.get(action, [])
   end
 end

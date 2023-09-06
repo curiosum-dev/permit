@@ -1,4 +1,8 @@
-defmodule Permit.Actions.CycledDefinitionError do
+defmodule Permit.CycledDefinitionError do
+  @moduledoc """
+  Raised when action groupings defined in a `Permit.Actions` implementation result in a circular dependency.
+  """
+
   alias __MODULE__
   defexception [:message]
 

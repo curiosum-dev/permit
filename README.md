@@ -15,20 +15,20 @@ defmodule MyApp.Authorization do
 end
 
 defmodule MyApp.Permissions do
-  use Permit.RuleSyntax, actions_module: Permit.Actions.PhoenixActions
+  use Permit.Permissions, actions_module: Permit.Actions.PhoenixActions
 
   def can(%{role: :admin} = user) do
-    grant(user)
+    permit()
     |> all(MyApp.Blog.Article)
   end
 
   def can(%{id: user_id} = user) do
-    grant(user)
+    permit()
     |> all(MyApp.Blog.Article, id: user_id)
     |> read(MyApp.Blog.Article) # allows :index and :show
   end
 
-  def can(user), do: grant(user)
+  def can(user), do: permit()
 end
 ```
 

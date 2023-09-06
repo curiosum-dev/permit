@@ -1,7 +1,5 @@
-defmodule Permit.Permissions.ParsedCondition.LikePatternCompiler do
-  @moduledoc """
-     Like pattern compiler
-  """
+defmodule Permit.Operators.Ilike.PatternCompiler do
+  @moduledoc false
   @stack [{"%", ".*"}, {"_", "."}]
 
   @spec to_regex(String.t(), keyword()) :: Regex.t()
@@ -11,7 +9,7 @@ defmodule Permit.Permissions.ParsedCondition.LikePatternCompiler do
     Keyword.get(ops, :escape, "")
     |> stack_of_replacements()
     |> create_replacements_composition()
-    |> apply([pattern])
+    |> then(& &1.(pattern))
     |> anchors()
     |> Regex.compile!(caseless?)
   end
@@ -35,8 +33,7 @@ defmodule Permit.Permissions.ParsedCondition.LikePatternCompiler do
   defp split_at_and_join(what, split_with, join_with, continue) do
     what
     |> String.split(split_with)
-    |> Enum.map(continue)
-    |> Enum.join(join_with)
+    |> Enum.map_join(join_with, continue)
   end
 
   defp case_switch(true), do: "i"

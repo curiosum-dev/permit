@@ -1,3 +1,3 @@
 [
-  {"test/permit/support/authorization_case.ex", :unknown_function}
+  ~r/unknown_function.*__impl__.*/
 ]

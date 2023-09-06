@@ -1,26 +1,39 @@
 defmodule Permit.Permissions.ParsedCondition do
   @moduledoc """
-     ParsedCondition
+  Represents the product of parsing a condition by a function implementing
+  the `c:Permit.Permissions.can/1` callback.
+
+  A condition parsed by Permit's rule syntax parser contains:
+  * condition semantics, that is: a function that allows for checking
+    whether the condition is satisfied
+  * an indication of whether it is negated (i.e. a condition defined as
+    `{:not, ...}`)
+  * metadata (`:private`), which can be used by alternative parsers (e.g.
+    `Permit.Ecto.Permissions` puts dynamic query constructors there)
+
+  Part of the private API, subject to changes and not to be used on the
+  application level.
   """
+
   @enforce_keys [:condition, :condition_type]
   defstruct [:condition, :condition_type, :semantics, not: false, private: %{}]
 
   alias __MODULE__
-  alias Permit.Permissions.ConditionBuilder
-  alias Permit.Permissions.Operators
-  require Permit.Permissions.Operators
+  alias Permit.Operators
+  alias Permit.Types
+  alias Permit.Types.ConditionTypes
 
-  @behaviour ConditionBuilder
+  require Permit.Operators
 
   @type condition_type :: :const | :function_1 | :function_2 | {:operator, module()}
   @type t :: %ParsedCondition{
           condition:
-            boolean()
-            | {atom(), (struct(), struct() -> any())}
-            | (struct(), struct() -> boolean())
-            | (struct() -> boolean()),
+            ConditionTypes.boolean_condition()
+            | {Types.struct_field(), (Types.subject(), Types.object() -> any())}
+            | ConditionTypes.fn1_condition()
+            | ConditionTypes.fn2_condition(),
           condition_type: condition_type(),
-          semantics: (any(), struct(), struct() -> boolean()),
+          semantics: (Types.struct_field(), Types.subject(), Types.object() -> boolean()),
           private: map(),
           not: boolean()
         }
@@ -30,15 +43,14 @@ defmodule Permit.Permissions.ParsedCondition do
   @eq Operators.eq()
   @operators Operators.all()
 
-  @impl ConditionBuilder
+  @doc false
+  @spec build(Permit.Types.ConditionTypes.condition(), list()) :: __MODULE__.t()
   def build(condition, opts \\ [bindings: []])
 
-  @impl ConditionBuilder
   def build({key, {:not, nil}}, ops)
       when is_atom(key),
       do: build({key, nil}, [{:not, true} | ops])
 
-  @impl ConditionBuilder
   def build({key, nil}, ops)
       when is_atom(key) do
     not? = Keyword.get(ops, :not, false)
@@ -51,44 +63,36 @@ defmodule Permit.Permissions.ParsedCondition do
     }
   end
 
-  @impl ConditionBuilder
   def build({key, {{:not, operator}, nil}}, ops)
       when is_atom(key),
       do: build({key, {operator, nil}}, [{:not, true} | ops])
 
-  @impl ConditionBuilder
   def build({key, {operator, nil}}, ops)
       when operator in @eq_operators and is_atom(key),
       do: build({key, nil}, ops)
 
-  @impl ConditionBuilder
   def build(
         {key, {{:not, operator}, value}},
         ops
       )
       when is_atom(key) and not is_nil(value),
-      # TODO negate ops instead of adding one. double nagation
       do: build({key, {operator, value}}, [{:not, true} | ops])
 
-  @impl ConditionBuilder
   def build({key, {:not, value}}, ops)
       when is_atom(key) and not is_nil(value),
       do: build({key, {@eq, value}}, [{:not, true} | ops])
 
-  @impl ConditionBuilder
   def build({key, {{:not, operator_with_ops}, value, operators_opts}}, ops)
       when is_atom(key) and
              not is_nil(value),
       do: build({key, {operator_with_ops, value}}, [{:not, true} | operators_opts ++ ops])
 
-  @impl ConditionBuilder
   def build({key, {operator_with_ops, value, operators_opts}}, ops)
       when operator_with_ops in @operators_with_options and
              is_atom(key) and
              not is_nil(value),
       do: build({key, {operator_with_ops, value}}, operators_opts ++ ops)
 
-  @impl ConditionBuilder
   def build({key, {operator, value} = _condition}, ops)
       when operator in @operators and is_atom(key) and not is_nil(value) do
     case Operators.get(operator) do
@@ -108,46 +112,41 @@ defmodule Permit.Permissions.ParsedCondition do
   end
 
   # only value with binding e.g `field: subject.foo`
-  @impl ConditionBuilder
   def build({key, {{:., _, _}, _, _} = value}, ops)
       when is_atom(key),
       do: build({key, {@eq, value}}, ops)
 
-  @impl ConditionBuilder
   def build({key, value}, ops)
       when is_atom(key) and
              not is_nil(value) and
              not is_tuple(value),
       do: build({key, {@eq, value}}, ops)
 
-  @impl ConditionBuilder
   def build(true, _ops),
     do: %ParsedCondition{
       condition: true,
       condition_type: :const
     }
 
-  @impl ConditionBuilder
   def build(false, _ops),
     do: %ParsedCondition{
       condition: false,
       condition_type: :const
     }
 
-  @impl ConditionBuilder
   def build(function, _ops) when is_function(function, 1),
     do: %ParsedCondition{
       condition: function,
       condition_type: :function_1
     }
 
-  @impl ConditionBuilder
   def build(function, _ops) when is_function(function, 2),
     do: %ParsedCondition{
       condition: function,
       condition_type: :function_2
     }
 
+  @doc false
   def satisfied?(
         %ParsedCondition{condition: condition, condition_type: :const},
         _record,
@@ -181,7 +180,11 @@ defmodule Permit.Permissions.ParsedCondition do
       ),
       do: !!function.(record)
 
-  def satisfied?(%ParsedCondition{condition: _fun, condition_type: :function_2}, _record, subject)
+  def satisfied?(
+        %ParsedCondition{condition: _fun, condition_type: :function_2},
+        _record,
+        subject
+      )
       when is_nil(subject),
       do:
         raise(

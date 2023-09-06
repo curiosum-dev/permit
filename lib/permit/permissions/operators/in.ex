@@ -1,8 +1,8 @@
-defmodule Permit.Permissions.Operators.In do
+defmodule Permit.Operators.In do
   @moduledoc """
-     In Operator
+  List inclusion operator, accessible via `:in`. Implemented using `Kernel.in/2`.
   """
-  alias Permit.Permissions.Operators.GenOperator
+  alias Permit.Operators.GenOperator
 
   use GenOperator
 

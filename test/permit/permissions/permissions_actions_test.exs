@@ -17,13 +17,16 @@ defmodule Permit.Permissions.PermissionsActions do
 
   defmodule TestPermissions do
     @moduledoc false
-    use Permit.RuleSyntax,
+    use Permit.Permissions,
       actions_module: TestActions
+
+    def can(_), do: permit()
   end
 
   describe "__using__/1" do
     test "should generate functions" do
-      TestActions.list_groups()
+      TestActions
+      |> Permit.Actions.list_groups()
       |> Enum.each(fn function ->
         assert {function, 2} in TestPermissions.__info__(:functions)
         assert {function, 3} in TestPermissions.__info__(:functions)
@@ -31,7 +34,8 @@ defmodule Permit.Permissions.PermissionsActions do
     end
 
     test "should generate macros" do
-      TestActions.list_groups()
+      TestActions
+      |> Permit.Actions.list_groups()
       |> Enum.each(fn function ->
         assert {function, 4} in TestPermissions.__info__(:macros)
       end)

@@ -1,8 +1,8 @@
-defmodule Permit.Permissions.Operators.IsNil do
+defmodule Permit.Operators.IsNil do
   @moduledoc """
-     Equality Operator
+  Nil equality operator operator, accessible via `:is_nil` or `:nil?`.
   """
-  alias Permit.Permissions.Operators.GenOperator
+  alias Permit.Operators.GenOperator
 
   use GenOperator
 
