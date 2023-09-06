@@ -11,7 +11,7 @@ If you join the [monorepo bandwagon](https://blog.devgenius.io/embrace-the-mono-
 ### Configure & define your permissions
 ```elixir
 defmodule MyApp.Authorization do
-  use Permit, permissions_module: MyApp.Permissions, repo: MyApp.Repo
+  use Permit, permissions_module: MyApp.Permissions
 end
 
 defmodule MyApp.Permissions do
@@ -123,11 +123,11 @@ An outline of our development goals for both the "MVP" and further releases.
   - Preloading accessible records in non-singular resource actions (e.g. `index`)
     - [x] Plug/Controller
     - [x] LiveView
-* [ ] Documentation
-  - [ ] Examples of vanilla usage, Plug and Phoenix Framework integrations
-  - [ ] Thorough documentation of the entire public API
+* [x] Documentation
+  - [x] Examples of vanilla usage, Plug and Phoenix Framework integrations
+  - [x] Thorough documentation of the entire public API
 * [ ] Dependency management
-  - [ ] Introduce `permit_ecto` and `permit_phoenix` libraries providing the possibility of using the library without unneeded dependencies
+  - [x] Introduce `permit_ecto` and `permit_phoenix` libraries providing the possibility of using the library without unneeded dependencies
 
 ### Further ideas
 
