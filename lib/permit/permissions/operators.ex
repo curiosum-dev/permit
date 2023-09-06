@@ -1,9 +1,13 @@
-defmodule Permit.Permissions.Operators do
+defmodule Permit.Operators do
   @moduledoc """
-     Operators
+  Represents the list of operators for usage in defining permission conditions, for example
+  `Permit.Operators.Eq` defines the equality operator usable as `:==` or alternatively
+  `:eq`, with given semantics.
+
+  Part of the private API, subject to changes and not to be used on the application level.
   """
 
-  alias Permit.Permissions.Operators
+  alias Permit.Operators
 
   @operators [
     Operators.Eq,

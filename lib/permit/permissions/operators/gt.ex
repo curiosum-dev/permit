@@ -1,8 +1,8 @@
-defmodule Permit.Permissions.Operators.Gt do
+defmodule Permit.Operators.Gt do
   @moduledoc """
-     Equality Operator
+  Greater-than operator, accessible via `:>` and `:gt`.
   """
-  alias Permit.Permissions.Operators.GenOperator
+  alias Permit.Operators.GenOperator
 
   use GenOperator
 

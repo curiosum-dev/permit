@@ -1,8 +1,9 @@
-defmodule Permit.Permissions.Operators.Eq do
+defmodule Permit.Operators.Eq do
   @moduledoc """
-     Equality Operator
+  Equality operator, accessible via `:==` and `:eq`.
   """
-  alias Permit.Permissions.Operators.GenOperator
+
+  alias Permit.Operators.GenOperator
 
   use GenOperator
 

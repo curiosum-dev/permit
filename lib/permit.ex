@@ -69,7 +69,7 @@ defmodule Permit do
   end
 
   defmodule MyApp.Permissions do
-    use Permit.RuleSyntax, actions_module: Permit.Actions.CrudActions
+    use Permit.Permissions, actions_module: Permit.Actions.CrudActions
 
     def can(%{role: :admin} = user) do
       permit()
@@ -85,7 +85,7 @@ defmodule Permit do
     def can(user), do: permit()
   end
   ```
-  Note that in the permission definitions module the `read` function is generated based on configuration provided as the `:actions_module` option - in this case, `CrudActions` generates `create`, `read`, `update` and `delete`. For more on this, see `Permit.Actions` and `Permit.RuleSyntax`.
+  Note that in the permission definitions module the `read` function is generated based on configuration provided as the `:actions_module` option - in this case, `CrudActions` generates `create`, `read`, `update` and `delete`. For more on this, see `Permit.Actions` and `Permit.Permissions`.
 
   ### Check a user's authorization to perform an action on a resource
   ```elixir
@@ -99,21 +99,14 @@ defmodule Permit do
   iex(4)> can(%MyApp.User{role: :admin}) |> delete?(%MyApp.Article{author_id: 2})
   true
   ```
-  Functions such as `MyApp.Authorization.read?/2`, `MyApp.Authorization.update?/2`, etc. are also generated based on the `:actions_module` option. See more in `Permit.Actions` as well as in `do?/3`.
-
-
-
+  Functions such as `MyApp.Authorization.read?/2`, `MyApp.Authorization.update?/2`, etc. are also generated based on the `:actions_module` option. See more in `Permit.Actions`.
   """
-  defstruct permissions: Permit.Permissions.new(), subject: nil
 
   alias Permit.SubjectMapping
   alias Permit.Permissions
   alias Permit.Types
 
-  @type t :: %Permit{
-          permissions: Permissions.t(),
-          subject: Types.subject() | nil
-        }
+  @callback resolver_module :: Types.resolver_module()
 
   defmacro __using__(opts) do
     alias Permit.Types
@@ -121,11 +114,13 @@ defmodule Permit do
     permissions_module = Keyword.fetch!(opts, :permissions_module)
 
     predicates =
-      Macro.expand(permissions_module, __CALLER__).actions_module().list_groups()
+      Macro.expand(permissions_module, __CALLER__).actions_module()
+      |> Permit.Actions.list_groups()
       |> Enum.map(&add_predicate_name/1)
       |> Enum.map(fn {predicate, name} ->
         quote do
-          @spec unquote(predicate)(Permit.t(), Types.resource()) :: boolean()
+          @spec unquote(predicate)(Permit.Context.t(), Types.object_or_resource_module()) ::
+                  boolean()
           def unquote(predicate)(authorization, resource) do
             Permit.verify_record(authorization, resource, unquote(name))
           end
@@ -133,18 +128,14 @@ defmodule Permit do
       end)
 
     quote do
-      @doc """
-      Initializes a structure holding permissions for a given user role.
-
-      Returns a Permit struct.
-      """
+      @behaviour Permit
 
       require unquote(permissions_module)
 
       def actions_module,
         do: unquote(permissions_module).actions_module()
 
-      @spec can(SubjectMapping.t()) :: Permit.t()
+      @spec can(SubjectMapping.t()) :: Permit.Context.t()
       def can(nil),
         do: raise("Unable to create permit authorization for nil role/user")
 
@@ -153,9 +144,10 @@ defmodule Permit do
         |> SubjectMapping.subjects()
         |> Stream.map(&unquote(permissions_module).can(&1))
         |> Enum.reduce(&Permissions.join(&1, &2))
-        |> then(&%Permit{subject: (is_struct(who) && who) || nil, permissions: &1})
+        |> then(&%Permit.Context{subject: (is_struct(who) && who) || nil, permissions: &1})
       end
 
+      @impl Permit
       def resolver_module, do: Permit.Resolver
 
       defoverridable resolver_module: 0
@@ -164,12 +156,9 @@ defmodule Permit do
     end
   end
 
-  @spec do?(Permit.t(), Types.action_group(), Types.resource()) :: boolean()
-  def do?(authorization, action, resource) do
-    Permit.verify_record(authorization, action, resource)
-  end
-
-  @spec verify_record(Permit.t(), Types.resource(), Types.action_group()) :: boolean()
+  @doc false
+  @spec verify_record(Permit.Context.t(), Types.object_or_resource_module(), Types.action_group()) ::
+          boolean()
   def verify_record(
         %{
           permissions: permissions,

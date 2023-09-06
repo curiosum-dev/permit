@@ -1,8 +1,9 @@
-defmodule Permit.Permissions.Operators.Lt do
+defmodule Permit.Operators.Lt do
   @moduledoc """
-     Equality Operator
+  Less-than operator, accessible via `:<` and `:lt`.
   """
-  alias Permit.Permissions.Operators.GenOperator
+
+  alias Permit.Operators.GenOperator
 
   use GenOperator
 

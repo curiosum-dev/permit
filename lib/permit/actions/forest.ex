@@ -1,14 +1,18 @@
 defmodule Permit.Actions.Forest do
+  @moduledoc ~S"""
+  Encapsulates the directed acyclic graph built from permissions defined using `Permit.Permissions` and provides traversal functions.
+
+  Part of the private API, subject to changes and not to be used on the application level.
+  """
+
   @enforce_keys [:forest]
   defstruct [:forest]
 
-  @moduledoc """
-
-  """
   alias __MODULE__
   @type vertex :: atom()
   @type t :: %Forest{forest: %{vertex() => [vertex()]}}
 
+  @doc false
   def new(list_or_map) when is_list(list_or_map) or is_map(list_or_map) do
     list_or_map
     |> Enum.map(&translate/1)
@@ -16,6 +20,7 @@ defmodule Permit.Actions.Forest do
     |> then(&%Forest{forest: &1})
   end
 
+  @doc false
   def uniq_nodes_list(%Forest{forest: forest}) do
     forest
     |> Map.values()
@@ -24,6 +29,7 @@ defmodule Permit.Actions.Forest do
     |> Enum.uniq()
   end
 
+  @doc false
   def to_map(%Forest{forest: map}),
     do: map
 
@@ -39,6 +45,7 @@ defmodule Permit.Actions.Forest do
        when is_atom(key),
        do: {key, []}
 
+  @doc false
   @spec traverse_forest(
           Forest.t(),
           any(),

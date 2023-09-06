@@ -1,4 +1,7 @@
-defmodule Permit.Actions.UndefinedActionError do
+defmodule Permit.UndefinedActionError do
+  @moduledoc """
+  Raised when a given action is not implemented in the actions module (implementing `Permit.Actions`).
+  """
   alias __MODULE__
   defexception [:message]
 

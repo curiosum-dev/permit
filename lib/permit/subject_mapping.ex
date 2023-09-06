@@ -17,7 +17,7 @@ defprotocol Permit.SubjectMapping do
   end
 
   defmodule Permissions do
-    use Permit.Ecto.RuleSyntax, actions_module: Permit.Actions.CrudActions
+    use Permit.Ecto.Permissions, actions_module: Permit.Actions.CrudActions
 
     def can(%User{role: :reader} = user), do: permit()
     def can(%User{role: :auditor} = user), do: permit()

@@ -1,5 +1,9 @@
 defmodule Permit.Resolver do
   @moduledoc """
+  Basic implementation of `Permit.ResolverBase` behaviour. Resolves and checks authorization of records or lists of records based on provided loader functions and parameters.
+
+  For a resolver implementation using Ecto for fetching resources, see `Permit.Ecto.Resolver` from the `permit_ecto` library.
+
   This module is to be considered a private API of the authorization framework.
   It should not be directly used by application code, but rather by wrappers
   providing integration with e.g. Plug or LiveView.
@@ -74,8 +78,8 @@ defmodule Permit.Resolver do
   @spec fetch_resource(
           module(),
           Types.resource_module(),
-          Types.controller_action(),
-          Permit.HasRole.t(),
+          Types.action_group(),
+          Types.subject(),
           map(),
           :all | :one
         ) :: [struct()] | struct() | nil
@@ -87,7 +91,12 @@ defmodule Permit.Resolver do
          %{loader: loader, params: params},
          :all
        ) do
-    case loader.(action, resource_module, subject, params) do
+    case loader.(%{
+           action: action,
+           resource_module: resource_module,
+           subject: subject,
+           params: params
+         }) do
       list when is_list(list) -> list
       nil -> []
       other_item -> [other_item]
@@ -102,7 +111,12 @@ defmodule Permit.Resolver do
          %{loader: loader, params: params},
          :one
        ) do
-    case loader.(action, resource_module, subject, params) do
+    case loader.(%{
+           action: action,
+           resource_module: resource_module,
+           subject: subject,
+           params: params
+         }) do
       [record | _] -> record
       [] -> nil
       record -> record

@@ -1,8 +1,9 @@
-defmodule Permit.Permissions.Operators.Match do
+defmodule Permit.Operators.Match do
   @moduledoc """
-     Equality Operator
+  Regular expression matching operator, accessible via `:=~` and `:match`.
   """
-  alias Permit.Permissions.Operators.GenOperator
+
+  alias Permit.Operators.GenOperator
 
   use GenOperator
 

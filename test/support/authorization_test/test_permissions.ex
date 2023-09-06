@@ -1,9 +1,10 @@
 defmodule Permit.AuthorizationTest.TestPermissions do
   @moduledoc false
-  use Permit.RuleSyntax
+  use Permit.Permissions
 
   alias Permit.AuthorizationTest.Types.{TestObject, TestUser, TestUserAsRole}
 
+  @impl Permit.Permissions
   def can(:admin = _role) do
     permit()
     |> all(TestObject)
