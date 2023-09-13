@@ -75,6 +75,7 @@ defmodule Permit.Permissions do
   """
 
   alias Permit.Permissions.ConditionParser
+  alias Permit.Permissions.ParsedCondition
   alias Permit.Permissions.DisjunctiveNormalForm, as: DNF
   alias Permit.Types
 
