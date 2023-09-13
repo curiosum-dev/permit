@@ -2,7 +2,6 @@ defmodule Permit.Permissions.ConditionParser do
   @moduledoc false
   alias Permit.Operators
   alias Permit.Permissions.ParsedCondition
-  alias Permit.Types.ConditionTypes
 
   require Permit.Operators
 
@@ -11,8 +10,9 @@ defmodule Permit.Permissions.ConditionParser do
   @eq Operators.eq()
   @operators Operators.all()
 
-  @doc false
-  @spec build(ConditionTypes.condition(), list()) :: ParsedCondition.t()
+  @behaviour Permit.Permissions.ConditionParserBase
+
+  @impl true
   def build(condition, opts \\ [bindings: []])
 
   def build({key, {:not, nil}}, ops)
