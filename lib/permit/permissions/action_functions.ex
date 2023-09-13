@@ -7,7 +7,7 @@ defmodule Permit.Permissions.ActionFunctions do
   def named_actions_mixin(
         actions_module,
         caller,
-        decorator,
+        condition_parser,
         condition_types_module \\ Permit.Types.ConditionTypes
       ) do
     Macro.expand(actions_module, caller)
@@ -32,22 +32,22 @@ defmodule Permit.Permissions.ActionFunctions do
                 list(),
                 unquote(condition_types_module).condition_or_conditions()
               ) :: Permit.Types.permissions_code()
-        defmacro unquote(name)(authorization, resource, bindings, conditions) do
+        defmacro unquote(name)(permissions, resource, bindings, conditions) do
           action = unquote(name)
 
-          decorator = unquote(decorator)
+          condition_parser = unquote(condition_parser)
 
           {escaped_bindings, escaped_conditions} =
             Permit.Permissions.escape_bindings_and_conditions(bindings, conditions)
 
           quote do
             Permit.Permissions.add_permission(
-              unquote(authorization),
+              unquote(permissions),
               unquote(action),
               unquote(resource),
               unquote(escaped_bindings),
               unquote(escaped_conditions),
-              unquote(decorator)
+              unquote(condition_parser)
             )
           end
         end
@@ -101,7 +101,11 @@ defmodule Permit.Permissions.ActionFunctions do
   @doc ~S"""
   Private - mixed in by `Permit.Permissions`. Defines `all/4`, `all/3` in permission definition modules.
   """
-  def all_actions_mixin(actions_module, decorator, condition_types_module \\ Permit.Types) do
+  def all_actions_mixin(
+        actions_module,
+        condition_parser,
+        condition_types_module \\ Permit.Types
+      ) do
     quote do
       @doc ~s"""
       Grants the permission to perform all defined actions on a certain resource under specific conditions.
@@ -121,9 +125,9 @@ defmodule Permit.Permissions.ActionFunctions do
               list(),
               unquote(condition_types_module).condition_or_conditions
             ) :: Permit.Types.permissions_code()
-      defmacro all(authorization, resource, bindings, conditions) do
+      defmacro all(permissions, resource, bindings, conditions) do
         actions_module = unquote(actions_module)
-        decorator = unquote(decorator)
+        condition_parser = unquote(condition_parser)
 
         {escaped_bindings, escaped_conditions} =
           Permit.Permissions.escape_bindings_and_conditions(bindings, conditions)
@@ -131,14 +135,14 @@ defmodule Permit.Permissions.ActionFunctions do
         quote do
           actions_module()
           |> Permit.Actions.list_groups()
-          |> Enum.reduce(unquote(authorization), fn group, auth ->
+          |> Enum.reduce(unquote(permissions), fn group, permissions ->
             Permit.Permissions.add_permission(
-              auth,
+              permissions,
               group,
               unquote(resource),
               unquote(escaped_bindings),
               unquote(escaped_conditions),
-              unquote(decorator)
+              unquote(condition_parser)
             )
           end)
         end
@@ -161,10 +165,10 @@ defmodule Permit.Permissions.ActionFunctions do
               Permit.Types.object_or_resource_module(),
               unquote(condition_types_module).condition_or_conditions
             ) :: Permit.Types.permissions()
-      def all(authorization, resource, conditions) do
+      def all(permissions, resource, conditions) do
         unquote(actions_module)
         |> Permit.Actions.list_groups()
-        |> Enum.reduce(authorization, fn group, auth ->
+        |> Enum.reduce(permissions, fn group, auth ->
           __MODULE__.permission_to(auth, group, resource, conditions)
         end)
       end
@@ -181,8 +185,8 @@ defmodule Permit.Permissions.ActionFunctions do
               Permit.Types.permissions(),
               Permit.Types.object_or_resource_module()
             ) :: Permit.Types.permissions()
-      def all(authorization, resource),
-        do: all(authorization, resource, true)
+      def all(permissions, resource),
+        do: all(permissions, resource, true)
     end
   end
 end

@@ -102,8 +102,8 @@ defmodule Permit do
   Functions such as `MyApp.Authorization.read?/2`, `MyApp.Authorization.update?/2`, etc. are also generated based on the `:actions_module` option. See more in `Permit.Actions`.
   """
 
-  alias Permit.SubjectMapping
   alias Permit.Permissions
+  alias Permit.SubjectMapping
   alias Permit.Types
 
   @callback resolver_module :: Types.resolver_module()
