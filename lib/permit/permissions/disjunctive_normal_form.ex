@@ -15,9 +15,9 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
   defstruct disjunctions: []
 
   alias __MODULE__, as: DNF
-  alias Permit.Types
   alias Permit.Permissions.ParsedCondition
   alias Permit.Permissions.ParsedConditionList
+  alias Permit.Types
   @type t :: %DNF{disjunctions: [ParsedConditionList.t()]}
 
   @spec new([ParsedConditionList.t()]) :: DNF.t()

@@ -1,6 +1,6 @@
 defmodule Permit.Permissions do
   @moduledoc """
-  Defines the application's permission set.
+  Defines the application's permission set. When used with `Permit.Ecto`, one should use `Permit.Ecto.Permissions` instead of `Permit.Permissions`.
 
   The behaviour defines the `c:can/1` callback, which must be implemented for defining permissions for a given subject.
 
@@ -74,9 +74,10 @@ defmodule Permit.Permissions do
       end
   """
 
-  alias Permit.Types
+  alias Permit.Permissions.ConditionParser
   alias Permit.Permissions.ParsedCondition
   alias Permit.Permissions.DisjunctiveNormalForm, as: DNF
+  alias Permit.Types
 
   import Permit.Helpers, only: [resource_module_from_resource: 1]
 
@@ -90,27 +91,30 @@ defmodule Permit.Permissions do
   @callback can(Permit.Types.subject()) :: Permit.Types.permissions()
 
   defmacro __using__(opts) do
-    decorator = opts[:condition_decorator] || (&Function.identity/1)
+    alias Permit.Permissions.ActionFunctions
+    alias Permit.Permissions.PermissionTo
+
+    condition_parser = opts[:condition_parser] || (&ConditionParser.build/2)
     condition_types_module = opts[:condition_types_module] || Permit.Types.ConditionTypes
 
     actions_module = opts |> Keyword.get(:actions_module, Permit.Actions.CrudActions)
 
     # Unnamed action macro
-    permission_to = Permit.Permissions.PermissionTo.mixin(decorator, condition_types_module)
+    permission_to = PermissionTo.mixin(condition_parser, condition_types_module)
 
     # Named action functions
     action_functions =
-      Permit.Permissions.ActionFunctions.named_actions_mixin(
+      ActionFunctions.named_actions_mixin(
         actions_module,
         __CALLER__,
-        decorator,
+        condition_parser,
         condition_types_module
       )
 
     all_actions_mixin =
-      Permit.Permissions.ActionFunctions.all_actions_mixin(
+      ActionFunctions.all_actions_mixin(
         actions_module,
-        decorator,
+        condition_parser,
         condition_types_module
       )
 
@@ -135,17 +139,17 @@ defmodule Permit.Permissions do
       Returns a Permit struct.
       """
       @spec permit() :: Types.permissions()
-      def permit(), do: %Permit.Permissions{}
+      def permit, do: %Permit.Permissions{}
     end
   end
 
   @doc false
-  def add_permission(permissions, action, resource, bindings, conditions, decorator) do
+  def add_permission(permissions, action, resource, bindings, conditions, condition_parser) do
     parsed_conditions =
       __MODULE__.parse_conditions(
         bindings,
         conditions,
-        decorator
+        condition_parser
       )
 
     permissions
@@ -167,27 +171,29 @@ defmodule Permit.Permissions do
   end
 
   @doc false
-  def parse_condition(condition, bindings) when length(bindings) <= 2 do
-    condition
-    |> ParsedCondition.build(bindings: bindings)
+  def parse_condition(condition, bindings, condition_parser) when length(bindings) <= 2 do
+    condition_parser.(condition, bindings: bindings)
   end
 
   @doc false
-  def parse_condition(_condition, bindings) do
+  def parse_condition(_condition, bindings, _condition_parser) do
     raise "Binding list should have at most 2 elements (subject and object), Given #{inspect(bindings)}"
   end
 
-  def parse_conditions(bindings, condition, decorate_condition) when not is_list(condition) do
-    parse_conditions(bindings, [condition], decorate_condition)
+  def parse_conditions(bindings, condition, condition_parser) when not is_list(condition) do
+    parse_conditions(bindings, [condition], condition_parser)
   end
 
-  def parse_conditions(bindings, raw_conditions, decorate_condition) do
+  def parse_conditions(bindings, raw_conditions, condition_parser) do
+    # raw_conditions
+    # |> Enum.map(
+    #   &(&1
+    #     |> __MODULE__.parse_condition(bindings)
+    #     |> condition_parser.())
+    # )
+
     raw_conditions
-    |> Enum.map(
-      &(&1
-        |> __MODULE__.parse_condition(bindings)
-        |> decorate_condition.())
-    )
+    |> Enum.map(&__MODULE__.parse_condition(&1, bindings, condition_parser))
   end
 
   @doc false
