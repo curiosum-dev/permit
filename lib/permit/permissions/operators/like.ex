@@ -16,12 +16,16 @@ defmodule Permit.Operators.Like do
   def semantics(pattern_fn, ops) do
     not? = maybe_negate(ops)
 
-    fn field, subject, object ->
-      re =
-        pattern_fn.(subject, object)
-        |> PatternCompiler.to_regex([{:ignore_case, false} | ops])
+    fn
+      nil, _, _ ->
+        false
 
-      not?.(field =~ re)
+      field, subject, object ->
+        re =
+          pattern_fn.(subject, object)
+          |> PatternCompiler.to_regex([{:ignore_case, false} | ops])
+
+        not?.(field =~ re)
     end
   end
 end
