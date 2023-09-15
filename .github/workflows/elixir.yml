@@ -43,7 +43,7 @@ jobs:
       run: mix deps.get
     - name: Dialyzer
       run: MIX_ENV=test mix dialyzer
-    - name: Dialyzer
+    - name: Credo
       run: MIX_ENV=test mix credo
     - name: Run tests
       run: mix test
