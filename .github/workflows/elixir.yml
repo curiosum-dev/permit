@@ -41,9 +41,9 @@ jobs:
        sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';"
     - name: Install dependencies
       run: mix deps.get
-    - name: Migrate DB
-      run: |
-       mix ecto.create
-       mix ecto.migrate
+    - name: Dialyzer
+      run: MIX_ENV=test mix dialyzer
+    - name: Dialyzer
+      run: MIX_ENV=test mix credo
     - name: Run tests
       run: mix test
