@@ -68,29 +68,38 @@ defmodule Permit.Actions.Forest do
     end
   end
 
-  defp traverse_aux(forest, value, actions, trace) do
-    condition_fn = Keyword.fetch!(actions, :condition)
+  defp traverse_aux(forest, action_name, actions, trace) do
+    is_condition_directly_defined = Keyword.fetch!(actions, :condition)
     value_fn = Keyword.fetch!(actions, :value)
     empty_fn = Keyword.fetch!(actions, :empty)
     join_fn = Keyword.fetch!(actions, :join)
 
     cond do
-      value in trace ->
-        throw({:cycle, Enum.reverse([value | trace])})
+      action_name in trace ->
+        throw({:cycle, Enum.reverse([action_name | trace])})
 
-      condition_fn.(value) ->
-        value_fn.(value)
+      is_condition_directly_defined.(action_name) ->
+        join_fn.([
+          value_fn.(action_name),
+          transitive_traversal(forest, action_name, actions, trace)
+        ])
 
-      [] == forest[value] ->
-        empty_fn.(value)
+      [] == forest[action_name] ->
+        empty_fn.(action_name)
 
-      nil == forest[value] ->
-        throw({:not_defined, value})
+      nil == forest[action_name] ->
+        throw({:not_defined, action_name})
 
       true ->
-        forest[value]
-        |> Enum.map(&traverse_aux(forest, &1, actions, [value | trace]))
-        |> join_fn.()
+        transitive_traversal(forest, action_name, actions, trace)
     end
+  end
+
+  defp transitive_traversal(forest, action_name, actions, trace) do
+    join_fn = Keyword.fetch!(actions, :join)
+
+    forest[action_name]
+    |> Enum.map(&traverse_aux(forest, &1, actions, [action_name | trace]))
+    |> join_fn.()
   end
 end
