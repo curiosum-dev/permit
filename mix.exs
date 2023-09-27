@@ -64,7 +64,12 @@ defmodule Permit.MixProject do
           Permit,
           Permit.SubjectMapping
         ],
-        Actions: [Permit.Actions, Permit.Actions.CrudActions, Permit.Actions.Forest],
+        Actions: [
+          Permit.Actions,
+          Permit.Actions.CrudActions,
+          Permit.Actions.Forest,
+          Permit.Actions.Traversal
+        ],
         Permissions: [
           Permit.Permissions,
           Permit.Permissions.ActionFunctions,
