@@ -58,7 +58,7 @@ defmodule Permit.Actions do
 
   """
   alias __MODULE__
-  alias Permit.Actions.Forest
+  alias Permit.Actions.{Forest, Traversal}
   alias Permit.CycledDefinitionError
   alias Permit.Types
   alias Permit.UndefinedActionError
@@ -144,18 +144,19 @@ defmodule Permit.Actions do
           | {:error, :cycle, [Types.action_group()]}
           | {:error, :not_defined, Types.action_group()}
   def verify_transitively(actions_module, action, verify_fn) do
-    condition = verify_fn
-    value = fn _ -> true end
+    value = verify_fn
+
     empty = fn _ -> false end
-    join = &Enum.all?/1
+    conj = &Enum.all?/1
+    disj = &Enum.any?/1
 
     traverse_actions(
       actions_module,
       action,
-      condition,
       value,
       empty,
-      join
+      conj,
+      disj
     )
   end
 
@@ -171,15 +172,27 @@ defmodule Permit.Actions do
   end
 
   @doc false
-  def traverse_actions(actions_module, key, condition, value, empty, join) do
+  def traverse_actions(actions_module, action_name, value, _empty, conj, disj) do
     actions_module.grouping_schema()
     |> Forest.new()
-    |> Forest.traverse_forest(key, condition: condition, value: value, empty: empty, join: join)
+    |> Traversal.traverse(
+      action_name,
+      value: value,
+      conj: conj,
+      disj: disj
+    )
+    |> then(&{:ok, &1})
+  catch
+    {:not_defined, action_name} ->
+      {:error, :not_defined, action_name}
+
+    {:cycle, trace} ->
+      {:error, :cycle, trace}
   end
 
   @doc false
-  def traverse_actions!(actions_module, key, condition, value, empty, join) do
-    fn -> traverse_actions(actions_module, key, condition, value, empty, join) end
+  def traverse_actions!(actions_module, action_name, value, empty, conj, disj) do
+    fn -> traverse_actions(actions_module, action_name, value, empty, conj, disj) end
     |> maybe_raise_traversal_errors!(actions_module)
   end
 

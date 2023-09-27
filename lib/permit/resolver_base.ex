@@ -55,11 +55,7 @@ defmodule Permit.ResolverBase do
 
       def authorized?(subject, authorization_module, resource_or_module, action)
           when not is_nil(subject) do
-        auth = authorization_module.can(subject)
-        actions_module = authorization_module.actions_module()
-        verify_fn = &Permit.verify_record(auth, resource_or_module, &1)
-
-        Permit.Actions.verify_transitively!(actions_module, action, verify_fn)
+        Permit.ResolverBase.authorized?(subject, authorization_module, resource_or_module, action)
       end
 
       @spec authorize_and_preload_one!(
@@ -90,5 +86,14 @@ defmodule Permit.ResolverBase do
         resolve(subject, authorization_module, resource_module, action, meta, :all)
       end
     end
+  end
+
+  @doc false
+  def authorized?(subject, authorization_module, resource_or_module, action) do
+    auth = authorization_module.can(subject)
+    actions_module = authorization_module.actions_module()
+    verify_fn = &Permit.verify_record(auth, resource_or_module, &1)
+
+    Permit.Actions.verify_transitively!(actions_module, action, verify_fn)
   end
 end
