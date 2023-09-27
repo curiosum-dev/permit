@@ -222,10 +222,10 @@ defmodule Permit.Permissions do
   end
 
   @doc false
-  @spec join(__MODULE__.t(), __MODULE__.t()) :: __MODULE__.t()
-  def join(p1, p2) do
+  @spec concatenate(__MODULE__.t(), __MODULE__.t()) :: __MODULE__.t()
+  def concatenate(p1, p2) do
     Map.merge(p1.conditions_map, p2.conditions_map, fn
-      _k, dnf1, dnf2 -> DNF.join(dnf1, dnf2)
+      _k, dnf1, dnf2 -> DNF.concatenate(dnf1, dnf2)
     end)
     |> then(&%__MODULE__{conditions_map: &1})
   end

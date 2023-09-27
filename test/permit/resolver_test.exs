@@ -1,11 +1,13 @@
 defmodule Permit.ResolverTest do
-  use ExUnit.Case, async: true
+  use Permit.Case, async: true
 
   defmodule Item do
+    @moduledoc false
     defstruct [:user_id]
   end
 
   defmodule User do
+    @moduledoc false
     defstruct [:id]
   end
 
@@ -28,32 +30,119 @@ defmodule Permit.ResolverTest do
       do: [:show, :edit, :new]
   end
 
-  defmodule TestPermissions do
-    @moduledoc false
-    use Permit.Permissions, actions_module: TestActions
+  defmacro permissions_module(do: block) do
+    inferred_modname =
+      with {test_name_atom, _} <- __CALLER__.function do
+        test_name_atom |> Atom.to_string() |> Macro.camelize() |> String.to_atom()
+      end
 
-    def can(user) do
-      permit()
-      |> all(Item, user_id: user.id)
-      |> read(Item)
+    quote do
+      {_, m, _, _} =
+        defmodule unquote(inferred_modname) do
+          use Permit.Permissions, actions_module: TestActions
+
+          unquote(block)
+        end
+
+      m
     end
   end
 
-  defmodule TestAuthorization do
-    use Permit, permissions_module: TestPermissions
+  def authorization_module(permmodname) do
+    [{authmodname, _}] =
+      Code.compile_quoted(
+        quote do
+          modname = :"#{unquote(permmodname)}Authorization"
+
+          defmodule modname do
+            use(Permit, permissions_module: unquote(permmodname))
+          end
+        end
+      )
+
+    authmodname
   end
 
-  describe "authorized?/4" do
+  describe "authorized?/4, action_grouping" do
     test """
-    with action grouping, transitively authorizes the :index action when :read permission is given
+    does not authorize :index on Item when only a restricted :all permission is present
     """ do
-      Permit.Resolver.authorized?(
-        %User{id: 1},
-        TestAuthorization,
-        %Item{user_id: 2},
-        :index
-      )
-      |> assert()
+      authorization_module =
+        permissions_module do
+          def can(user) do
+            permit()
+            |> all(Item, user_id: user.id)
+          end
+        end
+        |> authorization_module()
+
+      refute Permit.Resolver.authorized?(
+               %User{id: 1},
+               authorization_module,
+               %Item{user_id: 2},
+               :index
+             )
+    end
+
+    test """
+    does not authorize :index on Item when no permissions are present
+    """ do
+      authorization_module =
+        permissions_module do
+          def can(_user) do
+            permit()
+          end
+        end
+        |> authorization_module()
+
+      refute Permit.Resolver.authorized?(
+               %User{id: 1},
+               authorization_module,
+               %Item{user_id: 2},
+               :index
+             )
+    end
+
+    test """
+    authorizes :index on Item when the condition overrides a more restricted :all permission
+    """ do
+      authorization_module =
+        permissions_module do
+          def can(user) do
+            permit()
+            |> all(Item, user_id: user.id)
+            |> read(Item)
+          end
+        end
+        |> authorization_module()
+
+      assert Permit.Resolver.authorized?(
+               %User{id: 1},
+               authorization_module,
+               %Item{user_id: 2},
+               :index
+             )
+    end
+
+    test """
+    authorizes :index on Item when both a matching and non-matching condition exists
+    """ do
+      authorization_module =
+        permissions_module do
+          def can(user) do
+            permit()
+            |> index(Item, user_id: -1)
+            |> index(Item, user_id: user.id)
+          end
+        end
+        |> authorization_module()
+
+      assert Permit.Resolver.authorized?(
+               %User{id: 1},
+               authorization_module,
+               %Item{user_id: 1},
+               :index
+             )
     end
   end
 end

@@ -27,7 +27,7 @@ defmodule Permit.PermitTest do
   defmodule TestAuthorization do
     @moduledoc false
     use Permit,
-      permissions_module: TestPermissions
+      permissions_module: Permit.PermitTest.TestPermissions
   end
 
   describe "__using__/1" do

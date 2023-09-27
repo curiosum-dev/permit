@@ -130,6 +130,10 @@ defmodule Permit do
     quote do
       @behaviour Permit
 
+      def permissions_module do
+        unquote(permissions_module)
+      end
+
       require unquote(permissions_module)
 
       def actions_module,
@@ -140,11 +144,7 @@ defmodule Permit do
         do: raise("Unable to create permit authorization for nil role/user")
 
       def can(who) do
-        who
-        |> SubjectMapping.subjects()
-        |> Stream.map(&unquote(permissions_module).can(&1))
-        |> Enum.reduce(&Permissions.join(&1, &2))
-        |> then(&%Permit.Context{subject: (is_struct(who) && who) || nil, permissions: &1})
+        Permit.can(who, unquote(permissions_module))
       end
 
       @impl Permit
@@ -154,6 +154,15 @@ defmodule Permit do
 
       unquote(predicates)
     end
+  end
+
+  @doc false
+  def can(who, permissions_module) do
+    who
+    |> SubjectMapping.subjects()
+    |> Stream.map(&permissions_module.can/1)
+    |> Enum.reduce(&Permissions.concatenate(&1, &2))
+    |> then(&%Permit.Context{subject: (is_struct(who) && who) || nil, permissions: &1})
   end
 
   @doc false
