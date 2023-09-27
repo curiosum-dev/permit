@@ -42,8 +42,8 @@ defmodule Permit.Permissions.DisjunctiveNormalForm do
     |> Enum.any?(&ParsedConditionList.conditions_satisfied?(&1, record, subject))
   end
 
-  @spec join(DNF.t(), DNF.t()) :: DNF.t()
-  def join(%DNF{disjunctions: d1}, %DNF{disjunctions: d2}) do
+  @spec concatenate(DNF.t(), DNF.t()) :: DNF.t()
+  def concatenate(%DNF{disjunctions: d1}, %DNF{disjunctions: d2}) do
     %DNF{disjunctions: d1 ++ d2}
   end
 end
