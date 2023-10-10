@@ -15,7 +15,7 @@ defmodule MyApp.Authorization do
 end
 
 defmodule MyApp.Permissions do
-  use Permit.Permissions, actions_module: Permit.Actions.PhoenixActions
+  use Permit.Permissions, actions_module: Permit.Phoenix.Actions
 
   def can(%{role: :admin} = user) do
     permit()
