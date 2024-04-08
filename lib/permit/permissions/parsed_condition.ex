@@ -60,6 +60,20 @@ defmodule Permit.Permissions.ParsedCondition do
     |> semantics.(subject, record)
   end
 
+  def satisfied?(
+        %ParsedCondition{
+          condition: {key, val_fn},
+          condition_type: {:association, _},
+          semantics: _semantics
+        },
+        record,
+        subject
+      )
+      when is_struct(record) do
+    conditions = val_fn.(subject, record)
+    check_conditions(record, [{key, conditions}])
+  end
+
   def satisfied?(%ParsedCondition{condition: condition}, module, _subject)
       when is_atom(module),
       do: !!condition
@@ -88,4 +102,23 @@ defmodule Permit.Permissions.ParsedCondition do
         subject
       ),
       do: !!function.(subject, record)
+
+  defp check_conditions(record, conditions) when is_map(record) and is_list(conditions) do
+    Enum.all?(conditions, fn {assoc, assoc_conditions} ->
+      check_association(record, assoc, assoc_conditions)
+    end)
+  end
+
+  defp check_association(record, assoc, assoc_conditions) do
+    case Map.get(record, assoc) do
+      sub_assoc when is_map(sub_assoc) ->
+        check_conditions(sub_assoc, assoc_conditions)
+
+      sub_assoc when is_list(sub_assoc) ->
+        Enum.all?(sub_assoc, &check_conditions(&1, assoc_conditions))
+
+      sub_assoc ->
+        sub_assoc == assoc_conditions
+    end
+  end
 end

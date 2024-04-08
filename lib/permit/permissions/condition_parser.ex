@@ -67,9 +67,11 @@ defmodule Permit.Permissions.ConditionParser do
       {:ok, module} ->
         val_fn = binding_fn(value, Keyword.get(ops, :bindings))
 
+        condition_type = if Keyword.keyword?(value), do: :association, else: :operator
+
         %ParsedCondition{
           condition: {key, val_fn},
-          condition_type: {:operator, module},
+          condition_type: {condition_type, module},
           semantics: module.semantics(val_fn, ops),
           not: Keyword.get(ops, :not, false)
         }
