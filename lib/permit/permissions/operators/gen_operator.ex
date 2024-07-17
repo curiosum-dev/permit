@@ -45,7 +45,11 @@ defmodule Permit.Operators.GenOperator do
         not? = maybe_negate(ops)
 
         fn field_val, subject, object ->
-          not?.(apply(Kernel, symbol(), [field_val, val_fn.(subject, object)]))
+          expected_val = val_fn.(subject, object)
+          op_args = [field_val, expected_val]
+          arg = apply(Kernel, symbol(), op_args)
+
+          not?.(arg)
         end
       end
 

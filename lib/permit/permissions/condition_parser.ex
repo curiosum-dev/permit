@@ -134,11 +134,11 @@ defmodule Permit.Permissions.ConditionParser do
   end
 
   defp map_struct_selector_to_ast(
-         {{:., _, [{param, _, _}, field]}, [{:no_parens, true} | _], []} = expr,
+         {{:., _, [{param, _, _}, field]}, [{:no_parens, true} | _] = meta, []} = expr,
          selectors
        ) do
     if param in selectors do
-      {{:., [], [make_var_ast(param), field]}, [], []}
+      {{:., [], [make_var_ast(param), field]}, meta, []}
     else
       expr
     end
