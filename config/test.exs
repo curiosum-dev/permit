@@ -19,7 +19,7 @@ config :permit, Permit.FakeApp.Repo,
   pool_size: 10
 
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :warning
 
 ExUnit.start()
 
