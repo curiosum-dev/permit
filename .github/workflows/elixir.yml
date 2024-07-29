@@ -19,13 +19,42 @@ jobs:
     name: Build and test
     runs-on: ubuntu-22.04
 
+    strategy:
+      matrix:
+        elixir_version: ['1.12', '1.13', '1.14', '1.15', '1.16', '1.17']
+        otp_version: ['24', '25', '26', '27']
+        exclude:
+          - elixir_version: '1.12'
+            otp_version: '25'
+          - elixir_version: '1.12'
+            otp_version: '26'
+          - elixir_version: '1.12'
+            otp_version: '27'
+
+          - elixir_version: '1.13'
+            otp_version: '26'
+          - elixir_version: '1.13'
+            otp_version: '27'
+
+          - elixir_version: '1.14'
+            otp_version: '27'
+
+          - elixir_version: '1.15'
+            otp_version: '27'
+
+          - elixir_version: '1.16'
+            otp_version: '27'
+
+          - elixir_version: '1.17'
+            otp_version: '24'
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with:
-        elixir-version: '1.12.3' # Define the elixir version [required]
-        otp-version: '24' # Define the OTP version [required]
+        elixir-version: ${{ matrix.elixir_version }} # Define the elixir version [required]
+        otp-version: ${{ matrix.otp_version }} # Define the OTP version [required]
       env:
         ImageOS: ubuntu22
     - name: Restore dependencies cache
