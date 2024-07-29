@@ -1,5 +1,10 @@
 # Permit
 
+[![Hex version badge](https://img.shields.io/hexpm/v/permit.svg)](https://hex.pm/packages/permit)
+[![Actions Status](https://github.com/curiosum-dev/permit/actions/workflows/elixir.yml/badge.svg)](https://github.com/curiosum-dev/permit/actions)
+[![Code coverage badge](https://img.shields.io/codecov/c/github/curiosum-dev/permit/master.svg)](https://codecov.io/gh/curiosum-dev/permit/branch/master)
+[![License badge](https://img.shields.io/hexpm/l/permit.svg)](https://github.com/curiosum-dev/permit/blob/master/LICENSE.md)
+
 Plain-Elixir, DSL-less, extensible authorization library for Elixir, also leveraging the power of Ecto, Phoenix and LiveView.
 
 ## Purpose and usage
@@ -150,7 +155,7 @@ by adding `permit` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:permit, "~> 0.1.0"}
+    {:permit, "~> 0.2.1"}
   ]
 end
 ```
