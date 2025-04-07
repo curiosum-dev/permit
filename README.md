@@ -1,17 +1,29 @@
-# Permit
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/f0352656-397d-4d90-999a-d3adbae1095f">
 
-[![Hex version badge](https://img.shields.io/hexpm/v/permit.svg)](https://hex.pm/packages/permit)
-[![Actions Status](https://github.com/curiosum-dev/permit/actions/workflows/elixir.yml/badge.svg)](https://github.com/curiosum-dev/permit/actions)
-[![Code coverage badge](https://img.shields.io/codecov/c/github/curiosum-dev/permit/master.svg)](https://codecov.io/gh/curiosum-dev/permit/branch/master)
-[![License badge](https://img.shields.io/hexpm/l/permit.svg)](https://github.com/curiosum-dev/permit/blob/master/LICENSE.md)
+  <h1>Permit</h1>
+  <p><strong>Plain-Elixir, DSL-less, extensible authorization library for Elixir.
 
-Plain-Elixir, DSL-less, extensible authorization library for Elixir, also leveraging the power of Ecto, Phoenix and LiveView.
+</strong></p>
+
+  [![Contact Us](https://img.shields.io/badge/Contact%20Us-%23F36D2E?style=for-the-badge&logo=maildotru&logoColor=white&labelColor=F36D2E)](https://curiosum.com/contact)
+  [![Visit Curiosum](https://img.shields.io/badge/Visit%20Curiosum-%236819E6?style=for-the-badge&logo=elixir&logoColor=white&labelColor=6819E6)](https://curiosum.com/services/elixir-software-development)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-1D0642?style=for-the-badge&logo=open-source-initiative&logoColor=white&labelColor=1D0642)]()
+</div>
+
+
+<br/>
 
 ## Purpose and usage
 
 Provide a single source of truth of action permissions throughout your codebase, making use of Ecto to have your Phoenix Controllers and LiveViews authorize access to resources without having to repeat yourself.
 
 If you join the [monorepo bandwagon](https://blog.devgenius.io/embrace-the-mono-repo-3efcd09a38f8), you should be able to nicely drop your authorization into whatever's driven by Plug (Phoenix controllers) as well as into Phoenix LiveView, and perhaps even more - because it's very likely that your codebase will use multiple frameworks to process data that requires authorization.
+
+[![Hex version badge](https://img.shields.io/hexpm/v/permit.svg)](https://hex.pm/packages/permit)
+[![Actions Status](https://github.com/curiosum-dev/permit/actions/workflows/elixir.yml/badge.svg)](https://github.com/curiosum-dev/permit/actions)
+[![Code coverage badge](https://img.shields.io/codecov/c/github/curiosum-dev/permit/master.svg)](https://codecov.io/gh/curiosum-dev/permit/branch/master)
+[![License badge](https://img.shields.io/hexpm/l/permit.svg)](https://github.com/curiosum-dev/permit/blob/master/LICENSE.md)
 
 ### Configure & define your permissions
 ```elixir
