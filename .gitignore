@@ -26,3 +26,5 @@ permit-*.tar
 /tmp/
 
 .DS_Store
+
+.envrc
