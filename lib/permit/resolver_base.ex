@@ -92,7 +92,7 @@ defmodule Permit.ResolverBase do
   def authorized?(subject, authorization_module, resource_or_module, action) do
     auth = authorization_module.can(subject)
     actions_module = authorization_module.actions_module()
-    verify_fn = &Permit.verify_record(auth, resource_or_module, &1)
+    verify_fn = &Permit.verify_record(auth, &1, resource_or_module)
 
     Permit.Actions.verify_transitively!(actions_module, action, verify_fn)
   end

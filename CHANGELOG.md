@@ -6,6 +6,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- [Breaking] Change order of args in `Permit.verify_record/3` and add delegation as `do?/3` when doing `use Permit`.
+
+  This way, permisisons to perform a dynamically computed action can be checked like this:
+  ```elixir
+  action = :read
+  can(user) |> do?(action, %Item{id: 1})
+  ```
+  instead of the previously required, rather clumsy, and undocumented notation:
+
+  ```elixir
+  # Note: this is the previously used argument order; as of now, arguments 2 and 3 have been reversed.
+  can(user) |> Permit.verify_record(%Item{id: 1}, action)
+  ```
+  If you happened to use `Permit.verify_record(3)`, the way to migrate is swapping arguments 2 and 3 in all calls, or - better still - migrating to the `do?/3` syntactic sugar.
+
 ## [v0.2.1]
 ### Fixed
 - Fix runtime and compile-time warnings (#38).

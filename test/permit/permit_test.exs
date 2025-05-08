@@ -2,6 +2,14 @@ defmodule Permit.PermitTest do
   @moduledoc false
   use Permit.Case
 
+  defmodule TestUser do
+    defstruct [:id]
+  end
+
+  defmodule TestItem do
+    defstruct [:id]
+  end
+
   defmodule TestActions do
     use Permit.Actions
 
@@ -21,7 +29,7 @@ defmodule Permit.PermitTest do
     use Permit.Permissions,
       actions_module: TestActions
 
-    def can(_role), do: permit()
+    def can(_role), do: permit() |> a(TestItem)
   end
 
   defmodule TestAuthorization do
@@ -44,6 +52,20 @@ defmodule Permit.PermitTest do
 
         assert predicate in TestAuthorization.__info__(:functions)
       end)
+    end
+
+    test "should delegate do?/3 to Permit.verify_record/3" do
+      assert TestAuthorization.can(%TestUser{id: 1})
+             |> TestAuthorization.do?(:a, TestItem)
+
+      assert TestAuthorization.can(%TestUser{id: 1})
+             |> TestAuthorization.do?(:a, %TestItem{id: 1})
+
+      refute TestAuthorization.can(%TestUser{id: 1})
+             |> TestAuthorization.do?(:b, TestItem)
+
+      refute TestAuthorization.can(%TestUser{id: 1})
+             |> TestAuthorization.do?(:b, %TestItem{id: 1})
     end
   end
 end

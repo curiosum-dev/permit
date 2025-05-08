@@ -122,7 +122,7 @@ defmodule Permit do
           @spec unquote(predicate)(Permit.Context.t(), Types.object_or_resource_module()) ::
                   boolean()
           def unquote(predicate)(authorization, resource) do
-            Permit.verify_record(authorization, resource, unquote(name))
+            Permit.verify_record(authorization, unquote(name), resource)
           end
         end
       end)
@@ -153,6 +153,10 @@ defmodule Permit do
       defoverridable resolver_module: 0
 
       unquote(predicates)
+
+      defdelegate do?(authorization, action, resource_or_module),
+        to: Permit,
+        as: :verify_record
     end
   end
 
@@ -166,17 +170,17 @@ defmodule Permit do
   end
 
   @doc false
-  @spec verify_record(Permit.Context.t(), Types.object_or_resource_module(), Types.action_group()) ::
+  @spec verify_record(Permit.Context.t(), Types.action_group(), Types.object_or_resource_module()) ::
           boolean()
   def verify_record(
         %{
           permissions: permissions,
           subject: subject
         } = _authorization,
-        record,
-        action
+        action,
+        resource_or_module
       ) do
-    Permissions.granted?(permissions, action, record, subject)
+    Permissions.granted?(permissions, action, resource_or_module, subject)
   end
 
   defp add_predicate_name(atom),

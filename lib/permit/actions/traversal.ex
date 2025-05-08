@@ -37,12 +37,14 @@ defmodule Permit.Actions.Traversal do
     disj_function = funs[:disj]
     value_function = funs[:value]
 
+    # case Map.get(forest, :action_name, []) do
     case forest[action_name] do
       # action_name can be directly checked
       # in this case, the entire trace should be verified.
       # For example, if :see implies :read implies :index,
       # then asking for :index verifies whether explicitly
       # given is the permission to :see, or :read, or :index
+
       [] ->
         [action_name | trace]
         |> Enum.map(value_function)
@@ -54,7 +56,12 @@ defmodule Permit.Actions.Traversal do
         |> Enum.map(&traverse(f, &1, funs, [action_name | trace]))
         |> conj_function.()
 
+      # TODO: dubious after the introduction of reading out actions from the router
+      #
+      # Action not defined in the action definitions file. Assume it's an action
+      # that doesn't map to any different action in the forest.
       nil ->
+        # traverse(%{f | forest: Map.put(forest, action_name, [])}, action_name, funs, trace)
         throw({:not_defined, action_name})
     end
   end
