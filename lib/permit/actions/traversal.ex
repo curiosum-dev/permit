@@ -56,12 +56,10 @@ defmodule Permit.Actions.Traversal do
         |> Enum.map(&traverse(f, &1, funs, [action_name | trace]))
         |> conj_function.()
 
-      # TODO: dubious after the introduction of reading out actions from the router
-      #
-      # Action not defined in the action definitions file. Assume it's an action
-      # that doesn't map to any different action in the forest.
+      # Action not defined in the action definitions file (or imported into that file
+      # e.g. from a Phoenix router). Assume it's an action that doesn't map to any
+      # different action in the forest.
       nil ->
-        # traverse(%{f | forest: Map.put(forest, action_name, [])}, action_name, funs, trace)
         throw({:not_defined, action_name})
     end
   end

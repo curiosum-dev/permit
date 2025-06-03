@@ -1,4 +1,5 @@
 defmodule Permit.AuthorizationTest.Types do
+  @moduledoc false
   defmodule TestUser do
     @moduledoc false
 
