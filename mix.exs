@@ -1,7 +1,7 @@
 defmodule Permit.MixProject do
   use Mix.Project
 
-  @version "0.2.1"
+  @version "0.3.0"
   @source_url "https://github.com/curiosum-dev/permit/"
 
   def project do
@@ -32,7 +32,7 @@ defmodule Permit.MixProject do
     [
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
-      maintainers: ["Michał Buszkiewicz", "Piotr Lisowski"],
+      maintainers: ["Michał Buszkiewicz"],
       files: ["lib", "mix.exs", "README*"]
     ]
   end
@@ -61,7 +61,8 @@ defmodule Permit.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:versioce, "~> 2.0.0", only: [:dev, :test], runtime: false},
       {:git_cli, "~> 0.3.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.18", only: :test, runtime: false}
+      {:excoveralls, "~> 0.18", only: :test, runtime: false},
+      {:castore, "~> 1.0", only: :test, runtime: false}
     ]
   end
 

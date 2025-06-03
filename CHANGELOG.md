@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.3.0]
+### Changed
 - [Breaking] Change order of args in `Permit.verify_record/3` and add delegation as `do?/3` when doing `use Permit`.
 
   This way, permisisons to perform a dynamically computed action can be checked like this:
@@ -20,6 +22,9 @@ All notable changes to this project will be documented in this file.
   can(user) |> Permit.verify_record(%Item{id: 1}, action)
   ```
   If you happened to use `Permit.verify_record(3)`, the way to migrate is swapping arguments 2 and 3 in all calls, or - better still - migrating to the `do?/3` syntactic sugar.
+
+### Fixed
+- Update CI configuration and dependencies.
 
 ## [v0.2.1]
 ### Fixed
