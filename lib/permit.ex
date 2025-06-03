@@ -154,6 +154,21 @@ defmodule Permit do
 
       unquote(predicates)
 
+      @doc """
+      Verify if the authorization has the given action on the given resource.
+
+      For example, calling `do?(authorization, :read, %MyApp.Article{author_id: 1})` is equivalent
+      to calling `read?(authorization, %MyApp.Article{author_id: 1})` in the example below.
+
+      ## Examples
+
+      ```elixir
+      iex(1)> import MyApp.Authorization
+      iex(2)> can(%MyApp.User{id: 1}) |> do?(:read, %MyApp.Article{author_id: 1})
+      true
+      ```
+
+      """
       defdelegate do?(authorization, action, resource_or_module),
         to: Permit,
         as: :verify_record
@@ -169,7 +184,21 @@ defmodule Permit do
     |> then(&%Permit.Context{subject: (is_struct(who) && who) || nil, permissions: &1})
   end
 
-  @doc false
+  @doc """
+  Verify if the authorization has the given action on the given resource.
+
+  Most of the time this function will not be called directly, but rather through the `do?/3` delegation
+  via a module that uses `Permit`.
+
+  ## Examples
+
+  ```elixir
+  iex(1)> import MyApp.Authorization
+  iex(2)> can(%MyApp.User{id: 1}) |> do?(:read, %MyApp.Article{author_id: 1})
+  true
+  ```
+
+  """
   @spec verify_record(Permit.Context.t(), Types.action_group(), Types.object_or_resource_module()) ::
           boolean()
   def verify_record(
