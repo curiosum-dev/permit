@@ -18,7 +18,10 @@
 
 Provide a single source of truth of action permissions throughout your codebase, making use of Ecto to have your Phoenix Controllers and LiveViews authorize access to resources without having to repeat yourself.
 
-If you join the [monorepo bandwagon](https://blog.devgenius.io/embrace-the-mono-repo-3efcd09a38f8), you should be able to nicely drop your authorization into whatever's driven by Plug (Phoenix controllers) as well as into Phoenix LiveView, and perhaps even more - because it's very likely that your codebase will use multiple frameworks to process data that requires authorization.
+Permit supports multiple integration points across the Elixir ecosystem:
+- **Phoenix Controllers & LiveView** - with support for LiveView 1.0 and Streams
+- **GraphQL APIs** - through Absinthe integration (experimental)
+- **Custom integrations** - extensible architecture for other frameworks
 
 [![Hex version badge](https://img.shields.io/hexpm/v/permit.svg)](https://hex.pm/packages/permit)
 [![Actions Status](https://github.com/curiosum-dev/permit/actions/workflows/elixir.yml/badge.svg)](https://github.com/curiosum-dev/permit/actions)
@@ -26,6 +29,7 @@ If you join the [monorepo bandwagon](https://blog.devgenius.io/embrace-the-mono-
 [![License badge](https://img.shields.io/hexpm/l/permit.svg)](https://github.com/curiosum-dev/permit/blob/master/LICENSE.md)
 
 ### Configure & define your permissions
+Required package: `:permit`.
 ```elixir
 defmodule MyApp.Authorization do
   use Permit, permissions_module: MyApp.Permissions
@@ -41,7 +45,7 @@ defmodule MyApp.Permissions do
 
   def can(%{id: user_id} = user) do
     permit()
-    |> all(MyApp.Blog.Article, id: user_id)
+    |> all(MyApp.Blog.Article, author_id: user_id)
     |> read(MyApp.Blog.Article) # allows :index and :show
   end
 
@@ -50,6 +54,8 @@ end
 ```
 
 ### Set up your controller
+
+Requires `:permit_phoenix` package, and optionally `:permit_ecto` for sourcing authorization data from the DB.
 
 ```elixir
 defmodule MyAppWeb.Blog.ArticleController do
@@ -69,7 +75,7 @@ defmodule MyAppWeb.Blog.ArticleController do
     render(conn, "show.html")
   end
 
-  def show(conn, _params) do
+  def index(conn, _params) do
     # The list of Articles accessible by current user has been preloaded by Ecto
     # into the @loaded_resources assign.
 
@@ -81,6 +87,9 @@ end
 ```
 
 ### Set up your LiveView
+
+Requires `:permit_phoenix`, and optionally `:permit_ecto`.
+
 ```elixir
 defmodule MyAppWeb.Router do
   use Phoenix.Router
@@ -96,27 +105,114 @@ defmodule MyAppWeb.Blog.ArticleLive do
   use Phoenix.LiveView
 
   use Permit.Phoenix.LiveView,
-    authorization_module: MyAppWeb.Authorization,
-    resource_module: MyApp.Blog.Article
+    authorization_module: MyApp.Authorization,
+    resource_module: MyApp.Blog.Article,
+    use_stream?: true  # Enable LiveView 1.0 Streams support
 
   @impl true
   def fetch_subject(session), do: # load current user
 
   # Both in the mount/3 callback and in a hook attached to the handle_params event,
   # authorization will be performed based on assigns[:live_action].
+  # With streams enabled, :index actions will use streams instead of assigns.
 
   # Optionally, implement the handle_unauthorized/1 callback to deal with authorization denial.
 end
 ```
 
-The library idea was originally briefed and announced in Michal Buszkiewicz's [Curiosum](https://curiosum.com) [Elixir Meetup #5 in 2022](https://youtu.be/AvUPX6cAjzk?t=3997).
+### Set up your GraphQL API with Absinthe
 
+Requires `:permit_absinthe`, whereas `:permit_ecto` is automatically retrieved to provide Dataloader support - see [Permit.Absinthe docs](https://hexdocs.pm/permit_absinthe/Permit.Absinthe.Middleware.DataloaderSetup.html).
+
+```elixir
+defmodule MyAppWeb.Schema do
+  use Absinthe.Schema
+  use Permit.Absinthe, authorization_module: MyApp.Authorization
+
+  object :article do
+    permit schema: MyApp.Blog.Article
+
+    field :id, :id
+    field :title, :string
+    field :content, :string
+    field :author_id, :id
+  end
+
+  query do
+    field :article, :article do
+      permit action: :read
+      arg :id, non_null(:id)
+      resolve &load_and_authorize/2  # Automatically loads and authorizes based on permissions
+    end
+
+    field :articles, list_of(:article) do
+      permit action: :read
+      resolve &load_and_authorize/2  # Returns only articles accessible by current user
+    end
+  end
+
+  mutation do
+    field :create_article, :article do
+      permit action: :create
+      arg :title, non_null(:string)
+      arg :content, non_null(:string)
+
+      # Use middleware for complex authorization scenarios
+      middleware Permit.Absinthe.Middleware.LoadAndAuthorize
+
+      resolve fn _, args, %{context: %{current_user: user}} ->
+        MyApp.Blog.create_article(user, args)
+      end
+    end
+  end
+end
+```
+
+### Quick authorization checks
+
+Requires `:permit` for the basic checks, and `:permit_ecto` for `accessible_by!/3`.
+
+```elixir
+# Check permissions directly
+can(current_user) |> update?(article)
+
+# Generate Ecto queries based on permissions
+MyApp.Authorization.accessible_by!(current_user, :read, Article)
+
+# Use the friendly API for multiple actions
+can(current_user) |> do([:read, :update], article)
+```
+
+## Ecosystem
+
+Permit is designed as a modular ecosystem with multiple packages:
+
+| Package | Version | Description |
+|---------|---------|-------------|
+| **[permit](https://hex.pm/packages/permit)** | [![Hex.pm](https://img.shields.io/hexpm/v/permit.svg)](https://hex.pm/packages/permit) | Core authorization library |
+| **[permit_ecto](https://hex.pm/packages/permit_ecto)** | [![Hex.pm](https://img.shields.io/hexpm/v/permit_ecto.svg)](https://hex.pm/packages/permit_ecto) | Ecto integration for database queries |
+| **[permit_phoenix](https://hex.pm/packages/permit_phoenix)** | [![Hex.pm](https://img.shields.io/hexpm/v/permit_phoenix.svg)](https://hex.pm/packages/permit_phoenix) | Phoenix Controllers & LiveView integration |
+| **[permit_absinthe](https://github.com/curiosum-dev/permit_absinthe)** | [![Hex.pm](https://img.shields.io/hexpm/v/permit_absinthe.svg)](https://hex.pm/packages/permit_absinthe) | GraphQL API authorization via Absinthe |
+
+## Recent Updates
+
+**Version 0.3.0** brings several major improvements:
+- **Phoenix LiveView 1.0 support** with Streams for managing large collections
+- **Router-based action inference** - automatically derive action names from Phoenix routes
+- **Friendly `can(user) |> do(action, resource)` API** for more readable permission checks
+- **Enhanced performance** and better error handling
+
+See our recent blog posts for more details:
+- [Updates to Permit and Permit.Phoenix, announcing Permit.Absinthe](https://curiosum.com/blog/permit-open-source-update)
+- [Future of Permit authorization library](https://curiosum.com/blog/permit-future-authorization-library)
 
 ## Roadmap
 
 An outline of our development goals for both the "MVP" and further releases.
 
 ### Milestone 1
+
+The following features of Permit (along with its companion packages), originally intended as an initial backlog, has already been fulfilled:
 
 * Rule definition syntax
   - [x] Defining rules for **C**reate, **R**ead, **U**pdate and **D**elete actions
@@ -143,39 +239,88 @@ An outline of our development goals for both the "MVP" and further releases.
 * [x] Documentation
   - [x] Examples of vanilla usage, Plug and Phoenix Framework integrations
   - [x] Thorough documentation of the entire public API
-* [ ] Dependency management
+* [x] Dependency management
   - [x] Introduce `permit_ecto` and `permit_phoenix` libraries providing the possibility of using the library without unneeded dependencies
 
-### Further ideas
+### Future plans
 
-* [ ] Framework adapters
-  - [x] Refactor resolver to provide a clear and straightforward way to develop library adapters
-  - [ ] Research (and possibly PoC) of mapping or extending the paradigm to support Absinthe
-  - [ ] Research on ideas of adapting to other frameworks
-* [ ] New features and improvements
-  - [ ] Explore possibilities to use compile time to improve performance (e.g. #23, #24)
-  - [ ] Better support for DBMS other than Postgres (e.g. #10)
-* [ ] Documentation
-  - [ ] Improvement of private API documentation for library developers
-  - [ ] Instructions and examples of integration with other frameworks
+This list of planned items relates to the main Permit repository as well as to [Permit.Ecto](https://github.com/curiosum_dev/permit_ecto), [Permit.Phoenix](https://github.com/curiosum_dev/permit_phoenix), [Permit.Absinthe](https://github.com/curiosum_dev/permit_absinthe) and possible future offspring repositories related to the Permit project.
+
+* [ ] **Performance & Optimization**
+  - [ ] Compile-time optimizations and caching
+  - [ ] Static code analysis for authorization rules
+  - [ ] Policy playground & visualization tools
+  - [ ] Code generators for common authorization patterns with Permit.Ecto
+* [ ] **Extended Framework Support**
+  - [ ] Ash framework integration
+  - [ ] Commanded (CQRS/ES) integration
+  - [x] Absinthe integration - in progress
+  - [ ] Phoenix route-based authorization
+* [ ] **Research Ideas**
+  - [ ] Explore feasibility of entity field-level authorization
+  - [ ] Research alignment of Permit with PostgreSQL RLS
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `permit` to your list of dependencies in `mix.exs`:
+If [available in Hex](https://hex.pm/docs/publish), the package can be installed by adding `permit` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:permit, "~> 0.2.1"}
+    {:permit, "~> 0.3.0"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/permit>.
+For additional integrations, add the relevant packages:
+
+```elixir
+def deps do
+  [
+    {:permit, "~> 0.3.0"},
+    {:permit_ecto, "~> 0.2.4"},     # For Ecto integration
+    {:permit_phoenix, "~> 0.3.0"},  # For Phoenix & LiveView
+    {:permit_absinthe, "~> 0.1.0"}     # For GraphQL (Absinthe)
+  ]
+end
+```
+
+## Documentation
+
+- **Core library**: [hexdocs.pm/permit](https://hexdocs.pm/permit)
+- **Ecto integration**: [hexdocs.pm/permit_ecto](https://hexdocs.pm/permit_ecto)
+- **Phoenix integration**: [hexdocs.pm/permit_phoenix](https://hexdocs.pm/permit_phoenix)
+- **Absinthe integration**: [hexdocs.pm/permit_absinthe](https://hexdocs.pm/permit_phoenix)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development setup
+
+Just clone the repository, install dependencies normally, develop and run tests. When running Credo and Dialyzer, please use `MIX_ENV=test` to ensure tests and support files are validated, too.
+### Media
+
+* [_A Framework for Unified Authorization in Elixir_](https://youtu.be/AvUPX6cAjzk?t=3997), M. Buszkiewicz, Curiosum Elixir Meetup #5, May 2022
+* [_Permit - An Uniform Authorization Library for Elixir_](https://www.youtube.com/watch?v=qNl3fKpzQFY), M. Buszkiewicz, Curiosum Elixir Meetup #8, August 2022
+* _Authorization & Access Control: Case Studies and Practical Solutions using Elixir_, ElixirConf EU, May 2025 - publicly available on YouTube soon
+* [_Introducing Permit: An Authorization Library for Elixir_](https://curiosum.com/blog/introducing-permit-library-for-elixir), Curiosum, August 2022
+* [_Authorize access to your Phoenix app with Permit_](https://curiosum.com/blog/authorize-access-to-your-phoenix-app-with-permit), Curiosum, October 2023
+* [_Updates to Permit and Permit.Phoenix, announcing Permit.Absinthe_](https://curiosum.com/blog/permit-open-source-update), Curiosum, Jun 2025
+* [_Future of Permit authorization library_](https://curiosum.com/blog/permit-future-authorization-library), Curiosum, Jun 2025
+
+### Community
+
+- **Slack channel**: [Elixir Slack / #permit](https://elixir-lang.slack.com/archives/C091Q5S0GDU)
+- **Issues**: [GitHub Issues](https://github.com/curiosum-dev/permit/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/curiosum-dev/permit/discussions)
+- **Blog**: [Curiosum Blog](https://curiosum.com/blog?search=permit)
 
 ## Contact
 
-[Curiosum](https://curiosum.com)
+* Library maintainer: [Michał Buszkiewicz](https://github.com/vincentvanbush)
+* [**Curiosum**](https://curiosum.com) - Elixir development team behind Permit
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
