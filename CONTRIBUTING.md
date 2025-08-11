@@ -10,17 +10,17 @@ This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participatin
 
 ### Development environment
 
-1. **Prerequisites**
-   - Elixir 1.12+ and OTP 24+
-   - Git
+#### Prerequisites
 
-2. **Setup**
-   ```bash
-   git clone https://github.com/curiosum-dev/permit.git
-   cd permit
-   mix deps.get
-   mix test
-   ```
+* Elixir 1.12+ and OTP 24+
+  - _If implementing a proposed feature requires bumping Elixir or OTP, we're open to considering that._
+* Git
+
+Developing and testing the `permit` package itself does not require Postgres. This package contains only code that's not Ecto-dependent. Check [Permit.Ecto](https://github.com/curiosum-dev/permit_ecto/) for Permit's database integration.
+
+#### Setup
+
+Just clone the repository, install dependencies normally, develop and run tests. When running Credo and Dialyzer, please use `MIX_ENV=test` to ensure tests and support files are validated, too.
 
 ## How to contribute
 
@@ -130,35 +130,16 @@ Releases are handled by maintainers:
 
 ## Community
 
-### Getting Help
+### Getting help
 
-- **GitHub Discussions** - for questions and general discussion
-- **GitHub Issues** - for bug reports and feature requests
-- **Curiosum Blog** - for updates and tutorials
+- [Elixir Slack channel][0] - for chat, questions and general discussion
+- [GitHub Discussions][1] - for questions and general discussion
+- [GitHub Issues][2] - for bug reports and feature requests
+- [Curiosum Blog][3] - for updates, tutorials and other content
 
 ### Recognition
 
-Contributors are recognized in:
-- GitHub contributors list
-- Release notes for significant contributions
-- Blog posts highlighting community contributions
-
-## Package-Specific Guidelines
-
-### permit_ecto
-- All operators must implement both runtime and compile-time query generation
-- Database compatibility should be considered
-- Performance implications should be documented
-
-### permit_phoenix
-- Phoenix version compatibility matrix must be maintained
-- LiveView features should be backward compatible when possible
-- Controller and LiveView integrations should follow Phoenix patterns
-
-### permit_absinthe (experimental)
-- Breaking changes are acceptable in experimental packages
-- Focus on core GraphQL authorization patterns
-- Document limitations and experimental status
+We are eager to publicly recognize your valuable input as a Permit contributor! Your contributions will be highlighted in subsequent release notes, as well as blog posts announcing community contributions.
 
 ## Questions?
 
@@ -172,3 +153,5 @@ Thank you for contributing to Permit! 🎉
 
 [0]: https://elixir-lang.slack.com/archives/C091Q5S0GDU
 [1]: https://github.com/curiosum-dev/permit/discussions
+[2]: https://github.com/curiosum-dev/permit/issues
+[3]: https://curiosum.com/blog?search=permit
