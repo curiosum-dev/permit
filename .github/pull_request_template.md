@@ -43,24 +43,22 @@ Related to #<!-- issue number -->
 
 ### Test Cases
 - [ ] All existing tests pass
-- [ ] New tests added for new functionality
+- [ ] New tests added for new functionality at appropriate levels
 - [ ] Manual testing performed
-- [ ] Integration tests pass
 
 ### Test Commands Run
 ```bash
 # List the commands you ran to test
 mix test
-mix credo
-mix dialyzer
+MIX_ENV=test mix credo
+MIX_ENV=test mix dialyzer
 ```
 
 ## Documentation
 
 - [ ] Updated README.md (if applicable)
-- [ ] Updated documentation comments
+- [ ] Updated documentation comments (with examples for new features)
 - [ ] Updated CHANGELOG.md (if applicable)
-- [ ] Added examples for new features
 
 ## Code Quality
 
