@@ -16,7 +16,7 @@ body:
     attributes:
       label: Permit version
       description: What version of Permit are you using?
-      placeholder: e.g., 0.3.0
+      placeholder: e.g., 0.3.1
     validations:
       required: true
 
