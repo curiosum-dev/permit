@@ -16,10 +16,10 @@ defmodule Permit.PermitTest do
     @impl Permit.Actions
     def grouping_schema do
       %{
-        a: [:create],
-        b: [:read],
-        c: [:delete],
-        d: [:update]
+        a: [],
+        b: [],
+        c: [],
+        d: []
       }
     end
   end
