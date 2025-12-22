@@ -5,12 +5,14 @@ All notable changes to this project will be documented in this file.
 * This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
+### Changed
+- [Breaking] Require explicitly specified `:actions_module` on `use Permit` rather than fetching it through permissions module to avoid compile-time dependency.
 
 ## [v0.3.0]
 ### Changed
 - [Breaking] Change order of args in `Permit.verify_record/3` and add delegation as `do?/3` when doing `use Permit`.
 
-  This way, permisisons to perform a dynamically computed action can be checked like this:
+  This way, permissions to perform a dynamically computed action can be checked like this:
   ```elixir
   action = :read
   can(user) |> do?(action, %Item{id: 1})
