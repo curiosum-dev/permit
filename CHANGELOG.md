@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.3.2]
+
+### Fixed
+- [Breaking] Predicate functions now respect action grouping. For example, when `Permit.Actions.grouping_schema/0` includes `show: [:read]`,
+calling `can(user) |> show?(item)` will now check if the `:read` permission is granted. Previously, it would only check for `:show` directly.
+This was inconsistent with the behaviour of Permit.Phoenix and is now fixed for consistency.
+
 ## [v0.3.1]
 ### Fixed
 - Loader function now receives as its argument the entire `resolution_context` map, not just `params`.
