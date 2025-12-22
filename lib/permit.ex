@@ -144,7 +144,7 @@ defmodule Permit do
         do: raise("Unable to create permit authorization for nil role/user")
 
       def can(who) do
-        Permit.can(who, unquote(permissions_module))
+        Permit.can(who, unquote(permissions_module), __MODULE__)
       end
 
       @impl Permit
@@ -177,11 +177,22 @@ defmodule Permit do
 
   @doc false
   def can(who, permissions_module) do
+    can(who, permissions_module, nil)
+  end
+
+  @doc false
+  def can(who, permissions_module, authorization_module) do
     who
     |> SubjectMapping.subjects()
     |> Stream.map(&permissions_module.can/1)
     |> Enum.reduce(&Permissions.concatenate(&1, &2))
-    |> then(&%Permit.Context{subject: (is_struct(who) && who) || nil, permissions: &1})
+    |> then(
+      &%Permit.Context{
+        subject: (is_struct(who) && who) || nil,
+        permissions: &1,
+        authorization_module: authorization_module
+      }
+    )
   end
 
   @doc """
@@ -204,12 +215,24 @@ defmodule Permit do
   def verify_record(
         %{
           permissions: permissions,
-          subject: subject
+          subject: subject,
+          authorization_module: authorization_module
         } = _authorization,
         action,
         resource_or_module
       ) do
-    Permissions.granted?(permissions, action, resource_or_module, subject)
+    # If authorization_module is nil (backward compatibility), fall back to direct check
+    if is_nil(authorization_module) do
+      Permissions.granted?(permissions, action, resource_or_module, subject)
+    else
+      actions_module = authorization_module.actions_module()
+
+      verify_fn = fn check_action ->
+        Permissions.granted?(permissions, check_action, resource_or_module, subject)
+      end
+
+      Permit.Actions.verify_transitively!(actions_module, action, verify_fn)
+    end
   end
 
   defp add_predicate_name(atom),
