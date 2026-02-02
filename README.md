@@ -196,6 +196,8 @@ Permit is designed as a modular ecosystem with multiple packages:
 
 ## Recent Updates
 
+**Version 0.3.3** fixed a bug in the predicate function behaviour with has-many associations not matching Permit.Ecto behaviour.
+
 **Version 0.3.2** fixed a bug in the predicate functions respecting action grouping.
 
 **Version 0.3.1** fixed a bug in the loader function.
@@ -271,7 +273,7 @@ If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 ```elixir
 def deps do
   [
-    {:permit, "~> 0.3.2"}
+    {:permit, "~> 0.3.3"}
   ]
 end
 ```
@@ -281,7 +283,7 @@ For additional integrations, add the relevant packages:
 ```elixir
 def deps do
   [
-    {:permit, "~> 0.3.2"},
+    {:permit, "~> 0.3.3"},
     {:permit_ecto, "~> 0.2.4"},     # For Ecto integration
     {:permit_phoenix, "~> 0.3.0"},  # For Phoenix & LiveView
     {:permit_absinthe, "~> 0.1.0"}     # For GraphQL (Absinthe)

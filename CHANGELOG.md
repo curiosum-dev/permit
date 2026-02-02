@@ -6,6 +6,44 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.3.3]
+
+### Fixed
+
+- [Breaking] The behaviour of predicate functions has been changed to match the behaviour of Permit.Ecto in has-many associations (#53).
+  
+  With two disjunctive conditions on the same has-many association, the predicate function will now return `true` if at least one of the conditions is met - matching the behaviour of Permit.Ecto which builds a JOIN query and naturally returns the base record if _any_ associated record matches the query condition.
+
+  Example:
+  ```elixir
+  # Permissions
+  defmodule MyApp.Permissions do
+    use Permit
+
+    def can(user) do
+      # User can read articles they are authorized to view
+      user
+      |> can(:read, %Article{authorized_viewers: [%{id: user.id}]})
+    end
+  end
+  
+  # Article has no authorized viewers
+  can(user) |> read?(%Article{authorized_viewers: []})
+  => false
+  
+  # All authorized viewer records match current user
+  can(user) |> read?(%Article{authorized_viewers: [%{id: user.id}]})
+  => true
+  
+  # Any authorized viewer record matches current user
+  can(user) |> read?(%Article{authorized_viewers: [%{id: user.id}, %{id: 123}]})
+  => true
+  
+  # No authorized viewer records match current user
+  can(user) |> read?(%Article{authorized_viewers: [%{id: 123}]})
+  => false
+  ```
+
 ## [v0.3.2]
 
 ### Fixed
