@@ -51,9 +51,17 @@ if Code.ensure_loaded?(Igniter) do
       options = igniter.args.options
       app_module = Igniter.Project.Module.module_name_prefix(igniter)
 
-      authorization_module = parse_module(options[:authorization_module], Module.concat(app_module, Authorization))
-      permissions_module = parse_module(options[:permissions_module], Module.concat(authorization_module, Permissions))
-      actions_module = parse_module(options[:actions_module], Module.concat(authorization_module, Actions))
+      authorization_module =
+        parse_module(options[:authorization_module], Module.concat(app_module, Authorization))
+
+      permissions_module =
+        parse_module(
+          options[:permissions_module],
+          Module.concat(authorization_module, Permissions)
+        )
+
+      actions_module =
+        parse_module(options[:actions_module], Module.concat(authorization_module, Actions))
 
       no_ecto? = Keyword.get(options, :no_ecto, false)
       phoenix? = Keyword.get(options, :phoenix, false)
@@ -65,8 +73,12 @@ if Code.ensure_loaded?(Igniter) do
           |> create_base_permissions_module(permissions_module)
         else
           compose_args =
-            ["--authorization-module", inspect(authorization_module),
-             "--permissions-module", inspect(permissions_module)]
+            [
+              "--authorization-module",
+              inspect(authorization_module),
+              "--permissions-module",
+              inspect(permissions_module)
+            ]
             |> maybe_add_option(options, :repo)
             |> maybe_add_option_value("--actions-module", phoenix? && inspect(actions_module))
 
@@ -76,8 +88,12 @@ if Code.ensure_loaded?(Igniter) do
       igniter =
         if phoenix? do
           compose_args =
-            ["--authorization-module", inspect(authorization_module),
-             "--actions-module", inspect(actions_module)]
+            [
+              "--authorization-module",
+              inspect(authorization_module),
+              "--actions-module",
+              inspect(actions_module)
+            ]
             |> maybe_add_option(options, :router)
 
           Igniter.compose_task(igniter, "permit_phoenix.install", compose_args)
@@ -105,6 +121,7 @@ if Code.ensure_loaded?(Igniter) do
     end
 
     defp parse_module(nil, default), do: default
+
     defp parse_module(string, _default) when is_binary(string) do
       string
       |> String.split(".")
