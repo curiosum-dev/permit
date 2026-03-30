@@ -1,7 +1,8 @@
-defmodule Mix.Tasks.Permit.InstallTest do
-  use ExUnit.Case
+if Version.match?(System.version(), ">= 1.15.0") and Code.ensure_loaded?(Igniter.Test) do
+  defmodule Mix.Tasks.Permit.InstallTest do
+    use ExUnit.Case
 
-  import Igniter.Test
+    import Igniter.Test
 
   describe "permit.install --no-ecto" do
     test "creates authorization and permissions modules" do
@@ -72,5 +73,6 @@ defmodule Mix.Tasks.Permit.InstallTest do
       # Should not raise - the task handles missing sub-tasks gracefully
       assert %Igniter{} = igniter
     end
+  end
   end
 end
