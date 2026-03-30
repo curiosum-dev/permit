@@ -15,7 +15,7 @@ defmodule Permit.MixProject do
       consolidate_protocols: Mix.env() not in [:dev, :test],
       description: "Plain-Elixir, DSL-less, extensible authorization library for Elixir.",
       package: package(),
-      dialyzer: [plt_add_apps: [:ex_unit]],
+      dialyzer: [plt_add_apps: [:ex_unit, :mix]],
       docs: docs(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
