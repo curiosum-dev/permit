@@ -268,7 +268,33 @@ This list of planned items relates to the main Permit repository as well as to [
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed by adding `permit` to your list of dependencies in `mix.exs`:
+### Using Igniter (recommended)
+
+The easiest way to set up Permit is with [Igniter](https://hex.pm/packages/igniter), which will add the dependencies, generate authorization modules, and patch your web module automatically:
+
+```bash
+# Full setup with Ecto and Phoenix (LiveView + controllers)
+mix igniter.install permit --phoenix
+
+# With Absinthe/GraphQL integration
+mix igniter.install permit --phoenix --absinthe
+
+# Base Permit only, no Ecto
+mix igniter.install permit --no-ecto
+```
+
+After installation, use the patch tasks to wire Permit into existing controllers and LiveViews:
+
+```bash
+mix permit.patch.controller MyAppWeb.ArticleController MyApp.Blog.Article
+mix permit.patch.live_view MyAppWeb.ArticleLive.Index MyApp.Blog.Article
+```
+
+See the [Igniter documentation](https://hexdocs.pm/igniter) for more details.
+
+### Manual installation
+
+Alternatively, add `permit` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -286,7 +312,7 @@ def deps do
     {:permit, "~> 0.3.3"},
     {:permit_ecto, "~> 0.2.4"},     # For Ecto integration
     {:permit_phoenix, "~> 0.3.0"},  # For Phoenix & LiveView
-    {:permit_absinthe, "~> 0.1.0"}     # For GraphQL (Absinthe)
+    {:permit_absinthe, "~> 0.1.0"}  # For GraphQL (Absinthe)
   ]
 end
 ```

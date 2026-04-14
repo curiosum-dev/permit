@@ -12,12 +12,14 @@ if Version.match?(System.version(), ">= 1.15.0") and Code.ensure_loaded?(Igniter
     ## Options
 
     - `--phoenix` - Include Phoenix integration (Permit.Phoenix)
+    - `--absinthe` - Include Absinthe/GraphQL integration (Permit.Absinthe)
     - `--no-ecto` - Do not include Ecto integration (use only base Permit)
     - `--authorization-module` - Authorization module name (default: `<MyApp>.Authorization`)
     - `--permissions-module` - Permissions module name (default: `<MyApp>.Authorization.Permissions`)
     - `--actions-module` - Actions module name (default: `<MyApp>.Authorization.Actions`)
     - `--repo` - Ecto repo module name (auto-detected if not specified)
     - `--router` - Phoenix router module (auto-detected if not specified)
+    - `--schema-module` - Absinthe schema module (auto-detected if not specified)
     """
 
     use Igniter.Mix.Task
@@ -28,20 +30,24 @@ if Version.match?(System.version(), ">= 1.15.0") and Code.ensure_loaded?(Igniter
         group: :permit,
         schema: [
           phoenix: :boolean,
+          absinthe: :boolean,
           no_ecto: :boolean,
           authorization_module: :string,
           permissions_module: :string,
           actions_module: :string,
           repo: :string,
-          router: :string
+          router: :string,
+          schema_module: :string
         ],
         defaults: [
           phoenix: false,
+          absinthe: false,
           no_ecto: false
         ],
         composes: [
           "permit_ecto.install",
-          "permit_phoenix.install"
+          "permit_phoenix.install",
+          "permit_absinthe.install"
         ]
       }
     end
@@ -65,6 +71,7 @@ if Version.match?(System.version(), ">= 1.15.0") and Code.ensure_loaded?(Igniter
 
       no_ecto? = Keyword.get(options, :no_ecto, false)
       phoenix? = Keyword.get(options, :phoenix, false)
+      absinthe? = Keyword.get(options, :absinthe, false)
 
       igniter =
         if no_ecto? do
@@ -97,6 +104,17 @@ if Version.match?(System.version(), ">= 1.15.0") and Code.ensure_loaded?(Igniter
             |> maybe_add_option(options, :router)
 
           Igniter.compose_task(igniter, "permit_phoenix.install", compose_args)
+        else
+          igniter
+        end
+
+      igniter =
+        if absinthe? do
+          compose_args =
+            ["--authorization-module", inspect(authorization_module)]
+            |> maybe_add_option(options, :schema_module)
+
+          Igniter.compose_task(igniter, "permit_absinthe.install", compose_args)
         else
           igniter
         end
