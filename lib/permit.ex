@@ -30,7 +30,7 @@ defmodule Permit do
   ...if user's ID = article author's ID AND the article is not published,
   ...if user's ID = article author's ID AND the article type is a live ticker,
   ...if user's role is editor-in-chief AND the article is not published,
-  ...if user's role is editor-in-chief ID AND the article type is a live ticker,
+  ...if user's role is editor-in-chief AND the article type is a live ticker,
   ...or if the use has a super-admin role.
   ```
 
@@ -48,7 +48,7 @@ defmodule Permit do
     |> update(Article, author_id: user_id, type: :live_ticker)
   end
 
-  def can(%User{id: user_id, role: :super_admin} = _current_user) do
+  def can(%User{role: :super_admin} = _current_user) do
     permit()
     |> update(Article)
   end
