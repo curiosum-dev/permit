@@ -15,7 +15,7 @@ defmodule Permit.MixProject do
       consolidate_protocols: Mix.env() not in [:dev, :test],
       description: "Plain-Elixir, DSL-less, extensible authorization library for Elixir.",
       package: package(),
-      dialyzer: [plt_add_apps: [:ex_unit]],
+      dialyzer: [plt_add_apps: [:ex_unit, :mix, :igniter]],
       docs: docs(),
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -63,7 +63,15 @@ defmodule Permit.MixProject do
       {:git_cli, "~> 0.3.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test, runtime: false},
       {:castore, "~> 1.0", only: :test, runtime: false}
-    ]
+    ] ++ igniter_dep()
+  end
+
+  defp igniter_dep do
+    if Version.match?(System.version(), ">= 1.15.0") do
+      [{:igniter, "~> 0.5", only: [:dev, :test], runtime: false}]
+    else
+      []
+    end
   end
 
   defp docs do
