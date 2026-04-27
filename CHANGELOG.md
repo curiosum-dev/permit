@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `plural_actions/0` callback on `Permit.Actions`, mirroring `singular_actions/0`. Defaults to `[]`. Used by `Permit.Phoenix.Actions` to exclude collection style actions (e.g. `:list`, `:search`, `:feed`) from router based promotion to singular.
+
 ## [v0.3.3]
 
 ### Fixed

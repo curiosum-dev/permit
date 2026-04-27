@@ -100,6 +100,15 @@ defmodule Permit.Actions do
   """
   @callback singular_actions() :: [Types.action_group()]
 
+  @doc ~S"""
+  Declares which actions are explicitly plural, overriding any heuristic that
+  would otherwise classify them as singular.
+
+  Useful for collection-style actions whose names or routes would otherwise be
+  misclassified, e.g. `:list`, `:search`, `:feed`.
+  """
+  @callback plural_actions() :: [Types.action_group()]
+
   defmacro __using__(_opts) do
     quote do
       @behaviour Actions
@@ -129,8 +138,12 @@ defmodule Permit.Actions do
       @impl Actions
       def singular_actions, do: crud_singular()
 
+      @impl Actions
+      def plural_actions, do: []
+
       defoverridable grouping_schema: 0,
-                     singular_actions: 0
+                     singular_actions: 0,
+                     plural_actions: 0
     end
   end
 
