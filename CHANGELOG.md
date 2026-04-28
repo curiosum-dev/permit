@@ -6,9 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.4.0] - 2026-04-28
+
 ### Added
 
-- `plural_actions/0` callback on `Permit.Actions`, mirroring `singular_actions/0`. Defaults to `[]`. Used by `Permit.Phoenix.Actions` to exclude collection style actions (e.g. `:list`, `:search`, `:feed`) from router based promotion to singular.
+- `plural_actions/0` callback on `Permit.Actions`, mirroring `singular_actions/0`. Defaults to `[]`. Used by `Permit.Phoenix.Actions` to exclude collection style actions (e.g. `:list`, `:search`, `:feed`) from router based promotion to singular (#61)
+- Igniter installer task (`mix permit.install`) for zero-config project setup (#59)
+
+### Fixed
+
+- Documentation typos (#58)
 
 ## [v0.3.3]
 
