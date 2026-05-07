@@ -35,6 +35,7 @@ defmodule Permit.PermitTest do
   defmodule TestAuthorization do
     @moduledoc false
     use Permit,
+      actions_module: TestActions,
       permissions_module: Permit.PermitTest.TestPermissions
   end
 

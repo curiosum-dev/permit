@@ -11,7 +11,7 @@ defmodule Permit.Permissions do
   A very simple usage example:
   ```
   defmodule MyApp.Permissions do
-    use Permit.Permissions, actions_module: Permit.Actions.CrudActions
+    use Permit.Permissions
 
     @impl true
     def can(%MyApp.User{role: :admin}) do
@@ -30,6 +30,14 @@ defmodule Permit.Permissions do
   ```
 
   ## Named action functions
+
+  By default, Permit will generate actions functions for the 4 common CRUD actions. If you need further actions, you can define a custom actions module .and configure it in both your `Authorization` and your `Permissions` module. See `Permit.Actions` for more information.
+
+  ```elixir
+  defmodule MyApp.Permissions do
+    # actions_module defaults to Permit.Actions.CrudActions.
+    use Permit.Permissions, actions_module: MyApp.Actions
+  ```
 
   Each action defined in the `:actions_module` results in a 2-, 3-, and 4-arity function being generated.
 
@@ -97,7 +105,7 @@ defmodule Permit.Permissions do
     condition_parser = opts[:condition_parser] || (&ConditionParser.build/2)
     condition_types_module = opts[:condition_types_module] || Permit.Types.ConditionTypes
 
-    actions_module = opts |> Keyword.get(:actions_module, Permit.Actions.CrudActions)
+    actions_module = Keyword.get(opts, :actions_module, Permit.Actions.CrudActions)
 
     # Unnamed action macro
     permission_to = PermissionTo.mixin(condition_parser, condition_types_module)

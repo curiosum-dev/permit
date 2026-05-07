@@ -69,7 +69,7 @@ defmodule Permit do
   end
 
   defmodule MyApp.Permissions do
-    use Permit.Permissions, actions_module: Permit.Actions.CrudActions
+    use Permit.Permissions
 
     def can(%{role: :admin} = user) do
       permit()
@@ -85,7 +85,6 @@ defmodule Permit do
     def can(user), do: permit()
   end
   ```
-  Note that in the permission definitions module the `read` function is generated based on configuration provided as the `:actions_module` option - in this case, `CrudActions` generates `create`, `read`, `update` and `delete`. For more on this, see `Permit.Actions` and `Permit.Permissions`.
 
   ### Check a user's authorization to perform an action on a resource
   ```elixir
@@ -99,7 +98,22 @@ defmodule Permit do
   iex(4)> can(%MyApp.User{role: :admin}) |> delete?(%MyApp.Article{author_id: 2})
   true
   ```
-  Functions such as `MyApp.Authorization.read?/2`, `MyApp.Authorization.update?/2`, etc. are also generated based on the `:actions_module` option. See more in `Permit.Actions`.
+
+  ### Configure further actions
+  By default, Permit will generate predicate functions for the 4 common CRUD actions. If you need further actions,
+  you can define a custom actions module and configure it in both your `Authorization` and your `Permissions` module.
+  See `Permit.Actions` for more information.
+  ```elixir
+  defmodule MyApp.Authorization do
+    use Permit,
+      actions_module: MyApp.Actions,
+      permissions_module: MyApp.Permissions
+  end
+
+  defmodule MyApp.Permissions do
+    use Permit.Permissions, actions_module: MyApp.Actions
+    # ...
+  end
   """
 
   alias Permit.Permissions
@@ -114,7 +128,9 @@ defmodule Permit do
     permissions_module = Keyword.fetch!(opts, :permissions_module)
 
     predicates =
-      Macro.expand(permissions_module, __CALLER__).actions_module()
+      opts
+      |> Keyword.get(:actions_module, Permit.Actions.CrudActions)
+      |> Macro.expand(__CALLER__)
       |> Permit.Actions.list_groups()
       |> Enum.map(&add_predicate_name/1)
       |> Enum.map(fn {predicate, name} ->
