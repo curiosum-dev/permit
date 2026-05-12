@@ -48,7 +48,7 @@ defmodule Permit.ActionsGroupingTest do
   end
 
   defmodule TestAuthorization do
-    use Permit, permissions_module: TestPermissions
+    use Permit, permissions_module: TestPermissions, actions_module: TestActions
   end
 
   describe "transitive action grouping" do
@@ -195,7 +195,7 @@ defmodule Permit.ActionsGroupingTest do
     end
 
     defmodule MultipleAuthorization do
-      use Permit, permissions_module: MultiplePermissions
+      use Permit, permissions_module: MultiplePermissions, actions_module: MultipleActions
     end
 
     test "user with a permission cannot perform d action" do
