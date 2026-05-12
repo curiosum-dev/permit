@@ -115,7 +115,7 @@ defmodule Permit.Permissions.ParsedCondition do
         check_conditions(sub_assoc, assoc_conditions)
 
       sub_assoc when is_list(sub_assoc) ->
-        Enum.all?(sub_assoc, &check_conditions(&1, assoc_conditions))
+        Enum.any?(sub_assoc, &check_conditions(&1, assoc_conditions))
 
       sub_assoc ->
         sub_assoc == assoc_conditions

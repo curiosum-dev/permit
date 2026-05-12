@@ -8,6 +8,66 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - [Breaking] Require explicitly specified `:actions_module` on `use Permit` rather than fetching it through permissions module to avoid compile-time dependency.
 
+## [v0.4.0] - 2026-04-28
+
+### Added
+
+- `plural_actions/0` callback on `Permit.Actions`, mirroring `singular_actions/0`. Defaults to `[]`. Used by `Permit.Phoenix.Actions` to exclude collection style actions (e.g. `:list`, `:search`, `:feed`) from router based promotion to singular (#61)
+- Igniter installer task (`mix permit.install`) for zero-config project setup (#59)
+
+### Fixed
+
+- Documentation typos (#58)
+
+## [v0.3.3]
+
+### Fixed
+
+- [Breaking] The behaviour of predicate functions has been changed to match the behaviour of Permit.Ecto in has-many associations (#53).
+  
+  With two disjunctive conditions on the same has-many association, the predicate function will now return `true` if at least one of the conditions is met - matching the behaviour of Permit.Ecto which builds a JOIN query and naturally returns the base record if _any_ associated record matches the query condition.
+
+  Example:
+  ```elixir
+  # Permissions
+  defmodule MyApp.Permissions do
+    use Permit
+
+    def can(user) do
+      # User can read articles they are authorized to view
+      user
+      |> can(:read, %Article{authorized_viewers: [%{id: user.id}]})
+    end
+  end
+  
+  # Article has no authorized viewers
+  can(user) |> read?(%Article{authorized_viewers: []})
+  => false
+  
+  # All authorized viewer records match current user
+  can(user) |> read?(%Article{authorized_viewers: [%{id: user.id}]})
+  => true
+  
+  # Any authorized viewer record matches current user
+  can(user) |> read?(%Article{authorized_viewers: [%{id: user.id}, %{id: 123}]})
+  => true
+  
+  # No authorized viewer records match current user
+  can(user) |> read?(%Article{authorized_viewers: [%{id: 123}]})
+  => false
+  ```
+
+## [v0.3.2]
+
+### Fixed
+- [Breaking] Predicate functions now respect action grouping. For example, when `Permit.Actions.grouping_schema/0` includes `show: [:read]`,
+calling `can(user) |> show?(item)` will now check if the `:read` permission is granted. Previously, it would only check for `:show` directly.
+This was inconsistent with the behaviour of Permit.Phoenix and is now fixed for consistency.
+
+## [v0.3.1]
+### Fixed
+- Loader function now receives as its argument the entire `resolution_context` map, not just `params`.
+
 ## [v0.3.0]
 ### Changed
 - [Breaking] Change order of args in `Permit.verify_record/3` and add delegation as `do?/3` when doing `use Permit`.

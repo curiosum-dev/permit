@@ -80,7 +80,7 @@ defmodule Permit.Resolver do
           Types.resource_module(),
           Types.action_group(),
           Types.subject(),
-          map(),
+          Types.resolution_context(),
           :all | :one
         ) :: [struct()] | struct() | nil
   defp fetch_resource(
@@ -88,15 +88,18 @@ defmodule Permit.Resolver do
          resource_module,
          action,
          subject,
-         %{loader: loader, params: params},
+         %{loader: loader} = meta,
          :all
        ) do
-    case loader.(%{
-           action: action,
-           resource_module: resource_module,
-           subject: subject,
-           params: params
-         }) do
+    loader_arg =
+      %{
+        action: action,
+        resource_module: resource_module,
+        subject: subject
+      }
+      |> Map.merge(meta)
+
+    case loader.(loader_arg) do
       list when is_list(list) -> list
       nil -> []
       other_item -> [other_item]
@@ -108,15 +111,18 @@ defmodule Permit.Resolver do
          resource_module,
          action,
          subject,
-         %{loader: loader, params: params},
+         %{loader: loader} = meta,
          :one
        ) do
-    case loader.(%{
-           action: action,
-           resource_module: resource_module,
-           subject: subject,
-           params: params
-         }) do
+    loader_arg =
+      %{
+        action: action,
+        resource_module: resource_module,
+        subject: subject
+      }
+      |> Map.merge(meta)
+
+    case loader.(loader_arg) do
       [record | _] -> record
       [] -> nil
       record -> record

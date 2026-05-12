@@ -78,7 +78,8 @@ defmodule Permit.Permissions.ConditionTest do
              |> ParsedCondition.satisfied?(test_object, nil)
     end
 
-    test "should not satisfy nested has-many associations" do
+    test "should use ANY semantics for has-many associations" do
+      # None of the actors have age 123, so should fail
       condition = {:actors, {:==, [age: 123]}}
 
       test_object = %Movie{actors: [%Actor{age: 666}]}
@@ -86,19 +87,45 @@ defmodule Permit.Permissions.ConditionTest do
       refute ConditionParser.build(condition)
              |> ParsedCondition.satisfied?(test_object, nil)
 
+      # With ANY semantics: at least one actor has age 666, so should PASS
       condition = {:actors, {:==, [age: 666]}}
 
       test_object = %Movie{actors: [%Actor{age: 123}, %Actor{age: 666}]}
 
-      refute ConditionParser.build(condition)
+      assert ConditionParser.build(condition)
              |> ParsedCondition.satisfied?(test_object, nil)
 
+      # At least one actor matches both age AND name conditions
       condition = {:actors, {:==, [age: 123, name: "test"]}}
 
       test_object = %Movie{
         actors: [%Actor{age: 123, name: "test"}, %Actor{age: 123, name: "test_666"}]
       }
 
+      # With ANY semantics: first actor matches both conditions
+      assert ConditionParser.build(condition)
+             |> ParsedCondition.satisfied?(test_object, nil)
+
+      # No actor matches both conditions simultaneously
+      condition = {:actors, {:==, [age: 123, name: "test"]}}
+
+      test_object = %Movie{
+        actors: [%Actor{age: 666, name: "test"}, %Actor{age: 123, name: "wrong"}]
+      }
+
+      # No single actor has both age 123 AND name "test"
+      refute ConditionParser.build(condition)
+             |> ParsedCondition.satisfied?(test_object, nil)
+    end
+
+    test "should not satisfy nested has-many associations when association is empty" do
+      condition = {:actors, {:==, [age: 123]}}
+
+      # An empty list of actors should NOT satisfy the condition
+      # because there is no actor with age 123
+      test_object = %Movie{actors: []}
+
+      # Changed to any? semantic (PR #22 in permit_ecto)
       refute ConditionParser.build(condition)
              |> ParsedCondition.satisfied?(test_object, nil)
     end

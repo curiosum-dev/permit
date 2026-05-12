@@ -4,10 +4,11 @@ defmodule Permit.Context do
   alias Permit.Types
   alias Permit.Permissions
 
-  defstruct permissions: Permissions.new(), subject: nil
+  defstruct permissions: Permissions.new(), subject: nil, authorization_module: nil
 
   @type t :: %Permit.Context{
           permissions: Permissions.t(),
-          subject: Types.subject() | nil
+          subject: Types.subject() | nil,
+          authorization_module: module() | nil
         }
 end
